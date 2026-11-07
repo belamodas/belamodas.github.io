@@ -652,6 +652,16 @@ footer { padding-top:24px; }
   </div>
   <div id="admin-conteudo" hidden>
   <p class="aviso-demo">Os produtos e as fotos são sincronizados com a planilha e o Drive. As imagens enviadas para a vitrine ficam públicas para que as clientes possam visualizá-las.</p>
+  <section class="bloco-admin-banner" aria-labelledby="titulo-admin-banner" style="border:1px solid #d8c9c1;border-radius:10px;padding:16px;margin:14px 0 22px;background:#fffaf4">
+    <h3 id="titulo-admin-banner">Vídeo do banner principal</h3>
+    <p>Escolha um vídeo MP4 ou WebM de até 8 MB. Ele será exibido na página inicial para todas as clientes.</p>
+    <div id="admin-banner-atual" class="aviso-demo">Carregando configuração do banner…</div>
+    <label for="admin-banner-video">Selecionar ou substituir vídeo</label>
+    <input id="admin-banner-video" type="file" accept="video/mp4,video/webm">
+    <label><input id="admin-banner-remover" type="checkbox" style="width:auto"> Remover vídeo personalizado e voltar ao vídeo demonstrativo</label>
+    <button class="botao-principal" id="salvar-banner" type="button">Salvar vídeo do banner</button>
+    <div id="progresso-banner" class="aviso-demo" role="status" aria-live="polite" hidden></div>
+  </section>
   <form id="form-produto">
     <div class="linha-form"><div><label for="admin-codigo">Referência</label><input id="admin-codigo" required placeholder="Ex.: BM005"></div><div><label for="admin-categoria">Categoria</label><select id="admin-categoria"><option>Feminino</option><option>Masculino</option><option>Infantil</option><option>Acessórios</option></select></div></div>
     <label for="admin-nome">Nome do produto</label><input id="admin-nome" required placeholder="Nome da peça">
@@ -1217,6 +1227,61 @@ async function carregarProdutos() {
   mostrarProdutos();
   renderDestaques();
 }
+async function carregarBannerAdmin() {
+  const area = document.getElementById("admin-banner-atual");
+  try {
+    const config = await BelaSync.buscarBanner();
+    area.replaceChildren();
+    if (config && config.video_url) {
+      const link = document.createElement("a");
+      link.href = config.video_url;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = "Assistir ao vídeo atualmente publicado";
+      area.appendChild(link);
+    } else {
+      area.textContent = "Nenhum vídeo personalizado cadastrado. A vitrine está usando o vídeo demonstrativo.";
+    }
+  } catch (err) {
+    area.textContent = "Não foi possível consultar o vídeo atual: " + err.message;
+  }
+}
+document.getElementById("salvar-banner").addEventListener("click", async () => {
+  const botao = document.getElementById("salvar-banner");
+  const arquivo = document.getElementById("admin-banner-video").files[0];
+  const remover = document.getElementById("admin-banner-remover").checked;
+  const progresso = document.getElementById("progresso-banner");
+  if (!arquivo && !remover) {
+    alert("Selecione um vídeo ou marque a opção para voltar ao vídeo demonstrativo.");
+    return;
+  }
+  if (arquivo && (arquivo.size > 8 * 1024 * 1024 || !["video/mp4","video/webm"].includes(arquivo.type))) {
+    alert("Use um vídeo MP4 ou WebM de até 8 MB.");
+    return;
+  }
+  botao.disabled = true;
+  progresso.hidden = false;
+  try {
+    let url = "";
+    if (arquivo) {
+      progresso.textContent = "Enviando vídeo para o Google Drive…";
+      url = (await BelaSync.enviarVideo("banner", arquivo)).url;
+    }
+    progresso.textContent = "Salvando configuração do banner…";
+    await BelaSync.salvarBanner(url);
+    document.getElementById("admin-banner-video").value = "";
+    document.getElementById("admin-banner-remover").checked = false;
+    await carregarBannerAdmin();
+    progresso.textContent = "Vídeo do banner atualizado com sucesso.";
+    alert("Vídeo do banner salvo. A vitrine já poderá exibir a nova versão.");
+  } catch (err) {
+    progresso.textContent = "Não foi possível salvar: " + (err.message || "erro desconhecido");
+    alert(err.message || "Falha ao salvar o vídeo do banner.");
+  } finally {
+    botao.disabled = false;
+  }
+});
+
 function atualizarPainelAdmin() {
   const logado = BelaSync.estaLogado();
   document.getElementById("admin-login").hidden = logado;
@@ -1230,7 +1295,7 @@ document.getElementById("form-login").addEventListener("submit", async e => {
   try {
     await BelaSync.entrar(document.getElementById("admin-senha").value);
     document.getElementById("admin-senha").value = "";
-    await carregarProdutos(); atualizarPainelAdmin();
+    await carregarProdutos(); await carregarBannerAdmin(); atualizarPainelAdmin();
   } catch (err) { alert(err.message || "Falha ao entrar."); }
   finally { botao.disabled = false; }
 });
