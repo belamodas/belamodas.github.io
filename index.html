@@ -615,7 +615,7 @@ footer { padding-top:24px; }
   background:#3a1820;
   box-shadow:0 14px 34px rgba(0,0,0,.28);
 }
-.banner-editorial img {
+.banner-editorial video {
   position:absolute;
   inset:0;
   z-index:-2;
@@ -698,6 +698,33 @@ footer { padding-top:24px; }
   .banner-editorial-cta { transition:none; }
 }
 
+
+/* Banner em vídeo: área ampliada e marca mais equilibrada no celular. */
+.banner-editorial {
+  min-height:clamp(390px,48vw,540px);
+  background:#25040b;
+}
+.banner-editorial video {
+  inset:0;
+  z-index:-2;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  display:block;
+}
+@media(max-width:650px) {
+  .banner-editorial { min-height:460px; }
+  .banner-editorial video { object-position:58% center; }
+}
+@media(max-width:520px) {
+  .cabecalho-marca { justify-content:space-between; }
+  .marca-imagem { flex:0 0 32%; width:32%; max-width:210px; }
+  .marca-imagem img { width:100%; height:auto; object-fit:contain; }
+  .cabecalho-marca .header-info { flex:1 1 auto; max-width:none; padding:10px 12px 10px 4px; }
+  .banner-editorial { min-height:440px; }
+}
+
 </style>
 </head>
 
@@ -709,7 +736,7 @@ footer { padding-top:24px; }
   </div>
 </header>
 <section class="banner-editorial" aria-label="Conheça a coleção Bela Modas">
-  <img src="https://images.unsplash.com/photo-1763551229890-64e97d845251?auto=format&fit=crop&fm=jpg&q=80&w=1800" alt="Editorial de moda com vestido elegante em tons terrosos" fetchpriority="high">
+  <video id="banner-video" autoplay muted loop playsinline preload="metadata" poster="https://images.unsplash.com/photo-1763551229890-64e97d845251?auto=format&fit=crop&fm=jpg&q=80&w=1800" aria-label="Vídeo de apresentação da Bela Modas"><source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4"></video>
   <div class="banner-editorial-conteudo">
     <p class="banner-editorial-selo">Bela Modas apresenta</p>
     <h1>Vista-se de você.</h1>
@@ -1157,6 +1184,26 @@ document.getElementById("nav-sacola").addEventListener("click", () => abrirPaine
   } catch (_) {}
 })();
 
+const VIDEO_BANNER_DEMONSTRACAO = "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4";
+async function carregarVideoBanner() {
+  const video = document.getElementById("banner-video");
+  if (!video) return;
+  let url = VIDEO_BANNER_DEMONSTRACAO;
+  try {
+    const config = await BelaSync.buscarBanner();
+    if (config && config.video_url) url = config.video_url;
+  } catch (err) {
+    console.warn("Não foi possível consultar o vídeo personalizado do banner:", err.message);
+  }
+  if (video.src !== url) {
+    video.src = url;
+    video.load();
+  }
+  video.muted = true;
+  video.playsInline = true;
+  video.play().catch(() => {});
+}
+
 (async function iniciarCatalogo() {
   mostrarProdutos();
   renderDestaques();
@@ -1164,7 +1211,10 @@ document.getElementById("nav-sacola").addEventListener("click", () => abrirPaine
     console.error("sync.js não foi carregado.");
     return;
   }
-  try { await carregarProdutos(); }
+  try {
+    await carregarVideoBanner();
+    await carregarProdutos();
+  }
   catch (err) {
     console.warn("Catálogo remoto indisponível:", err.message);
     areaProdutos.innerHTML = '<div class="vazio">A vitrine está aguardando a configuração da conexão. Volte em instantes.</div>';
