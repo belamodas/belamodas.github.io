@@ -223,6 +223,39 @@
     });
   }
 
+  function buscarBanner() {
+    verificarConfiguracao();
+    return new Promise((resolve, reject) => {
+      const callback = "__belaBanner_" + gerarNonce();
+      const script = document.createElement("script");
+      let finished = false;
+      const timer = setTimeout(() => finalizar(new Error("Não foi possível carregar o vídeo do banner.")), CONFIG.TIMEOUT);
+      function finalizar(error, data) {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timer);
+        delete window[callback];
+        script.remove();
+        if (error) reject(error);
+        else if (!data || data.sucesso !== true) reject(new Error(data?.erro || "Resposta inválida do banner."));
+        else resolve(data.banner || {});
+      }
+      window[callback] = data => finalizar(null, data);
+      script.onerror = () => finalizar(new Error("Falha ao consultar o vídeo do banner."));
+      script.src = CONFIG.API_URL + "?acao=banner&callback=" + encodeURIComponent(callback) + "&tempo=" + Date.now();
+      document.head.appendChild(script);
+    });
+  }
+
+  async function salvarBanner(videoUrl) {
+    exigirSessao();
+    return requisicaoPost({
+      acao: "salvarBanner",
+      token: tokenAdmin,
+      video_url: String(videoUrl || "")
+    });
+  }
+
   async function entrar(senha) {
     if (!senha || senha.length < 12) {
       throw new Error("Informe a senha administrativa.");
@@ -361,6 +394,8 @@
 
   window.BelaSync = Object.freeze({
     buscarProdutos,
+    buscarBanner,
+    salvarBanner,
     entrar,
     sair,
     estaLogado,
