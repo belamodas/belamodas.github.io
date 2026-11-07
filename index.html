@@ -794,6 +794,23 @@ footer { padding-top:24px; }
   .navegacao-inferior { max-width:620px; left:50%; right:auto; width:calc(100% - 36px); transform:translateX(-50%); bottom:14px; border:1px solid rgba(232,189,112,.8); border-radius:18px; padding:7px 12px; }
   body { padding-bottom:100px; }
 }
+
+/* Seletor de tamanhos antes de adicionar à sacola */
+.seletor-tamanho-fundo { display:none; position:fixed; inset:0; z-index:40; padding:18px; background:rgba(18,2,7,.78); align-items:center; justify-content:center; }
+.seletor-tamanho-fundo.aberto { display:flex; }
+.seletor-tamanho-modal { width:min(420px,100%); max-height:min(88vh,620px); overflow:auto; position:relative; padding:25px 20px 20px; border:1px solid #e5bd70; border-radius:16px; background:#fff8ef; color:#351018; box-shadow:0 18px 55px rgba(0,0,0,.45); }
+.seletor-tamanho-modal h3 { margin:4px 32px 7px 0; color:#650817; font:normal 25px Georgia,serif; }
+.seletor-tamanho-modal p { margin:0 0 16px; color:#70565a; font-size:12px; line-height:1.5; }
+.seletor-tamanho-fechar { position:absolute; top:10px; right:13px; border:0; background:transparent; color:#650817; font-size:27px; cursor:pointer; }
+.opcoes-tamanho { display:flex; flex-wrap:wrap; gap:9px; margin:16px 0 20px; }
+.opcao-tamanho { min-width:54px; min-height:44px; padding:9px 13px; border:1px solid #cdb9a9; border-radius:9px; background:#fff; color:#650817; font-weight:700; cursor:pointer; }
+.opcao-tamanho.ativa { border-color:#650817; background:#650817; color:#fff4e7; box-shadow:0 0 0 2px rgba(229,189,112,.55); }
+.acoes-tamanho { display:flex; gap:9px; }
+.acoes-tamanho button { flex:1; min-height:44px; padding:10px; border:1px solid #650817; border-radius:8px; cursor:pointer; font-weight:700; }
+#confirmar-tamanho { background:#650817; color:#fff4e7; }
+#confirmar-tamanho:disabled { opacity:.45; cursor:not-allowed; }
+#cancelar-tamanho { background:transparent; color:#650817; }
+@media(max-width:520px) { .seletor-tamanho-fundo { padding:12px; } .seletor-tamanho-modal { padding:23px 16px 16px; } }
 </style>
 </head>
 
@@ -876,6 +893,19 @@ footer { padding-top:24px; }
   </div>
 </div>
 
+<div class="seletor-tamanho-fundo" id="modal-tamanhos" aria-hidden="true">
+  <section class="seletor-tamanho-modal" role="dialog" aria-modal="true" aria-labelledby="titulo-seletor-tamanho">
+    <button type="button" class="seletor-tamanho-fechar" id="fechar-seletor-tamanho" aria-label="Fechar">×</button>
+    <h3 id="titulo-seletor-tamanho">Escolha o tamanho</h3>
+    <p id="nome-produto-tamanho"></p>
+    <div class="opcoes-tamanho" id="opcoes-tamanho"></div>
+    <div class="acoes-tamanho">
+      <button type="button" id="cancelar-tamanho">Cancelar</button>
+      <button type="button" id="confirmar-tamanho" disabled>Adicionar à sacola</button>
+    </div>
+  </section>
+</div>
+
 <div class="painel-extra" id="painel-carrinho"><div class="painel-conteudo">
   <button class="fechar" data-fechar="painel-carrinho">×</button><h3>Sua sacola</h3>
   <div id="itens-carrinho"></div><p><strong>Total: <span id="valor-total">R$ 0,00</span></strong></p>
@@ -893,6 +923,8 @@ footer { padding-top:24px; }
 let produtos = [];
 let categoriaAtual = "Todos";
 let carrinho = [];
+let produtoAguardandoTamanho = null;
+let tamanhoSelecionado = "";
 
 const areaProdutos = document.getElementById("produtos");
 const busca = document.getElementById("busca");
@@ -1072,7 +1104,7 @@ function mostrarProdutos() {
     const detalhe = document.createElement("button"); detalhe.className = "secundario"; detalhe.textContent = "Ver detalhes";
     detalhe.onclick = e => { e.stopPropagation(); abrirProduto(produto); };
     const adicionar = document.createElement("button"); adicionar.textContent = "Adicionar";
-    adicionar.onclick = e => { e.stopPropagation(); adicionarAoCarrinho(produto.codigo); };
+    adicionar.onclick = e => { e.stopPropagation(); abrirSeletorTamanho(produto.codigo); };
     botoes.append(detalhe, adicionar); info.append(tipo, nome, preco, disponibilidade, botoes);
     card.append(foto, info); card.addEventListener("click", () => abrirProduto(produto));
     areaProdutos.appendChild(card);
@@ -1137,12 +1169,59 @@ function abrirProduto(produto) {
   quadro.append(anterior, proxima); galeria.append(quadro, contador, pontos); mostrarMidia();
   modal.classList.add("aberto");
 }
-function adicionarAoCarrinho(codigo) {
+function tamanhosDoProduto(produto) {
+  return [...new Set(String(produto.tamanhos || "").split(/[,;|\n]+/).map(x => x.trim()).filter(Boolean))];
+}
+function abrirSeletorTamanho(codigo) {
+  const produto = produtos.find(x => x.codigo === codigo);
+  if (!produto) return;
+  const tamanhos = tamanhosDoProduto(produto);
+  if (!tamanhos.length) { adicionarAoCarrinho(codigo, ""); return; }
+  produtoAguardandoTamanho = produto;
+  tamanhoSelecionado = "";
+  document.getElementById("nome-produto-tamanho").textContent = produto.nome;
+  const opcoes = document.getElementById("opcoes-tamanho");
+  opcoes.replaceChildren();
+  tamanhos.forEach(tamanho => {
+    const botao = document.createElement("button");
+    botao.type = "button"; botao.className = "opcao-tamanho"; botao.textContent = tamanho;
+    botao.setAttribute("aria-pressed", "false");
+    botao.addEventListener("click", () => {
+      tamanhoSelecionado = tamanho;
+      opcoes.querySelectorAll(".opcao-tamanho").forEach(item => {
+        const ativo = item === botao;
+        item.classList.toggle("ativa", ativo);
+        item.setAttribute("aria-pressed", String(ativo));
+      });
+      document.getElementById("confirmar-tamanho").disabled = false;
+    });
+    opcoes.appendChild(botao);
+  });
+  document.getElementById("confirmar-tamanho").disabled = true;
+  const caixa = document.getElementById("modal-tamanhos");
+  caixa.classList.add("aberto"); caixa.setAttribute("aria-hidden", "false");
+}
+function fecharSeletorTamanho() {
+  const caixa = document.getElementById("modal-tamanhos");
+  caixa.classList.remove("aberto"); caixa.setAttribute("aria-hidden", "true");
+  produtoAguardandoTamanho = null; tamanhoSelecionado = "";
+}
+function adicionarAoCarrinho(codigo, tamanho = "") {
   const p = produtos.find(x => x.codigo === codigo); if (!p) return;
-  const existente = carrinho.find(x => x.codigo === codigo);
-  if (existente) existente.quantidade++; else carrinho.push({ codigo, quantidade: 1 });
+  const chave = String(tamanho || "").trim().toLocaleLowerCase("pt-BR");
+  const existente = carrinho.find(x => x.codigo === codigo && String(x.tamanho || "").trim().toLocaleLowerCase("pt-BR") === chave);
+  if (existente) existente.quantidade++;
+  else carrinho.push({ codigo, tamanho: String(tamanho || "").trim(), quantidade: 1 });
   atualizarCarrinho(); alert("Produto adicionado à sacola!");
 }
+document.getElementById("confirmar-tamanho").addEventListener("click", () => {
+  if (!produtoAguardandoTamanho || !tamanhoSelecionado) return;
+  adicionarAoCarrinho(produtoAguardandoTamanho.codigo, tamanhoSelecionado);
+  fecharSeletorTamanho();
+});
+document.getElementById("fechar-seletor-tamanho").addEventListener("click", fecharSeletorTamanho);
+document.getElementById("cancelar-tamanho").addEventListener("click", fecharSeletorTamanho);
+document.getElementById("modal-tamanhos").addEventListener("click", e => { if (e.target.id === "modal-tamanhos") fecharSeletorTamanho(); });
 function atualizarCarrinho() {
   const contador = document.getElementById("contador-sacola-nav");
   if (contador) contador.textContent = carrinho.reduce((s, x) => s + x.quantidade, 0);
@@ -1153,9 +1232,9 @@ function atualizarCarrinho() {
     const p = produtos.find(x => x.codigo === item.codigo); if (!p) return;
     total += Number(p.precoFinalValor ?? p.precoValor ?? 0) * item.quantidade;
     const linha = document.createElement("div"); linha.className = "item-carrinho";
-    const texto = document.createElement("span"); texto.textContent = `${p.nome} × ${item.quantidade} — ${p.preco}`;
-    const remover = document.createElement("button"); remover.type = "button"; remover.textContent = "−";
-    remover.onclick = () => { item.quantidade--; if (item.quantidade <= 0) carrinho = carrinho.filter(x => x.codigo !== item.codigo); atualizarCarrinho(); };
+    const texto = document.createElement("span"); texto.textContent = p.nome + (item.tamanho ? " — Tam. " + item.tamanho : "") + " × " + item.quantidade + " — " + p.preco;
+    const remover = document.createElement("button"); remover.type = "button"; remover.textContent = "−"; remover.setAttribute("aria-label", "Remover uma unidade deste item");
+    remover.onclick = () => { item.quantidade--; if (item.quantidade <= 0) carrinho = carrinho.filter(x => x !== item); atualizarCarrinho(); };
     linha.append(texto, remover); area.appendChild(linha);
   });
   document.getElementById("valor-total").textContent = moeda(total);
@@ -1218,7 +1297,7 @@ document.getElementById("enviar-whatsapp").onclick = () => {
   if (!numeroWhatsAppLoja) { alert("O número de WhatsApp da Bela Modas ainda precisa ser configurado no código."); return; }
   const nome = document.getElementById("nome-cliente").value.trim() || "Cliente";
   const linhas = [`Olá, Bela Modas! Meu nome é ${nome} e gostaria de fazer este pedido:`];
-  carrinho.forEach(i => { const p = produtos.find(x => x.codigo === i.codigo); if (p) linhas.push(`- ${p.nome} (ref. ${p.codigo}) x${i.quantidade} — ${p.preco}`); });
+  carrinho.forEach(i => { const p = produtos.find(x => x.codigo === i.codigo); if (p) linhas.push("- " + p.nome + " (ref. " + p.codigo + ")" + (i.tamanho ? " — Tamanho: " + i.tamanho : "") + " x" + i.quantidade + " — " + p.preco); });
   const total = carrinho.reduce((s, i) => { const p = produtos.find(x => x.codigo === i.codigo); return s + (p ? Number(p.precoFinalValor ?? p.precoValor ?? 0) * i.quantidade : 0); }, 0);
   linhas.push(`Total dos produtos: ${moeda(total)}`);
   linhas.push("Observações: " + (document.getElementById("obs-pedido").value.trim() || "Nenhuma"));
@@ -1238,7 +1317,7 @@ document.querySelectorAll("[data-categoria-visual]").forEach(botao => botao.addE
 busca.addEventListener("input", mostrarProdutos);
 document.getElementById("fechar").addEventListener("click", () => modal.classList.remove("aberto"));
 modal.addEventListener("click", e => { if (e.target === modal) modal.classList.remove("aberto"); });
-document.addEventListener("keydown", e => { if (e.key === "Escape") { modal.classList.remove("aberto"); document.getElementById("painel-carrinho")?.classList.remove("aberto"); } });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { modal.classList.remove("aberto"); document.getElementById("painel-carrinho")?.classList.remove("aberto"); fecharSeletorTamanho(); } });
 
 
 document.querySelectorAll(".navegacao-inferior [data-ir]").forEach(botao => botao.addEventListener("click", () => {
