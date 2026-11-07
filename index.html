@@ -756,6 +756,44 @@ footer { padding-top:24px; }
   .marca-assinatura { gap:7px; margin-top:8px; font-size:8px; letter-spacing:2px; }
   .marca-assinatura span { width:18px; }
 }
+
+/* Busca e sacola: controles com acabamento de loja virtual profissional. */
+.titulo-secao { align-items:center; gap:18px; }
+.titulo-secao > div:first-child { min-width:0; }
+.busca {
+  width:min(340px,42vw); min-height:48px; padding:0 18px 0 46px;
+  border:1px solid rgba(229,189,112,.85); border-radius:28px;
+  color:#351018; background:#fffaf2;
+  box-shadow:0 5px 16px rgba(0,0,0,.16),inset 0 1px 0 #fff;
+  font:500 13px Arial,sans-serif;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23650817' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-4-4'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:17px center; background-size:18px;
+  transition:box-shadow .2s,border-color .2s;
+}
+.busca::placeholder { color:#927b78; }
+.busca:focus { border-color:#e5bd70; outline:none; box-shadow:0 0 0 3px rgba(229,189,112,.2),0 6px 18px rgba(0,0,0,.18); }
+.navegacao-inferior { grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; padding-left:12px; padding-right:12px; }
+.navegacao-inferior button { border:0; border-radius:13px; transition:background .2s,transform .2s; }
+.navegacao-inferior button:active { transform:scale(.97); }
+.navegacao-inferior #nav-sacola {
+  margin:3px 0; border:1px solid #f2d28f;
+  background:linear-gradient(135deg,#f7dfa8 0%,#d9a64f 100%);
+  color:#3b0710; font-weight:700;
+  box-shadow:0 3px 12px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.6);
+}
+.navegacao-inferior #nav-sacola .sacola-icone .icone-sacola-svg { stroke:#4b0a18; }
+.navegacao-inferior #nav-sacola .sacola-icone i { background:#650817; color:#fff3dc; border:1px solid #f8dfaa; }
+.banner-editorial { background:linear-gradient(135deg,#260208,#4b0716 55%,#1e0208); }
+.banner-editorial video { background:transparent; }
+@media(max-width:650px) {
+  .titulo-secao { align-items:stretch; }
+  .busca { width:100%; min-height:47px; }
+  .navegacao-inferior { padding-left:8px; padding-right:8px; }
+}
+@media(min-width:651px) {
+  .navegacao-inferior { max-width:620px; left:50%; right:auto; width:calc(100% - 36px); transform:translateX(-50%); bottom:14px; border:1px solid rgba(232,189,112,.8); border-radius:18px; padding:7px 12px; }
+  body { padding-bottom:100px; }
+}
 </style>
 </head>
 
@@ -768,7 +806,7 @@ footer { padding-top:24px; }
   </div>
 </header>
 <section class="banner-editorial" aria-label="Conheça a coleção Bela Modas">
-  <video id="banner-video" autoplay muted loop playsinline preload="metadata" poster="https://images.unsplash.com/photo-1763551229890-64e97d845251?auto=format&fit=crop&fm=jpg&q=80&w=1800" aria-label="Vídeo de apresentação da Bela Modas"><source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4"></video>
+  <video id="banner-video" autoplay muted loop playsinline preload="metadata" aria-label="Vídeo de apresentação da Bela Modas"><source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4"></video>
   <div class="banner-editorial-conteudo">
     <p class="banner-editorial-selo">Bela Modas apresenta</p>
     <h1>Vista-se de você.</h1>
