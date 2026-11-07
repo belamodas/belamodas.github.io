@@ -513,6 +513,91 @@ footer { padding-top:24px; }
 .preco-modal { display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
 .preco-modal .preco-atual { font-size:25px; }
 .tamanhos-modal { display:block; margin-top:8px; color:inherit; font-size:12px; font-weight:normal; }
+
+/* CORREÇÃO DO MODAL RESPONSIVO - BELA MODAS */
+#modal.modal-fundo {
+  z-index: 20;
+  padding: max(10px, env(safe-area-inset-top)) 12px
+           max(10px, env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  align-items: center;
+  justify-content: center;
+}
+
+#modal .modal {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 100%);
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px 18px 18px;
+  margin: auto;
+  border-radius: 14px;
+}
+
+#modal .fechar {
+  position: sticky;
+  top: 0;
+  align-self: flex-end;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  margin: 0 -8px 2px 0;
+  display: grid;
+  place-items: center;
+  z-index: 10;
+  border: 0;
+  border-radius: 50%;
+  background: #fff8ef;
+  color: #650817;
+  box-shadow: 0 2px 8px rgba(0,0,0,.18);
+  line-height: 1;
+}
+
+#modal .visualizador {
+  width: 100%;
+  height: min(48vh, 430px);
+  height: min(48dvh, 430px);
+  max-height: 430px;
+  min-height: 160px;
+  flex: 0 0 auto;
+}
+
+#modal .visualizador img,
+#modal .visualizador video {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+@media (max-width: 520px) {
+  #modal.modal-fundo {
+    padding: max(10px, env(safe-area-inset-top)) 10px
+             max(10px, env(safe-area-inset-bottom));
+  }
+
+  #modal .modal {
+    width: 100%;
+    max-height: calc(100vh - 20px);
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px);
+    padding: 10px 14px 16px;
+  }
+
+  #modal .visualizador {
+    height: min(45vh, 360px);
+    height: min(45dvh, 360px);
+    min-height: 150px;
+    max-height: 360px;
+  }
+
+  #modal .modal h3 {
+    font-size: 23px;
+  }
+}
+
 </style>
 </head>
 
