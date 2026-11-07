@@ -354,6 +354,26 @@
     });
   }
 
+
+  async function cadastrarVendedor(dados) {
+    if (!dados || !String(dados.nome || "").trim() || !String(dados.telefone || "").trim()) throw new Error("Informe nome e WhatsApp para o cadastro.");
+    return requisicaoPost({ acao: "cadastrarVendedor", vendedor: {
+      nome: String(dados.nome).trim(), telefone: String(dados.telefone).trim(), instagram: String(dados.instagram || "").trim()
+    }});
+  }
+
+  async function listarVendedores() {
+    exigirSessao();
+    const resultado = await requisicaoPost({ acao: "listarVendedores", token: tokenAdmin });
+    return Array.isArray(resultado) ? resultado : (resultado?.vendedores || []);
+  }
+
+  async function atualizarVendedor(id, status) {
+    exigirSessao();
+    if (!id || !["aprovado","reprovado"].includes(status)) throw new Error("Dados de aprovação inválidos.");
+    return requisicaoPost({ acao: "atualizarVendedor", token: tokenAdmin, id, status });
+  }
+
   async function enviarArquivo(codigo, arquivo, tipoMidia) {
     exigirSessao();
 
