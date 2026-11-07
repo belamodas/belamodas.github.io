@@ -910,9 +910,16 @@ footer { padding-top:24px; }
   <button class="fechar" data-fechar="painel-carrinho">×</button><h3>Sua sacola</h3>
   <div id="itens-carrinho"></div><p><strong>Total: <span id="valor-total">R$ 0,00</span></strong></p>
   <label for="nome-cliente">Seu nome</label><input id="nome-cliente" placeholder="Como podemos te chamar?">
+  <label for="forma-pagamento">Como pretende pagar?</label>
+  <select id="forma-pagamento">
+    <option value="Pix — quero receber a cobrança Pix">Pix — quero receber a cobrança Pix</option>
+    <option value="Cartão — quero receber um link de pagamento">Cartão — quero receber um link de pagamento</option>
+    <option value="Dinheiro na retirada ou entrega">Dinheiro na retirada ou entrega</option>
+    <option value="Ainda não decidi">Ainda não decidi</option>
+  </select>
   <label for="obs-pedido">Observações do pedido</label><textarea id="obs-pedido" rows="2" placeholder="Tamanho, cor ou outras informações"></textarea>
   <button class="botao-principal" id="enviar-whatsapp">Enviar pedido pelo WhatsApp</button>
-  <p class="aviso-demo">Ao continuar, seu pedido será preparado no WhatsApp da Bela Modas para você revisar e enviar.</p>
+  <p class="aviso-demo">Atenção: antes de realizar qualquer pagamento, aguarde a confirmação da disponibilidade dos produtos pela equipe da Bela Modas.</p>
 </div></div>
 
 
@@ -1296,11 +1303,20 @@ document.getElementById("enviar-whatsapp").onclick = () => {
   if (!carrinho.length) { alert("Sua sacola está vazia."); return; }
   if (!numeroWhatsAppLoja) { alert("O número de WhatsApp da Bela Modas ainda precisa ser configurado no código."); return; }
   const nome = document.getElementById("nome-cliente").value.trim() || "Cliente";
+  const pagamento = document.getElementById("forma-pagamento").value;
   const linhas = [`Olá, Bela Modas! Meu nome é ${nome} e gostaria de fazer este pedido:`];
-  carrinho.forEach(i => { const p = produtos.find(x => x.codigo === i.codigo); if (p) linhas.push("- " + p.nome + " (ref. " + p.codigo + ")" + (i.tamanho ? " — Tamanho: " + i.tamanho : "") + " x" + i.quantidade + " — " + p.preco); });
+  carrinho.forEach(i => {
+    const p = produtos.find(x => x.codigo === i.codigo);
+    if (!p) return;
+    linhas.push("- " + p.nome + " (ref. " + p.codigo + ")" + (i.tamanho ? " — Tamanho: " + i.tamanho : "") + " x" + i.quantidade + " — " + p.preco);
+    if (p.foto) linhas.push("Foto do produto: " + p.foto);
+  });
   const total = carrinho.reduce((s, i) => { const p = produtos.find(x => x.codigo === i.codigo); return s + (p ? Number(p.precoFinalValor ?? p.precoValor ?? 0) * i.quantidade : 0); }, 0);
   linhas.push(`Total dos produtos: ${moeda(total)}`);
+  linhas.push("Forma de pagamento pretendida: " + pagamento);
   linhas.push("Observações: " + (document.getElementById("obs-pedido").value.trim() || "Nenhuma"));
+  linhas.push("");
+  linhas.push("IMPORTANTE: aguardo a confirmação da disponibilidade dos produtos antes de realizar qualquer pagamento.");
   window.open(`https://wa.me/${numeroWhatsAppLoja}?text=${encodeURIComponent(linhas.join("\n"))}`, "_blank", "noopener");
 };
 document.querySelectorAll(".categoria").forEach(botao => botao.addEventListener("click", () => {
