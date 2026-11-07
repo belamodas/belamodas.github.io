@@ -677,6 +677,13 @@ footer { padding-top:24px; }
     <button class="botao-principal" id="salvar-produto" type="submit">＋ Salvar produto na nuvem</button>
     <button class="acao-header" id="cancelar-edicao" type="button">Limpar formulário</button>
   </form><hr><h3>Produtos cadastrados</h3><div id="lista-admin"></div>
+  
+  <section id="admin-vendedores" style="border:1px solid #d8c9c1;border-radius:10px;padding:16px;margin:22px 0;background:#fffaf4">
+    <h3>Vendedores parceiros</h3>
+    <p>Analise os cadastros recebidos. Somente vendedores aprovados terão um link exclusivo para divulgar o catálogo.</p>
+    <div id="lista-vendedores" aria-live="polite">Carregue os cadastros para consultar os vendedores.</div>
+    <button class="acao-header" id="atualizar-vendedores" type="button">Atualizar cadastros</button>
+  </section>
   <button class="acao-header" id="sair-admin" type="button">Sair da administração</button>
   </div>
 </div></div>
@@ -714,6 +721,19 @@ const areaProdutos = document.getElementById("produtos");
 const busca = document.getElementById("busca");
 const modal = document.getElementById("modal");
 const numeroWhatsAppLoja = "5531997337304"; // WhatsApp Bela Modas: +55 31 99733-7304.
+const parametrosVendedor = new URLSearchParams(window.location.search);
+const codigoVendedor = parametrosVendedor.get("vendedor") || "";
+const nomeVendedor = parametrosVendedor.get("nomeVendedor") || "";
+if (codigoVendedor) {
+  try { localStorage.setItem("bela_vendedor_indicacao", JSON.stringify({codigo:codigoVendedor.slice(0,40),nome:nomeVendedor.slice(0,100),salvoEm:Date.now()})); } catch (_) {}
+}
+function obterIndicacaoVendedor() {
+  try {
+    const dado = JSON.parse(localStorage.getItem("bela_vendedor_indicacao") || "null");
+    if (!dado || !dado.codigo || Date.now() - Number(dado.salvoEm || 0) > 30 * 86400000) return null;
+    return dado;
+  } catch (_) { return null; }
+}
 
 function moeda(valor) {
   return Number(valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -1282,11 +1302,72 @@ document.getElementById("salvar-banner").addEventListener("click", async () => {
   }
 });
 
+
+function escaparTextoVendedor(valor) {
+  return String(valor || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+async function carregarVendedoresAdmin() {
+  const area = document.getElementById("lista-vendedores");
+  const botao = document.getElementById("atualizar-vendedores");
+  if (!area) return;
+  if (!BelaSync || typeof BelaSync.listarVendedores !== "function") {
+    area.textContent = "A lista de vendedores será ativada após a atualização do Apps Script.";
+    return;
+  }
+  if (botao) botao.disabled = true;
+  area.textContent = "Carregando cadastros…";
+  try {
+    const vendedores = await BelaSync.listarVendedores();
+    area.replaceChildren();
+    if (!Array.isArray(vendedores) || !vendedores.length) {
+      area.textContent = "Nenhum cadastro de vendedor recebido até o momento.";
+      return;
+    }
+    vendedores.forEach(v => {
+      const cartao = document.createElement("div");
+      cartao.style.cssText = "padding:12px 0;border-bottom:1px solid #e5d4bd;display:grid;gap:6px";
+      const nome = document.createElement("strong"); nome.textContent = v.nome || "Sem nome";
+      const dados = document.createElement("span");
+      dados.textContent = "WhatsApp: " + (v.telefone || "não informado") + (v.instagram ? " · Instagram: " + v.instagram : "") + " · Status: " + (v.status || "pendente");
+      cartao.append(nome,dados);
+      const acoes = document.createElement("div"); acoes.style.cssText = "display:flex;gap:8px;flex-wrap:wrap";
+      if (String(v.status || "pendente").toLowerCase() !== "aprovado") {
+        const aprovar = document.createElement("button"); aprovar.type="button"; aprovar.className="botao-principal"; aprovar.textContent="Aprovar vendedor";
+        aprovar.onclick = () => atualizarStatusVendedor(v,"aprovado"); acoes.appendChild(aprovar);
+      }
+      if (String(v.status || "").toLowerCase() !== "reprovado") {
+        const reprovar = document.createElement("button"); reprovar.type="button"; reprovar.className="acao-header"; reprovar.textContent="Reprovar";
+        reprovar.onclick = () => atualizarStatusVendedor(v,"reprovado"); acoes.appendChild(reprovar);
+      }
+      if (String(v.status || "").toLowerCase() === "aprovado" && v.codigo) {
+        const link = "https://belamodas.github.io/?vendedor=" + encodeURIComponent(v.codigo) + "&nomeVendedor=" + encodeURIComponent(v.nome || "Parceiro");
+        const copiar = document.createElement("button"); copiar.type="button"; copiar.className="acao-header"; copiar.textContent="Copiar link do vendedor";
+        copiar.onclick = async () => {
+          try { await navigator.clipboard.writeText(link); alert("Link exclusivo copiado!"); }
+          catch (_) { window.prompt("Copie o link exclusivo do vendedor:",link); }
+        };
+        acoes.appendChild(copiar);
+      }
+      cartao.appendChild(acoes); area.appendChild(cartao);
+    });
+  } catch (err) {
+    area.textContent = "Não foi possível carregar os vendedores: " + (err.message || "erro desconhecido");
+  } finally { if (botao) botao.disabled = false; }
+}
+async function atualizarStatusVendedor(vendedor,status) {
+  if (!confirm((status === "aprovado" ? "Aprovar" : "Reprovar") + " o cadastro de " + (vendedor.nome || "vendedor") + "?")) return;
+  try {
+    await BelaSync.atualizarVendedor(vendedor.id,status);
+    await carregarVendedoresAdmin();
+    alert(status === "aprovado" ? "Vendedor aprovado. O link exclusivo já pode ser copiado." : "Cadastro reprovado.");
+  } catch (err) { alert(err.message || "Não foi possível atualizar o cadastro."); }
+}
+document.getElementById("atualizar-vendedores")?.addEventListener("click",carregarVendedoresAdmin);
 function atualizarPainelAdmin() {
   const logado = BelaSync.estaLogado();
   document.getElementById("admin-login").hidden = logado;
   document.getElementById("admin-conteudo").hidden = !logado;
-  if (logado) renderListaAdmin();
+  if (logado) { renderListaAdmin(); carregarVendedoresAdmin(); }
 }
 document.getElementById("form-login").addEventListener("submit", async e => {
   e.preventDefault();
@@ -1413,6 +1494,8 @@ document.getElementById("enviar-whatsapp").onclick = () => {
   if (!numeroWhatsAppLoja) { alert("O número de WhatsApp da Bela Modas ainda precisa ser configurado no código."); return; }
   const nome = document.getElementById("nome-cliente").value.trim() || "Cliente";
   const linhas = [`Olá, Bela Modas! Meu nome é ${nome} e gostaria de fazer este pedido:`];
+  const indicacao = obterIndicacaoVendedor();
+  if (indicacao) linhas.push("Vendedor parceiro: " + (indicacao.nome || "Parceiro") + " (código: " + indicacao.codigo + ")");
   carrinho.forEach(i => { const p = produtos.find(x => x.codigo === i.codigo); if (p) linhas.push(`- ${p.nome} (ref. ${p.codigo}) x${i.quantidade} — ${p.preco}`); });
   const total = carrinho.reduce((s, i) => { const p = produtos.find(x => x.codigo === i.codigo); return s + (p ? Number(p.precoFinalValor ?? p.precoValor ?? 0) * i.quantidade : 0); }, 0);
   linhas.push(`Total dos produtos: ${moeda(total)}`);
