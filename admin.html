@@ -667,7 +667,7 @@ footer { padding-top:24px; }
     <label for="admin-nome">Nome do produto</label><input id="admin-nome" required placeholder="Nome da peça">
     <label for="admin-descricao">Descrição</label><textarea id="admin-descricao" rows="3" placeholder="Detalhes, tecido, cor e outras informações"></textarea>
     <div class="linha-form"><div><label for="admin-preco">Preço (R$)</label><input id="admin-preco" type="number" min="0" step="0.01" placeholder="49,90"></div><div><label for="admin-estoque">Estoque / quantidade</label><input id="admin-estoque" type="number" min="0" step="1" placeholder="Ex.: 5"></div></div>
-    <div class="linha-form"><div><label for="admin-tamanhos">Tamanhos disponíveis</label><input id="admin-tamanhos" placeholder="P, M, G ou 21/22"></div><div><label for="admin-disponibilidade">Disponibilidade</label><input id="admin-disponibilidade" placeholder="Disponível / Sob consulta"></div></div>
+    <div class="linha-form"><div><label for="admin-tamanhos">Tamanhos disponíveis</label><input id="admin-tamanhos" placeholder="P, M, G, GG ou 34, 35, 36" aria-describedby="ajuda-tamanhos"><small id="ajuda-tamanhos">Separe os tamanhos por vírgula. Ex.: P, M, G ou 34, 35, 36. Eles aparecerão como opções para o cliente escolher.</small></div><div><label for="admin-disponibilidade">Disponibilidade</label><input id="admin-disponibilidade" placeholder="Disponível / Sob consulta"></div></div>
     <div class="linha-form"><div><label><input id="admin-ativo" type="checkbox" checked style="width:auto"> Produto ativo/publicado</label></div></div>
     <label for="admin-foto">Adicionar fotos (até 5 no total)</label><input id="admin-foto" type="file" accept="image/jpeg,image/png,image/webp" multiple><small>Na edição, as fotos atuais aparecem abaixo. Você pode manter, remover ou escolher a foto principal.</small>
     <div id="fotos-atuais"></div>
@@ -1394,7 +1394,7 @@ document.getElementById("form-produto").addEventListener("submit", async e => {
       disponibilidade: document.getElementById("admin-disponibilidade").value.trim() || "Consulte disponibilidade",
       foto_principal: fotosOrdenadas[0] || "",
       fotos_adicionais: fotosOrdenadas.slice(1).join("|"),
-      tamanhos: document.getElementById("admin-tamanhos").value.trim(),
+      tamanhos: [...new Set(document.getElementById("admin-tamanhos").value.split(/[,;|\n]+/).map(x => x.trim()).filter(Boolean))].join(", "),
       video_url: videoUrl,
       destaque: existente ? Boolean(existente.destaque) : false,
       ativo: document.getElementById("admin-ativo").checked
