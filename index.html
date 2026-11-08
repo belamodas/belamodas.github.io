@@ -513,6 +513,11 @@ footer { padding-top:24px; }
 .preco-atual { color:#e63d35; font-size:1.28em; font-weight:900; }
 .preco-legenda { flex-basis:100%; color:#b8322d; font-size:9px; font-weight:900; letter-spacing:1.3px; }
 .selo-oferta-destaque { position:absolute; top:14px; right:14px; z-index:2; background:#e83d35; color:#fff; padding:9px 13px; border-radius:5px; font-size:11px; font-weight:900; letter-spacing:1.2px; box-shadow:0 3px 12px #25020a; }
+.contagem-promocao { position:absolute; z-index:3; left:9px; right:9px; bottom:9px; display:flex; align-items:center; justify-content:center; gap:5px; padding:8px 6px; border:1px solid rgba(229,189,112,.9); border-radius:8px; background:rgba(42,3,12,.92); color:#ffe5ad; font-size:10px; font-weight:800; letter-spacing:.3px; text-align:center; box-shadow:0 3px 12px rgba(0,0,0,.35); }
+.contagem-promocao strong { color:#fff; font-size:12px; font-variant-numeric:tabular-nums; letter-spacing:.6px; }
+.contagem-destaque { left:14px; right:14px; bottom:12px; padding:10px; font-size:11px; }
+.produto .foto { position:relative; }
+@media(max-width:520px){ .contagem-promocao { font-size:9px; gap:3px; padding:7px 4px; } .contagem-promocao strong { font-size:11px; } }
 .preco-destaque.preco-em-oferta { display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
 .preco-destaque .preco-legenda { font-size:9px; }
 .preco-destaque .preco-antigo { font-size:12px; }
@@ -1100,7 +1105,13 @@ function normalizarProduto(p) {
     : [p.foto_principal, ...(String(p.fotos_adicionais || "").split("|").filter(Boolean))].filter(Boolean);
   const precoValor = Number(p.preco_valor ?? p.preco ?? 0) || 0;
   const precoPromocional = Number(p.preco_promocional || 0) || 0;
-  const emPromocao = precoPromocional > 0 && precoPromocional < precoValor;
+  const promocaoInicio = String(p.promocao_inicio || p.promo_inicio || "");
+  const promocaoFim = String(p.promocao_fim || p.promo_fim || "");
+  const agora = Date.now();
+  const inicioMs = promocaoInicio ? new Date(promocaoInicio).getTime() : 0;
+  const fimMs = promocaoFim ? new Date(promocaoFim).getTime() : 0;
+  const periodoValido = (!inicioMs || (Number.isFinite(inicioMs) && agora >= inicioMs)) && (!fimMs || (Number.isFinite(fimMs) && agora < fimMs));
+  const emPromocao = precoPromocional > 0 && precoPromocional < precoValor && periodoValido;
   const precoFinalValor = emPromocao ? precoPromocional : precoValor;
   return {
     codigo: String(p.codigo || ""),
@@ -1109,7 +1120,9 @@ function normalizarProduto(p) {
     categoria: String(p.categoria || ""),
     descricao: String(p.descricao || ""),
     precoValor,
-    precoPromocionalValor: emPromocao ? precoPromocional : 0,
+    precoPromocionalValor: precoPromocional > 0 && precoPromocional < precoValor ? precoPromocional : 0,
+    promocaoInicio,
+    promocaoFim,
     emPromocao,
     precoFinalValor,
     precoOriginal: precoValor ? moeda(precoValor) : "Consulte o preço",
@@ -1156,6 +1169,47 @@ function gerarUrlDestaque(url) {
   } catch (_) {}
   return url;
 }
+function montarContagemPromocao(produto, destaque = false) {
+  if (!produto.emPromocao || !produto.promocaoFim) return null;
+  const fim = new Date(produto.promocaoFim).getTime();
+  if (!Number.isFinite(fim)) return null;
+  const contador = document.createElement("div");
+  contador.className = "contagem-promocao" + (destaque ? " contagem-destaque" : "");
+  contador.dataset.promoFim = String(fim);
+  contador.innerHTML = '<span>TERMINA EM</span> <strong>--d --h --m --s</strong>';
+  atualizarTextoContagem(contador, fim);
+  return contador;
+}
+function atualizarTextoContagem(elemento, fim) {
+  const restante = fim - Date.now();
+  const texto = elemento.querySelector("strong");
+  if (!texto) return;
+  if (restante <= 0) { texto.textContent = "OFERTA ENCERRADA"; return; }
+  const dias = Math.floor(restante / 86400000);
+  const horas = Math.floor((restante % 86400000) / 3600000);
+  const minutos = Math.floor((restante % 3600000) / 60000);
+  const segundos = Math.floor((restante % 60000) / 1000);
+  texto.textContent = dias + "d " + String(horas).padStart(2,"0") + "h " + String(minutos).padStart(2,"0") + "m " + String(segundos).padStart(2,"0") + "s";
+}
+function atualizarContagensPromocao() {
+  const agora = Date.now();
+  let mudou = false;
+  produtos.forEach(p => {
+    const inicio = p.promocaoInicio ? new Date(p.promocaoInicio).getTime() : 0;
+    const fim = p.promocaoFim ? new Date(p.promocaoFim).getTime() : 0;
+    const temPrecoPromocional = Number(p.precoPromocionalValor) > 0 && Number(p.precoPromocionalValor) < Number(p.precoValor);
+    const ativa = temPrecoPromocional && (!inicio || (Number.isFinite(inicio) && agora >= inicio)) && (!fim || (Number.isFinite(fim) && agora < fim));
+    if (ativa !== p.emPromocao) {
+      p.emPromocao = ativa;
+      p.precoFinalValor = ativa ? Number(p.precoPromocionalValor) : Number(p.precoValor);
+      p.preco = moeda(p.precoFinalValor);
+      mudou = true;
+    }
+  });
+  if (mudou) { mostrarProdutos(); renderDestaques(); if (typeof atualizarCarrinho === "function") atualizarCarrinho(); return; }
+  document.querySelectorAll(".contagem-promocao[data-promo-fim]").forEach(el => { atualizarTextoContagem(el, Number(el.dataset.promoFim)); });
+}
+setInterval(atualizarContagensPromocao, 1000);
 function renderDestaques() {
   const faixa = document.getElementById("carrossel-destaques");
   const pontos = document.getElementById("pontos-carrossel");
@@ -1176,7 +1230,7 @@ function renderDestaques() {
     if (i < 2) img.fetchPriority = "high";
     foto.appendChild(img);
     if (produto.destaque) { const selo = document.createElement("span"); selo.className = "selo-destaque"; selo.textContent = "✦ Em destaque"; foto.appendChild(selo); }
-    if (produto.emPromocao) { const oferta = document.createElement("span"); oferta.className = "selo-oferta-destaque"; oferta.textContent = "OFERTA"; foto.appendChild(oferta); }
+    if (produto.emPromocao) { const oferta = document.createElement("span"); oferta.className = "selo-oferta-destaque"; oferta.textContent = "OFERTA"; foto.appendChild(oferta); const contagem = montarContagemPromocao(produto, true); if (contagem) foto.appendChild(contagem); }
     const info = document.createElement("div"); info.className = "info-destaque";
     const textos = document.createElement("div");
     const categoria = document.createElement("div"); categoria.className = "categoria-destaque"; categoria.textContent = produto.categoria || "Bela Modas";
@@ -1249,6 +1303,7 @@ function mostrarProdutos() {
     }
     if (produto.emPromocao) {
       const tagOferta = document.createElement("span"); tagOferta.className = "tag-oferta"; tagOferta.textContent = "OFERTA"; foto.appendChild(tagOferta);
+      const contagem = montarContagemPromocao(produto); if (contagem) foto.appendChild(contagem);
     }
     const info = document.createElement("div"); info.className = "informacoes";
     const tipo = document.createElement("div"); tipo.className = "tipo"; tipo.textContent = produto.categoria;
