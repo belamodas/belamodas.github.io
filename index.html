@@ -367,6 +367,13 @@ footer p { color:#e6c98c; font-size:10px; letter-spacing:2px; margin:10px 0 22px
   color:#650817;
 }
 .painel-conteudo input, .painel-conteudo select, .painel-conteudo textarea { width:100%; padding:11px; border:1px solid #D8C9C1; background:white; font:inherit; }
+.endereco-entrega { margin:18px 0; padding:15px; border:1px solid #d8c9c1; border-radius:10px; background:#fffaf4; }
+.endereco-entrega h4 { margin:0 0 10px; color:#650817; font:normal 20px Georgia,serif; }
+.linha-endereco { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.status-cep { margin:5px 0 10px; color:#82666a; font-size:11px; line-height:1.4; }
+.status-cep.erro { color:#a32232; }
+.status-cep.sucesso { color:#27633d; }
+.aviso-frete-pendente { margin:12px 0 0; padding:10px; border-radius:7px; background:#f0e6df; color:#5b4145; font-size:11px; line-height:1.5; }
 .linha-form { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .item-carrinho { padding:12px 0; border-bottom:1px solid #D8C9C1; display:flex; justify-content:space-between; gap:10px; font-size:13px; }
 #fotos-atuais { display:grid; grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); gap:10px; margin:10px 0; }
@@ -929,7 +936,33 @@ footer { padding-top:24px; }
 <div class="painel-extra" id="painel-carrinho"><div class="painel-conteudo">
   <button class="fechar" data-fechar="painel-carrinho">×</button><h3>Sua sacola</h3>
   <div id="itens-carrinho"></div><p><strong>Total: <span id="valor-total">R$ 0,00</span></strong></p>
-  <label for="nome-cliente">Seu nome</label><input id="nome-cliente" placeholder="Como podemos te chamar?">
+  <label for="nome-cliente">Seu nome</label><input id="nome-cliente" placeholder="Como podemos te chamar?" autocomplete="name">
+  <section class="endereco-entrega" aria-labelledby="titulo-endereco-entrega">
+    <h4 id="titulo-endereco-entrega">Como deseja receber?</h4>
+    <label for="tipo-recebimento">Forma de recebimento</label>
+    <select id="tipo-recebimento">
+      <option value="entrega">Receber por motoboy</option>
+      <option value="retirada">Retirar na loja</option>
+    </select>
+    <div id="campos-endereco-entrega">
+      <label for="cep-entrega">CEP</label>
+      <input id="cep-entrega" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000">
+      <p id="status-cep" class="status-cep" role="status" aria-live="polite">Digite o CEP para preencher o endereço automaticamente.</p>
+      <label for="rua-entrega">Rua / Avenida</label>
+      <input id="rua-entrega" autocomplete="address-line1" placeholder="Rua ou avenida">
+      <div class="linha-endereco">
+        <div><label for="numero-entrega">Número</label><input id="numero-entrega" inputmode="numeric" placeholder="Nº"></div>
+        <div><label for="complemento-entrega">Complemento</label><input id="complemento-entrega" placeholder="Casa, apto..."></div>
+      </div>
+      <label for="bairro-entrega">Bairro</label>
+      <input id="bairro-entrega" autocomplete="address-level3" placeholder="Bairro">
+      <div class="linha-endereco">
+        <div><label for="cidade-entrega">Cidade</label><input id="cidade-entrega" autocomplete="address-level2" placeholder="Cidade"></div>
+        <div><label for="estado-entrega">Estado</label><input id="estado-entrega" maxlength="2" placeholder="UF" autocomplete="address-level1"></div>
+      </div>
+    </div>
+    <p class="aviso-frete-pendente">O valor do frete será confirmado pela equipe da Bela Modas antes do pagamento.</p>
+  </section>
   <label for="forma-pagamento">Como pretende pagar?</label>
   <select id="forma-pagamento">
     <option value="Pix — quero receber a cobrança Pix">Pix — quero receber a cobrança Pix</option>
@@ -1357,11 +1390,62 @@ function dataUrlParaArquivo(dataUrl, nome) {
   for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
   return new File([bytes], nome, { type: tipo });
 }
+const tipoRecebimento = document.getElementById("tipo-recebimento");
+const camposEnderecoEntrega = document.getElementById("campos-endereco-entrega");
+const cepEntrega = document.getElementById("cep-entrega");
+const statusCep = document.getElementById("status-cep");
+
+tipoRecebimento.addEventListener("change", () => {
+  camposEnderecoEntrega.hidden = tipoRecebimento.value !== "entrega";
+});
+
+cepEntrega.addEventListener("input", () => {
+  const numeros = cepEntrega.value.replace(/\D/g, "").slice(0, 8);
+  cepEntrega.value = numeros.length > 5 ? numeros.slice(0, 5) + "-" + numeros.slice(5) : numeros;
+});
+
+cepEntrega.addEventListener("blur", async () => {
+  const cep = cepEntrega.value.replace(/\D/g, "");
+  if (cep.length !== 8) {
+    statusCep.textContent = cep ? "Informe um CEP válido com 8 números." : "Digite o CEP para preencher o endereço automaticamente.";
+    statusCep.className = "status-cep" + (cep ? " erro" : "");
+    return;
+  }
+  statusCep.textContent = "Consultando CEP…";
+  statusCep.className = "status-cep";
+  try {
+    const resposta = await fetch("https://viacep.com.br/ws/" + cep + "/json/");
+    if (!resposta.ok) throw new Error("Falha na consulta do CEP.");
+    const endereco = await resposta.json();
+    if (endereco.erro) throw new Error("CEP não encontrado. Confira os números.");
+    document.getElementById("rua-entrega").value = endereco.logradouro || "";
+    document.getElementById("bairro-entrega").value = endereco.bairro || "";
+    document.getElementById("cidade-entrega").value = endereco.localidade || "";
+    document.getElementById("estado-entrega").value = endereco.uf || "";
+    document.getElementById("numero-entrega").focus();
+    statusCep.textContent = "Endereço localizado. Confira os dados e informe o número.";
+    statusCep.className = "status-cep sucesso";
+  } catch (erro) {
+    statusCep.textContent = erro.message || "Não foi possível consultar o CEP. Preencha o endereço manualmente.";
+    statusCep.className = "status-cep erro";
+  }
+});
+
 document.getElementById("enviar-whatsapp").onclick = () => {
   if (!carrinho.length) { alert("Sua sacola está vazia."); return; }
   if (!numeroWhatsAppLoja) { alert("O número de WhatsApp da Bela Modas ainda precisa ser configurado no código."); return; }
   const nome = document.getElementById("nome-cliente").value.trim() || "Cliente";
   const pagamento = document.getElementById("forma-pagamento").value;
+  const entrega = tipoRecebimento.value === "entrega";
+  const rua = document.getElementById("rua-entrega").value.trim();
+  const numero = document.getElementById("numero-entrega").value.trim();
+  const bairro = document.getElementById("bairro-entrega").value.trim();
+  const cidade = document.getElementById("cidade-entrega").value.trim();
+  const cep = cepEntrega.value.trim();
+  if (entrega && (!cep || !rua || !numero || !bairro || !cidade)) {
+    alert("Para entrega, informe o CEP, rua, número, bairro e cidade. Você também pode escolher retirada na loja.");
+    return;
+  }
   const linhas = [`Olá, Bela Modas! Meu nome é ${nome} e gostaria de fazer este pedido:`];
   const indicacao = obterIndicacaoVendedor();
   if (indicacao) linhas.push("Vendedor parceiro: " + (indicacao.nome || "Parceiro") + " (código: " + indicacao.codigo + ")");
@@ -1373,10 +1457,20 @@ document.getElementById("enviar-whatsapp").onclick = () => {
   });
   const total = carrinho.reduce((s, i) => { const p = produtos.find(x => x.codigo === i.codigo); return s + (p ? Number(p.precoFinalValor ?? p.precoValor ?? 0) * i.quantidade : 0); }, 0);
   linhas.push(`Total dos produtos: ${moeda(total)}`);
+  if (entrega) {
+    linhas.push("Forma de recebimento: Entrega por motoboy");
+    linhas.push("Endereço de entrega: " + rua + ", " + numero + (document.getElementById("complemento-entrega").value.trim() ? " — " + document.getElementById("complemento-entrega").value.trim() : ""));
+    linhas.push("Bairro: " + bairro);
+    linhas.push("Cidade/UF: " + cidade + "/" + document.getElementById("estado-entrega").value.trim());
+    linhas.push("CEP: " + cep);
+    linhas.push("Frete: a confirmar pela Bela Modas");
+  } else {
+    linhas.push("Forma de recebimento: Retirada na loja");
+  }
   linhas.push("Forma de pagamento pretendida: " + pagamento);
   linhas.push("Observações: " + (document.getElementById("obs-pedido").value.trim() || "Nenhuma"));
   linhas.push("");
-  linhas.push("IMPORTANTE: aguardo a confirmação da disponibilidade dos produtos antes de realizar qualquer pagamento.");
+  linhas.push("IMPORTANTE: aguardo a confirmação da disponibilidade dos produtos e, se for entrega, do valor do frete antes de realizar qualquer pagamento.");
   window.open(`https://wa.me/${numeroWhatsAppLoja}?text=${encodeURIComponent(linhas.join("\n"))}`, "_blank", "noopener");
 };
 document.querySelectorAll(".categoria").forEach(botao => botao.addEventListener("click", () => {
