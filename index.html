@@ -608,6 +608,34 @@ footer { padding-top:24px; }
 
 
 /* Banner editorial principal — Bela Modas */
+/* Carrossel horizontal dos banners principais */
+.hero-banner-carousel { position:relative; width:100%; overflow:hidden; }
+.hero-banner-track { display:flex; width:100%; transition:transform .65s cubic-bezier(.22,.7,.2,1); will-change:transform; }
+.hero-banner-slide { flex:0 0 100%; min-width:100%; }
+.hero-banner-slide.banner-editorial { margin-left:0; margin-right:0; }
+.hero-banner-slide.banner-blackfriday { margin-left:0; margin-right:0; }
+.hero-banner-setas { position:absolute; z-index:5; right:clamp(14px,4vw,34px); bottom:18px; display:flex; gap:8px; }
+.hero-banner-setas button { width:38px; height:38px; border:1px solid rgba(255,232,190,.8); border-radius:50%; background:rgba(30,3,12,.72); color:#ffe8be; font-size:24px; cursor:pointer; }
+.hero-banner-pontos { position:absolute; z-index:5; left:50%; bottom:29px; transform:translateX(-50%); display:flex; gap:7px; }
+.hero-banner-pontos button { width:8px; height:8px; padding:0; border:0; border-radius:50%; background:rgba(255,255,255,.5); cursor:pointer; }
+.hero-banner-pontos button.ativo { width:22px; border-radius:8px; background:#e5bd70; }
+.banner-blackfriday video { position:absolute; inset:0; z-index:-2; width:100%; height:100%; object-fit:cover; opacity:.48; display:block; }
+.banner-blackfriday { position:relative; isolation:isolate; overflow:hidden; min-height:clamp(290px,34vw,410px); display:flex; align-items:center; border:1px solid #e5bd70; border-radius:18px; background:linear-gradient(115deg,#130207 0%,#4a0616 58%,#170208 100%); }
+.banner-blackfriday::after { content:""; position:absolute; inset:0; z-index:-1; background:linear-gradient(90deg,rgba(22,2,8,.96),rgba(50,3,15,.78) 52%,rgba(25,2,8,.22)); }
+.banner-blackfriday-conteudo { max-width:650px; padding:clamp(25px,5vw,48px); color:#fff4e7; }
+.banner-blackfriday-selo { margin:0 0 9px; color:#f4cc80; font-size:11px; font-weight:900; letter-spacing:3px; }
+.banner-blackfriday h2 { margin:0 0 10px; color:#ffe2a4; font:900 clamp(36px,6vw,66px)/.98 Georgia,serif; letter-spacing:1px; text-shadow:0 3px 18px #000; }
+.banner-blackfriday p:not(.banner-blackfriday-selo) { max-width:440px; margin:0 0 20px; color:#fff1e4; font-size:14px; line-height:1.55; }
+.banner-blackfriday-cta { display:inline-flex; min-height:48px; align-items:center; justify-content:center; padding:0 25px; border:1px solid #ffe3a5; border-radius:28px; background:linear-gradient(110deg,#ffe5a8,#dca64e); color:#360510; font-size:11px; font-weight:900; letter-spacing:1px; cursor:pointer; box-shadow:0 5px 18px rgba(0,0,0,.3); }
+@media(max-width:650px) {
+ .banner-blackfriday { min-height:300px; align-items:flex-end; border-radius:0; }
+ .banner-blackfriday::after { background:linear-gradient(0deg,rgba(20,2,8,.97),rgba(43,4,15,.65) 62%,rgba(20,2,8,.12)); }
+ .banner-blackfriday-conteudo { padding:25px 20px; }
+ .banner-blackfriday h2 { font-size:42px; }
+ .hero-banner-setas { bottom:12px; right:12px; }
+ .hero-banner-pontos { bottom:25px; }
+}
+
 .banner-editorial {
   position:relative;
   isolation:isolate;
@@ -835,13 +863,36 @@ footer { padding-top:24px; }
     <div class="marca-assinatura"><span></span> ESTILO · BELEZA · VOCÊ <span></span></div>
   </div>
 </header>
-<section class="banner-editorial" aria-label="Conheça a coleção Bela Modas">
-  <video id="banner-video" autoplay muted loop playsinline preload="metadata" aria-label="Vídeo de apresentação da Bela Modas"><source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4"></video>
-  <div class="banner-editorial-conteudo">
-    <p class="banner-editorial-selo">Bela Modas apresenta</p>
-    <h1>Vista-se de você.</h1>
-    <p>Encontre peças que combinam com seu estilo e descubra suas novas escolhas favoritas.</p>
-    <a class="banner-editorial-cta" href="#secao-categorias">Conheça nossa coleção</a>
+<section class="hero-banner-carousel" id="hero-banner-carousel" aria-label="Banners promocionais">
+  <div class="hero-banner-track" id="hero-banner-track">
+    <section class="banner-editorial hero-banner-slide" aria-label="Conheça a coleção Bela Modas">
+      <video id="banner-video" autoplay muted loop playsinline preload="metadata" aria-label="Vídeo de apresentação da Bela Modas"><source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4"></video>
+      <div class="banner-editorial-conteudo">
+        <p class="banner-editorial-selo">Bela Modas apresenta</p>
+        <h1>Vista-se de você.</h1>
+        <p>Encontre peças que combinam com seu estilo e descubra suas novas escolhas favoritas.</p>
+        <a class="banner-editorial-cta" href="#secao-categorias">Conheça nossa coleção</a>
+      </div>
+    </section>
+    <section class="banner-blackfriday hero-banner-slide" aria-label="Black Friday Bela Modas">
+      <video autoplay muted loop playsinline preload="none" poster="https://images.pexels.com/videos/5644289/free-video-5644289.jpg?auto=compress&cs=tinysrgb&w=1200" aria-hidden="true">
+        <source src="https://videos.pexels.com/video-files/5644289/5644289-uhd_2160_4096_25fps.mp4" type="video/mp4">
+      </video>
+      <div class="banner-blackfriday-conteudo">
+        <p class="banner-blackfriday-selo">BELA MODAS · OFERTAS ESPECIAIS</p>
+        <h2>BLACK FRIDAY</h2>
+        <p>Seu estilo merece ofertas especiais. Aproveite os produtos selecionados com preços promocionais!</p>
+        <button type="button" class="banner-blackfriday-cta" id="aproveitar-promocoes">APROVEITAR PROMOÇÕES</button>
+      </div>
+    </section>
+  </div>
+  <div class="hero-banner-pontos" aria-label="Selecionar banner">
+    <button type="button" class="ativo" data-banner-slide="0" aria-label="Banner principal"></button>
+    <button type="button" data-banner-slide="1" aria-label="Black Friday"></button>
+  </div>
+  <div class="hero-banner-setas">
+    <button type="button" id="banner-anterior" aria-label="Banner anterior">‹</button>
+    <button type="button" id="banner-proximo" aria-label="Próximo banner">›</button>
   </div>
 </section>
 <section class="vitrine-destaques" aria-label="Produtos em destaque">
@@ -860,10 +911,9 @@ footer { padding-top:24px; }
   </div>
   <div class="titulo-secao">
     <div>
-      <h2>Explore a coleção</h2>
-      <div class="subtitulo">
-        Uma vitrine feita para você navegar com calma.
-      </div>
+      <h2 id="titulo-listagem-produtos">Explore a coleção</h2>
+      <div class="subtitulo" id="subtitulo-listagem-produtos">Uma vitrine feita para você navegar com calma.</div>
+      <button type="button" id="limpar-filtro-promocoes" hidden>Ver todos os produtos</button>
     </div>
 
     <input
@@ -982,6 +1032,7 @@ footer { padding-top:24px; }
 
 let produtos = [];
 let categoriaAtual = "Todos";
+let somentePromocoes = false;
 let carrinho = [];
 let produtoAguardandoTamanho = null;
 let tamanhoSelecionado = "";
@@ -1158,8 +1209,15 @@ document.getElementById("carrossel-destaques").addEventListener("scroll", () => 
 
 function mostrarProdutos() {
   const termo = busca.value.toLocaleLowerCase("pt-BR").trim();
+  const tituloLista = document.getElementById("titulo-listagem-produtos");
+  const subtituloLista = document.getElementById("subtitulo-listagem-produtos");
+  const limparPromocoes = document.getElementById("limpar-filtro-promocoes");
+  if (tituloLista) tituloLista.textContent = somentePromocoes ? "Ofertas especiais" : "Explore a coleção";
+  if (subtituloLista) subtituloLista.textContent = somentePromocoes ? "Produtos com promoção ativa no catálogo." : "Uma vitrine feita para você navegar com calma.";
+  if (limparPromocoes) limparPromocoes.hidden = !somentePromocoes;
   const encontrados = produtos.filter(p =>
     p.ativo &&
+    (!somentePromocoes || p.emPromocao) &&
     (categoriaAtual === "Todos" || p.categoria === categoriaAtual) &&
     (p.nome.toLocaleLowerCase("pt-BR").includes(termo) || p.codigo.toLocaleLowerCase("pt-BR").includes(termo))
   );
@@ -1167,7 +1225,7 @@ function mostrarProdutos() {
   if (!encontrados.length) {
     const vazio = document.createElement("div");
     vazio.className = "vazio";
-    vazio.textContent = "Nenhuma peça encontrada.";
+    vazio.textContent = somentePromocoes ? "Ainda não há produtos com promoção ativa. Volte em breve para conferir as ofertas!" : "Nenhuma peça encontrada.";
     areaProdutos.appendChild(vazio);
     return;
   }
@@ -1474,6 +1532,7 @@ document.getElementById("enviar-whatsapp").onclick = () => {
   window.open(`https://wa.me/${numeroWhatsAppLoja}?text=${encodeURIComponent(linhas.join("\n"))}`, "_blank", "noopener");
 };
 document.querySelectorAll(".categoria").forEach(botao => botao.addEventListener("click", () => {
+  somentePromocoes = false;
   categoriaAtual = botao.dataset.categoria;
   document.querySelectorAll(".categoria").forEach(item => item.classList.toggle("ativa", item === botao));
   mostrarProdutos();
@@ -1484,11 +1543,37 @@ document.querySelectorAll("[data-categoria-visual]").forEach(botao => botao.addE
   if (filtro) filtro.click();
   document.getElementById("produtos").scrollIntoView({behavior:"smooth",block:"start"});
 }));
+document.getElementById("aproveitar-promocoes").addEventListener("click", () => {
+  somentePromocoes = true; categoriaAtual = "Todos"; busca.value = "";
+  document.querySelectorAll(".categoria").forEach(item => item.classList.toggle("ativa", item.dataset.categoria === "Todos"));
+  mostrarProdutos(); document.getElementById("produtos").scrollIntoView({behavior:"smooth",block:"start"});
+});
+document.getElementById("limpar-filtro-promocoes").addEventListener("click", () => { somentePromocoes = false; mostrarProdutos(); });
 busca.addEventListener("input", mostrarProdutos);
 document.getElementById("fechar").addEventListener("click", () => modal.classList.remove("aberto"));
 modal.addEventListener("click", e => { if (e.target === modal) modal.classList.remove("aberto"); });
 document.addEventListener("keydown", e => { if (e.key === "Escape") { modal.classList.remove("aberto"); document.getElementById("painel-carrinho")?.classList.remove("aberto"); fecharSeletorTamanho(); } });
 
+
+let bannerAtual = 0;
+function mostrarBanner(indice) {
+  const faixa = document.getElementById("hero-banner-track");
+  if (!faixa) return;
+  bannerAtual = (indice + 2) % 2;
+  faixa.style.transform = "translateX(-" + (bannerAtual * 100) + "%)";
+  document.querySelectorAll("[data-banner-slide]").forEach((p,i) => p.classList.toggle("ativo",i===bannerAtual));
+  const videos = faixa.querySelectorAll("video");
+  videos.forEach((video,i) => {
+    if (i === bannerAtual) { if (video.readyState === 0) video.load(); video.play().catch(() => {}); }
+    else video.pause();
+  });
+}
+document.getElementById("banner-anterior").addEventListener("click", () => mostrarBanner(bannerAtual-1));
+document.getElementById("banner-proximo").addEventListener("click", () => mostrarBanner(bannerAtual+1));
+document.querySelectorAll("[data-banner-slide]").forEach(p => p.addEventListener("click", () => mostrarBanner(Number(p.dataset.bannerSlide))));
+let temporizadorBanners = setInterval(() => mostrarBanner(bannerAtual+1), 7000);
+document.getElementById("hero-banner-carousel").addEventListener("mouseenter", () => clearInterval(temporizadorBanners));
+document.getElementById("hero-banner-carousel").addEventListener("mouseleave", () => { clearInterval(temporizadorBanners); temporizadorBanners=setInterval(() => mostrarBanner(bannerAtual+1),7000); });
 
 document.querySelectorAll(".navegacao-inferior [data-ir]").forEach(botao => botao.addEventListener("click", () => {
   const destino = {inicio:".cabecalho-marca",destaques:".vitrine-destaques",categorias:"#secao-categorias"}[botao.dataset.ir];
