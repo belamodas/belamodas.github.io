@@ -374,6 +374,10 @@ footer p { color:#e6c98c; font-size:10px; letter-spacing:2px; margin:10px 0 22px
 .status-cep.erro { color:#a32232; }
 .status-cep.sucesso { color:#27633d; }
 .aviso-frete-pendente { margin:12px 0 0; padding:10px; border-radius:7px; background:#f0e6df; color:#5b4145; font-size:11px; line-height:1.5; }
+.resumo-frete { margin:12px 0; padding:13px; border:1px solid #d8c9c1; border-radius:8px; background:#fff; }
+.resumo-frete > div { display:flex; justify-content:space-between; gap:12px; padding:5px 0; color:#5b4145; font-size:12px; }
+.resumo-frete strong { color:#650817; text-align:right; }
+.resumo-frete .total-com-frete { margin-top:7px; padding-top:10px; border-top:1px solid #d8c9c1; font-size:14px; font-weight:700; }
 .linha-form { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .item-carrinho { padding:12px 0; border-bottom:1px solid #D8C9C1; display:flex; justify-content:space-between; gap:10px; font-size:13px; }
 #fotos-atuais { display:grid; grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); gap:10px; margin:10px 0; }
@@ -1016,7 +1020,15 @@ footer { padding-top:24px; }
         <div><label for="estado-entrega">Estado</label><input id="estado-entrega" maxlength="2" placeholder="UF" autocomplete="address-level1"></div>
       </div>
     </div>
-    <p class="aviso-frete-pendente">O valor do frete será confirmado pela equipe da Bela Modas antes do pagamento.</p>
+    <button class="botao-principal" id="calcular-frete" type="button">Calcular valor da entrega</button>
+    <p id="status-frete" class="status-cep" role="status" aria-live="polite">Informe o endereço completo e calcule o frete para continuar.</p>
+    <div id="resumo-frete" class="resumo-frete" hidden>
+      <div><span>Distância da rota (ida)</span><strong id="distancia-frete">—</strong></div>
+      <div><span>Valor por km</span><strong id="valor-km-frete">—</strong></div>
+      <div><span>Frete</span><strong id="valor-frete">—</strong></div>
+      <div class="total-com-frete"><span>Total com entrega</span><strong id="total-com-frete">—</strong></div>
+    </div>
+    <p id="aviso-retirada" class="aviso-frete-pendente" hidden>Retirada na loja: sem cobrança de frete.</p>
   </section>
   <label for="forma-pagamento">Como pretende pagar?</label>
   <select id="forma-pagamento">
@@ -1039,6 +1051,7 @@ let produtos = [];
 let categoriaAtual = "Todos";
 let somentePromocoes = false;
 let carrinho = [];
+let cotacaoEntrega = null;
 let produtoAguardandoTamanho = null;
 let tamanhoSelecionado = "";
 
@@ -1423,6 +1436,7 @@ function adicionarAoCarrinho(codigo, tamanho = "") {
   const existente = carrinho.find(x => x.codigo === codigo && String(x.tamanho || "").trim().toLocaleLowerCase("pt-BR") === chave);
   if (existente) existente.quantidade++;
   else carrinho.push({ codigo, tamanho: String(tamanho || "").trim(), quantidade: 1 });
+  invalidarCotacaoEntrega();
   atualizarCarrinho(); alert("Produto adicionado à sacola!");
 }
 document.getElementById("confirmar-tamanho").addEventListener("click", () => {
@@ -1507,9 +1521,41 @@ const tipoRecebimento = document.getElementById("tipo-recebimento");
 const camposEnderecoEntrega = document.getElementById("campos-endereco-entrega");
 const cepEntrega = document.getElementById("cep-entrega");
 const statusCep = document.getElementById("status-cep");
+const statusFrete = document.getElementById("status-frete");
+const resumoFrete = document.getElementById("resumo-frete");
+const botaoCalcularFrete = document.getElementById("calcular-frete");
+const avisoRetirada = document.getElementById("aviso-retirada");
 
+function atualizarResumoFrete() {
+  const retirada = tipoRecebimento.value === "retirada";
+  botaoCalcularFrete.hidden = retirada;
+  statusFrete.hidden = retirada;
+  resumoFrete.hidden = retirada || !cotacaoEntrega;
+  avisoRetirada.hidden = !retirada;
+  if (retirada) {
+    cotacaoEntrega = null;
+    document.getElementById("valor-total").textContent = moeda(totalProdutosCarrinho());
+  } else if (cotacaoEntrega) {
+    document.getElementById("distancia-frete").textContent = Number(cotacaoEntrega.distanciaKm).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " km";
+    document.getElementById("valor-km-frete").textContent = moeda(cotacaoEntrega.valorKm) + " / km";
+    document.getElementById("valor-frete").textContent = moeda(cotacaoEntrega.frete);
+    document.getElementById("total-com-frete").textContent = moeda(totalProdutosCarrinho() + Number(cotacaoEntrega.frete));
+  }
+}
+function totalProdutosCarrinho() {
+  return carrinho.reduce((s,i) => { const p=produtos.find(x=>x.codigo===i.codigo); return s+(p?Number(p.precoFinalValor ?? p.precoValor ?? 0)*i.quantidade:0); },0);
+}
+function invalidarCotacaoEntrega() {
+  cotacaoEntrega = null;
+  if (statusFrete) {
+    statusFrete.textContent = "A sacola mudou. Calcule novamente o valor da entrega.";
+    statusFrete.className = "status-cep";
+  }
+  if (resumoFrete) resumoFrete.hidden = true;
+}
 tipoRecebimento.addEventListener("change", () => {
   camposEnderecoEntrega.hidden = tipoRecebimento.value !== "entrega";
+  atualizarResumoFrete();
 });
 
 cepEntrega.addEventListener("input", () => {
@@ -1544,6 +1590,44 @@ cepEntrega.addEventListener("blur", async () => {
   }
 });
 
+["rua-entrega","numero-entrega","complemento-entrega","bairro-entrega","cidade-entrega","estado-entrega","cep-entrega"].forEach(id => {
+  document.getElementById(id).addEventListener("input", invalidarCotacaoEntrega);
+});
+
+botaoCalcularFrete.addEventListener("click", async () => {
+  const campos = {
+    cep: cepEntrega.value.trim(),
+    rua: document.getElementById("rua-entrega").value.trim(),
+    numero: document.getElementById("numero-entrega").value.trim(),
+    complemento: document.getElementById("complemento-entrega").value.trim(),
+    bairro: document.getElementById("bairro-entrega").value.trim(),
+    cidade: document.getElementById("cidade-entrega").value.trim(),
+    estado: document.getElementById("estado-entrega").value.trim()
+  };
+  if (campos.cep.replace(/\D/g,"").length !== 8 || !campos.rua || !campos.numero || !campos.bairro || !campos.cidade || !campos.estado) {
+    statusFrete.textContent = "Preencha CEP, rua, número, bairro, cidade e UF antes de calcular.";
+    statusFrete.className = "status-cep erro";
+    return;
+  }
+  const destino = [campos.rua,campos.numero,campos.complemento,campos.bairro,campos.cidade,campos.estado,"Brasil",campos.cep].filter(Boolean).join(", ");
+  botaoCalcularFrete.disabled = true;
+  statusFrete.textContent = "Calculando a rota e o valor da entrega…";
+  statusFrete.className = "status-cep";
+  resumoFrete.hidden = true;
+  try {
+    const resultado = await BelaSync.calcularEntrega(destino);
+    if (!resultado || !Number.isFinite(Number(resultado.frete)) || !Number.isFinite(Number(resultado.distanciaKm))) throw new Error("O servidor não retornou um cálculo válido.");
+    cotacaoEntrega = resultado;
+    statusFrete.textContent = "Frete calculado pela rota de carro. O valor já está incluído no total abaixo.";
+    statusFrete.className = "status-cep sucesso";
+    atualizarResumoFrete();
+  } catch (erro) {
+    cotacaoEntrega = null;
+    statusFrete.textContent = erro.message || "Não foi possível calcular a entrega. Confira o endereço e tente novamente.";
+    statusFrete.className = "status-cep erro";
+  } finally { botaoCalcularFrete.disabled = false; }
+});
+
 document.getElementById("enviar-whatsapp").onclick = () => {
   if (!carrinho.length) { alert("Sua sacola está vazia."); return; }
   if (!numeroWhatsAppLoja) { alert("O número de WhatsApp da Bela Modas ainda precisa ser configurado no código."); return; }
@@ -1555,8 +1639,12 @@ document.getElementById("enviar-whatsapp").onclick = () => {
   const bairro = document.getElementById("bairro-entrega").value.trim();
   const cidade = document.getElementById("cidade-entrega").value.trim();
   const cep = cepEntrega.value.trim();
-  if (entrega && (!cep || !rua || !numero || !bairro || !cidade)) {
-    alert("Para entrega, informe o CEP, rua, número, bairro e cidade. Você também pode escolher retirada na loja.");
+  if (entrega && (!cep || !rua || !numero || !bairro || !cidade || !document.getElementById("estado-entrega").value.trim())) {
+    alert("Para entrega, informe o CEP e o endereço completo, incluindo o estado.");
+    return;
+  }
+  if (entrega && !cotacaoEntrega) {
+    alert("Calcule o valor da entrega antes de enviar o pedido pelo WhatsApp.");
     return;
   }
   const linhas = [`Olá, Bela Modas! Meu nome é ${nome} e gostaria de fazer este pedido:`];
@@ -1576,7 +1664,10 @@ document.getElementById("enviar-whatsapp").onclick = () => {
     linhas.push("Bairro: " + bairro);
     linhas.push("Cidade/UF: " + cidade + "/" + document.getElementById("estado-entrega").value.trim());
     linhas.push("CEP: " + cep);
-    linhas.push("Frete: a confirmar pela Bela Modas");
+    linhas.push("Distância da rota (ida): " + Number(cotacaoEntrega.distanciaKm).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " km");
+    linhas.push("Valor por km: " + moeda(cotacaoEntrega.valorKm));
+    linhas.push("Frete calculado: " + moeda(cotacaoEntrega.frete));
+    linhas.push("Total com entrega: " + moeda(total + Number(cotacaoEntrega.frete)));
   } else {
     linhas.push("Forma de recebimento: Retirada na loja");
   }
