@@ -958,6 +958,10 @@ footer { padding-top:24px; }
       <input id="vendedor-email" name="email" type="email" autocomplete="email" required maxlength="150" placeholder="seuemail@exemplo.com">
       <label for="vendedor-instagram">Instagram (opcional)</label>
       <input id="vendedor-instagram" name="instagram" maxlength="60" placeholder="@seuinstagram">
+      <label for="vendedor-senha">Crie sua senha (mínimo de 8 caracteres)</label>
+      <input id="vendedor-senha" name="senha" type="password" autocomplete="new-password" minlength="8" maxlength="72" required placeholder="Crie uma senha">
+      <label for="vendedor-confirma-senha">Confirme sua senha</label>
+      <input id="vendedor-confirma-senha" name="confirmaSenha" type="password" autocomplete="new-password" minlength="8" maxlength="72" required placeholder="Digite a senha novamente">
       <button class="botao-principal" type="submit">Enviar cadastro</button>
       <p id="resultado-cadastro-vendedor" role="status" aria-live="polite"></p>
     </form>
@@ -1104,12 +1108,23 @@ if (formularioVendedor) formularioVendedor.addEventListener("submit", async e =>
     nome: document.getElementById("vendedor-nome").value.trim(),
     telefone: document.getElementById("vendedor-whatsapp").value.trim(),
     instagram: document.getElementById("vendedor-instagram").value.trim(),
-    email: document.getElementById("vendedor-email").value.trim()
+    email: document.getElementById("vendedor-email").value.trim(),
+    senha: document.getElementById("vendedor-senha").value,
+    confirmaSenha: document.getElementById("vendedor-confirma-senha").value
   };
   if (dados.nome.length < 3 || dados.telefone.replace(/\D/g, "").length < 10 || !dados.email) {
     resultado.textContent = "Confira seu nome, WhatsApp e e-mail.";
     return;
   }
+  if (dados.senha.length < 8 || dados.senha.length > 72) {
+    resultado.textContent = "A senha deve ter entre 8 e 72 caracteres.";
+    return;
+  }
+  if (dados.senha !== dados.confirmaSenha) {
+    resultado.textContent = "As senhas não conferem.";
+    return;
+  }
+  delete dados.confirmaSenha;
   botao.disabled = true;
   resultado.textContent = "Enviando seu cadastro…";
   try {
