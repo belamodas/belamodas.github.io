@@ -701,6 +701,10 @@ footer { padding-top:24px; }
     <p>Analise os cadastros recebidos. Somente vendedores aprovados terão um link exclusivo para divulgar o catálogo.</p>
     <div id="lista-vendedores" aria-live="polite">Carregue os cadastros para consultar os vendedores.</div>
     <button class="acao-header" id="atualizar-vendedores" type="button">Atualizar cadastros</button>
+    <hr><h3>Pedidos e comissões dos vendedores</h3>
+    <p>Os pedidos atribuídos a vendedores aparecem aqui após o cliente enviar o pedido pelo catálogo. Atualize o status quando a venda avançar.</p>
+    <div id="lista-pedidos-vendedores" aria-live="polite">Carregando pedidos quando a área for aberta…</div>
+    <button class="acao-header" id="atualizar-pedidos-vendedores" type="button">Atualizar pedidos</button>
   </section>
   </section>
   <section class="admin-secao" id="secao-admin-entregas" hidden>
@@ -1414,6 +1418,10 @@ async function carregarVendedoresAdmin() {
         const reprovar = document.createElement("button"); reprovar.type="button"; reprovar.className="acao-header"; reprovar.textContent="Reprovar";
         reprovar.onclick = () => atualizarStatusVendedor(v,"reprovado"); acoes.appendChild(reprovar);
       }
+      if (String(v.status || "").toLowerCase() === "aprovado") {
+        const reset = document.createElement("button"); reset.type="button"; reset.className="acao-header"; reset.textContent="Gerar / redefinir senha";
+        reset.onclick = () => resetarAcessoVendedor(v,reset); acoes.appendChild(reset);
+      }
       if (String(v.status || "").toLowerCase() === "aprovado" && v.codigo) {
         const link = "https://belamodas.github.io/?vendedor=" + encodeURIComponent(v.codigo) + "&nomeVendedor=" + encodeURIComponent(v.nome || "Parceiro");
         const copiar = document.createElement("button"); copiar.type="button"; copiar.className="acao-header"; copiar.textContent="Copiar link do vendedor";
@@ -1429,6 +1437,53 @@ async function carregarVendedoresAdmin() {
     area.textContent = "Não foi possível carregar os vendedores: " + (err.message || "erro desconhecido");
   } finally { if (botao) botao.disabled = false; }
 }
+async function resetarAcessoVendedor(vendedor, botao) {
+  if (!confirm("Gerar uma nova senha temporária para " + (vendedor.nome || "este vendedor") + "? A senha atual deixará de funcionar.")) return;
+  botao.disabled = true;
+  try {
+    const r = await BelaSync.resetarSenhaVendedor(vendedor.id);
+    window.prompt("Envie esta senha temporária ao vendedor por um canal privado. Ele deverá criar outra senha no primeiro acesso.", r.senhaTemporaria);
+    await carregarVendedoresAdmin();
+  } catch(err) { alert(err.message || "Não foi possível gerar a senha temporária."); }
+  finally { botao.disabled = false; }
+}
+async function carregarPedidosVendedoresAdmin() {
+  const area = document.getElementById("lista-pedidos-vendedores");
+  const botao = document.getElementById("atualizar-pedidos-vendedores");
+  if (!area) return;
+  if (botao) botao.disabled = true;
+  area.textContent = "Carregando pedidos…";
+  try {
+    const pedidos = await BelaSync.listarPedidosVendedores();
+    area.replaceChildren();
+    if (!pedidos.length) { area.textContent = "Nenhum pedido de vendedor registrado."; return; }
+    pedidos.forEach(p => {
+      const card = document.createElement("div");
+      card.style.cssText = "padding:12px 0;border-bottom:1px solid #e5d4bd;display:grid;gap:7px";
+      const titulo = document.createElement("strong");
+      titulo.textContent = p.vendedor + " · " + p.cliente + " · " + new Date(p.criadoEm).toLocaleString("pt-BR");
+      const resumo = document.createElement("span");
+      resumo.textContent = "Pedido " + p.id + " · Produtos: " + moedaAdmin(p.totalProdutos) + " · Frete: " + moedaAdmin(p.frete) + " · Total: " + moedaAdmin(p.total) + " · Comissão: " + moedaAdmin(p.comissao) + " (" + p.comissaoPercentual + "%)";
+      const status = document.createElement("select");
+      [["aguardando","Aguardando"],["confirmada","Confirmada"],["concluida","Concluída — liberar comissão"],["cancelada","Cancelada"]].forEach(([v,t]) => { const o=document.createElement("option");o.value=v;o.textContent=t;status.appendChild(o); });
+      status.value = p.status;
+      status.addEventListener("change", async () => {
+        status.disabled = true;
+        try { await BelaSync.atualizarPedidoVendedor(p.id,status.value); await carregarPedidosVendedoresAdmin(); }
+        catch(err) { alert(err.message || "Não foi possível atualizar o pedido."); status.value=p.status; }
+        finally { status.disabled=false; }
+      });
+      const itens = document.createElement("small");
+      try { itens.textContent = JSON.parse(p.itens).map(i => i.nome + " ×" + i.quantidade + (i.tamanho ? " · " + i.tamanho : "")).join(" | "); }
+      catch(_) { itens.textContent = "Itens do pedido"; }
+      card.append(titulo,resumo,itens,status); area.appendChild(card);
+    });
+  } catch(err) { area.textContent = "Não foi possível carregar os pedidos: " + (err.message || "erro desconhecido"); }
+  finally { if (botao) botao.disabled=false; }
+}
+function moedaAdmin(v) { return Number(v || 0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
+document.getElementById("atualizar-pedidos-vendedores")?.addEventListener("click",carregarPedidosVendedoresAdmin);
+
 async function salvarComissaoVendedor(vendedor, input, botao) {
   const valor = Number(input.value);
   if (!Number.isFinite(valor) || valor < 0 || valor > 100) { alert("A comissão deve estar entre 0% e 100%."); return; }
@@ -1486,7 +1541,7 @@ function atualizarPainelAdmin() {
   const logado = BelaSync.estaLogado();
   document.getElementById("admin-login").hidden = logado;
   document.getElementById("admin-conteudo").hidden = !logado;
-  if (logado) { renderListaAdmin(); carregarVendedoresAdmin(); }
+  if (logado) { renderListaAdmin(); carregarVendedoresAdmin(); carregarPedidosVendedoresAdmin(); }
 }
 document.getElementById("form-login").addEventListener("submit", async e => {
   e.preventDefault();
