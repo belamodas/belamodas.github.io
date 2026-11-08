@@ -247,6 +247,30 @@
     });
   }
 
+  function buscarEntregas() {
+    verificarConfiguracao();
+    return new Promise((resolve, reject) => {
+      const callback = "__belaEntregas_" + gerarNonce();
+      const script = document.createElement("script");
+      let finished = false;
+      const timer = setTimeout(() => finalizar(new Error("Não foi possível carregar as configurações de entrega.")), CONFIG.TIMEOUT);
+      function finalizar(error, data) {
+        if (finished) return;
+        finished = true; clearTimeout(timer); delete window[callback]; script.remove();
+        if (error) reject(error);
+        else if (!data || data.sucesso !== true) reject(new Error(data?.erro || "Resposta inválida das configurações de entrega."));
+        else resolve(data.config || {});
+      }
+      window[callback] = data => finalizar(null, data);
+      script.onerror = () => finalizar(new Error("Falha ao consultar as configurações de entrega."));
+      script.src = CONFIG.API_URL + "?acao=entregas&callback=" + encodeURIComponent(callback) + "&tempo=" + Date.now();
+      document.head.appendChild(script);
+    });
+  }
+  async function salvarEntregas(config) {
+    exigirSessao();
+    return requisicaoPost({ acao: "salvarEntregas", token: tokenAdmin, config });
+  }
   async function salvarBanner(videoUrl) {
     exigirSessao();
     return requisicaoPost({
@@ -368,10 +392,12 @@
     return Array.isArray(resultado) ? resultado : (resultado?.vendedores || []);
   }
 
-  async function atualizarVendedor(id, status) {
+  async function atualizarVendedor(id, status, comissao) {
     exigirSessao();
-    if (!id || !["aprovado","reprovado"].includes(status)) throw new Error("Dados de aprovação inválidos.");
-    return requisicaoPost({ acao: "atualizarVendedor", token: tokenAdmin, id, status });
+    if (!id || (status && !["pendente","aprovado","reprovado"].includes(status))) throw new Error("Dados de atualização do vendedor inválidos.");
+    const dados = { acao: "atualizarVendedor", token: tokenAdmin, id, status: status || "" };
+    if (comissao !== undefined) dados.comissao = Number(comissao);
+    return requisicaoPost(dados);
   }
 
   async function enviarArquivo(codigo, arquivo, tipoMidia) {
@@ -422,6 +448,11 @@
     salvarProduto,
     excluirProduto,
     salvarOrdemProdutos,
+    cadastrarVendedor,
+    listarVendedores,
+    atualizarVendedor,
+    buscarEntregas,
+    salvarEntregas,
     enviarFoto,
     enviarVideo
   });
