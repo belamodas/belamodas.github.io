@@ -368,6 +368,15 @@ footer p { color:#e6c98c; font-size:10px; letter-spacing:2px; margin:10px 0 22px
 .painel-conteudo button:not(.botao-principal):not(.fechar) {
   color:#650817;
 }
+.admin-menu { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin:18px 0 20px; }
+.admin-menu button { min-height:76px; padding:12px 8px; border:1px solid #d8c9c1; border-radius:10px; background:#fff; color:#650817; font-size:12px; font-weight:800; cursor:pointer; }
+.admin-menu button span { display:block; font-size:22px; margin-bottom:5px; }
+.admin-menu button.ativo { color:#fff4e7; border-color:#650817; background:linear-gradient(145deg,#7b1028,#39040f); box-shadow:0 4px 12px rgba(70,5,20,.2); }
+.admin-secao[hidden] { display:none!important; }
+.admin-secao { border-top:1px solid #e2d4ca; padding-top:15px; }
+.entrega-config { border:1px solid #d8c9c1; border-radius:10px; background:#fffaf4; padding:16px; margin:14px 0; }
+.entrega-config h4 { margin:0 0 8px; color:#650817; font:normal 20px Georgia,serif; }
+.entrega-config .aviso-demo { margin-bottom:0; }
 .painel-conteudo input, .painel-conteudo select, .painel-conteudo textarea { width:100%; padding:11px; border:1px solid #D8C9C1; background:white; font:inherit; }
 .linha-form { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .item-carrinho { padding:12px 0; border-bottom:1px solid #D8C9C1; display:flex; justify-content:space-between; gap:10px; font-size:13px; }
@@ -651,7 +660,14 @@ footer { padding-top:24px; }
     </form>
   </div>
   <div id="admin-conteudo" hidden>
-  <p class="aviso-demo">Os produtos e as fotos são sincronizados com a planilha e o Drive. As imagens enviadas para a vitrine ficam públicas para que as clientes possam visualizá-las.</p>
+  <p class="aviso-demo">Escolha uma área para administrar a Bela Modas.</p>
+  <nav class="admin-menu" aria-label="Áreas administrativas">
+    <button type="button" class="ativo" data-admin-aba="produtos" aria-selected="true"><span>🛍️</span>Produtos</button>
+    <button type="button" data-admin-aba="vendedores" aria-selected="false"><span>🤝</span>Vendedores</button>
+    <button type="button" data-admin-aba="entregas" aria-selected="false"><span>🚚</span>Entregas</button>
+  </nav>
+  <section class="admin-secao" id="secao-admin-produtos">
+  <p class="aviso-demo">Cadastro, edição, fotos, vídeos, preços, estoque, destaques e promoções dos produtos.</p>
   <section class="bloco-admin-banner" aria-labelledby="titulo-admin-banner" style="border:1px solid #d8c9c1;border-radius:10px;padding:16px;margin:14px 0 22px;background:#fffaf4">
     <h3 id="titulo-admin-banner">Vídeo do banner principal</h3>
     <p>Escolha um vídeo MP4 ou WebM de até 8 MB. Ele será exibido na página inicial para todas as clientes.</p>
@@ -677,12 +693,34 @@ footer { padding-top:24px; }
     <button class="botao-principal" id="salvar-produto" type="submit">＋ Salvar produto na nuvem</button>
     <button class="acao-header" id="cancelar-edicao" type="button">Limpar formulário</button>
   </form><hr><h3>Produtos cadastrados</h3><div id="lista-admin"></div>
+  </section>
+  <section class="admin-secao" id="secao-admin-vendedores" hidden>
   
   <section id="admin-vendedores" style="border:1px solid #d8c9c1;border-radius:10px;padding:16px;margin:22px 0;background:#fffaf4">
     <h3>Vendedores parceiros</h3>
     <p>Analise os cadastros recebidos. Somente vendedores aprovados terão um link exclusivo para divulgar o catálogo.</p>
     <div id="lista-vendedores" aria-live="polite">Carregue os cadastros para consultar os vendedores.</div>
     <button class="acao-header" id="atualizar-vendedores" type="button">Atualizar cadastros</button>
+  </section>
+  </section>
+  <section class="admin-secao" id="secao-admin-entregas" hidden>
+    <h3>Configurações de entrega</h3>
+    <p>Reúna aqui as opções de frete, cálculo por quilômetro e retirada na loja.</p>
+    <div class="entrega-config">
+      <h4>Entrega por distância</h4>
+      <label for="admin-valor-km">Valor por quilômetro (R$)</label>
+      <input id="admin-valor-km" type="number" min="0" step="0.01" value="2.00" disabled>
+      <label for="admin-endereco-origem">Endereço de saída para entregas</label>
+      <input id="admin-endereco-origem" value="Avenida México, 87, Petrovale, Betim - MG, CEP 32668-052" disabled>
+      <p class="aviso-demo">O cálculo será feito pela distância da rota de carro, considerando somente a ida. O valor por km e o endereço poderão ser alterados nesta área quando a integração com o Apps Script estiver pronta.</p>
+    </div>
+    <div class="entrega-config">
+      <h4>Retirada na loja</h4>
+      <label for="admin-endereco-retirada">Endereço informado para retirada</label>
+      <input id="admin-endereco-retirada" value="Avenida México, 87, Petrovale, Betim - MG, CEP 32668-052" disabled>
+      <p class="aviso-demo">O endereço de retirada poderá ser configurado separadamente do endereço usado como origem do cálculo de entrega.</p>
+    </div>
+    <p class="aviso-demo">Atenção: os campos estão em preparação e ainda não salvam configurações. Vamos ativar a edição e a gravação quando atualizarmos o Apps Script, para evitar que pareça salvo sem estar.</p>
   </section>
   <button class="acao-header" id="sair-admin" type="button">Sair da administração</button>
   </div>
@@ -1406,6 +1444,19 @@ document.getElementById("form-login").addEventListener("submit", async e => {
     await carregarProdutos(); await carregarBannerAdmin(); atualizarPainelAdmin();
   } catch (err) { alert(err.message || "Falha ao entrar."); }
   finally { botao.disabled = false; }
+});
+document.querySelectorAll("[data-admin-aba]").forEach(botao => {
+  botao.addEventListener("click", () => {
+    const aba = botao.dataset.adminAba;
+    document.querySelectorAll("[data-admin-aba]").forEach(item => {
+      const ativo = item === botao;
+      item.classList.toggle("ativo", ativo);
+      item.setAttribute("aria-selected", ativo ? "true" : "false");
+    });
+    document.querySelectorAll(".admin-secao").forEach(secao => {
+      secao.hidden = secao.id !== "secao-admin-" + aba;
+    });
+  });
 });
 document.getElementById("sair-admin").onclick = () => { BelaSync.sair(); atualizarPainelAdmin(); };
 document.getElementById("cancelar-edicao").onclick = limparFormulario;
