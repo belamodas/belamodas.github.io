@@ -391,7 +391,8 @@
     if (!dados || !String(dados.nome || "").trim() || !String(dados.telefone || "").trim() || !String(dados.email || "").trim()) throw new Error("Informe nome, WhatsApp e e-mail para o cadastro.");
     return requisicaoPost({ acao: "cadastrarVendedor", vendedor: {
       nome: String(dados.nome).trim(), telefone: String(dados.telefone).trim(),
-      instagram: String(dados.instagram || "").trim(), email: String(dados.email).trim().toLowerCase()
+      instagram: String(dados.instagram || "").trim(), email: String(dados.email).trim().toLowerCase(),
+      senha: String(dados.senha || "")
     }});
   }
 
@@ -457,6 +458,12 @@
     return requisicaoPost(dados);
   }
 
+  async function excluirVendedor(id) {
+    exigirSessao();
+    if (!id) throw new Error("Vendedor não informado.");
+    return requisicaoPost({ acao: "excluirVendedor", token: tokenAdmin, id });
+  }
+
   async function enviarArquivo(codigo, arquivo, tipoMidia) {
     exigirSessao();
 
@@ -516,6 +523,7 @@
     atualizarPedidoVendedor,
     listarVendedores,
     atualizarVendedor,
+    excluirVendedor,
     buscarEntregas,
     calcularEntrega,
     salvarEntregas,
