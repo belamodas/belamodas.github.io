@@ -267,6 +267,12 @@
       document.head.appendChild(script);
     });
   }
+  async function calcularEntrega(destino) {
+    const endereco = String(destino || "").trim();
+    if (!endereco) throw new Error("Informe o endereço completo para calcular a entrega.");
+    return requisicaoPost({ acao: "calcularEntrega", destino: endereco });
+  }
+
   async function salvarEntregas(config) {
     exigirSessao();
     return requisicaoPost({ acao: "salvarEntregas", token: tokenAdmin, config });
@@ -452,6 +458,7 @@
     listarVendedores,
     atualizarVendedor,
     buscarEntregas,
+    calcularEntrega,
     salvarEntregas,
     enviarFoto,
     enviarVideo
