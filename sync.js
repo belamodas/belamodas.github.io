@@ -15,6 +15,8 @@
 
   let tokenAdmin = null;
   let sessaoValidaAte = 0;
+  let tokenVendedor = null;
+  try { tokenVendedor = localStorage.getItem("bela_vendedor_token") || null; } catch (_) {}
 
   function verificarConfiguracao() {
     if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec$/.test(CONFIG.API_URL)) {
@@ -386,10 +388,59 @@
 
 
   async function cadastrarVendedor(dados) {
-    if (!dados || !String(dados.nome || "").trim() || !String(dados.telefone || "").trim()) throw new Error("Informe nome e WhatsApp para o cadastro.");
+    if (!dados || !String(dados.nome || "").trim() || !String(dados.telefone || "").trim() || !String(dados.email || "").trim()) throw new Error("Informe nome, WhatsApp e e-mail para o cadastro.");
     return requisicaoPost({ acao: "cadastrarVendedor", vendedor: {
-      nome: String(dados.nome).trim(), telefone: String(dados.telefone).trim(), instagram: String(dados.instagram || "").trim()
+      nome: String(dados.nome).trim(), telefone: String(dados.telefone).trim(),
+      instagram: String(dados.instagram || "").trim(), email: String(dados.email).trim().toLowerCase()
     }});
+  }
+
+  async function entrarVendedor(email, senha) {
+    const result = await requisicaoPost({ acao: "loginVendedor", email: String(email || "").trim().toLowerCase(), senha: String(senha || "") });
+    if (!result?.token || !Number(result.validadeSegundos)) throw new Error("Não foi possível iniciar a sessão do vendedor.");
+    tokenVendedor = result.token;
+    try { localStorage.setItem("bela_vendedor_token", tokenVendedor); } catch (_) {}
+    return result;
+  }
+
+  function exigirSessaoVendedor() {
+    if (!tokenVendedor) throw new Error("Entre na sua conta de vendedor.");
+  }
+
+  async function painelVendedor() {
+    exigirSessaoVendedor();
+    return requisicaoPost({ acao: "painelVendedor", tokenVendedor });
+  }
+
+  async function trocarSenhaVendedor(novaSenha) {
+    exigirSessaoVendedor();
+    return requisicaoPost({ acao: "trocarSenhaVendedor", tokenVendedor, novaSenha: String(novaSenha || "") });
+  }
+
+  async function sairVendedor() {
+    if (tokenVendedor) { try { await requisicaoPost({ acao: "sairVendedor", tokenVendedor }); } catch (_) {} }
+    tokenVendedor = null;
+    try { localStorage.removeItem("bela_vendedor_token"); } catch (_) {}
+  }
+
+  async function registrarPedidoVendedor(pedido) {
+    return requisicaoPost({ acao: "registrarPedidoVendedor", pedido });
+  }
+
+  async function resetarSenhaVendedor(id) {
+    exigirSessao();
+    return requisicaoPost({ acao: "resetarSenhaVendedor", token: tokenAdmin, id });
+  }
+
+  async function listarPedidosVendedores() {
+    exigirSessao();
+    const resultado = await requisicaoPost({ acao: "listarPedidosVendedores", token: tokenAdmin });
+    return Array.isArray(resultado) ? resultado : [];
+  }
+
+  async function atualizarPedidoVendedor(id, status) {
+    exigirSessao();
+    return requisicaoPost({ acao: "atualizarPedidoVendedor", token: tokenAdmin, id, status });
   }
 
   async function listarVendedores() {
@@ -400,7 +451,7 @@
 
   async function atualizarVendedor(id, status, comissao) {
     exigirSessao();
-    if (!id || (status && !["pendente","aprovado","reprovado"].includes(status))) throw new Error("Dados de atualização do vendedor inválidos.");
+    if (!id || (status && !["pendente","aprovado","reprovado","bloqueado"].includes(status))) throw new Error("Dados de atualização do vendedor inválidos.");
     const dados = { acao: "atualizarVendedor", token: tokenAdmin, id, status: status || "" };
     if (comissao !== undefined) dados.comissao = Number(comissao);
     return requisicaoPost(dados);
@@ -455,6 +506,14 @@
     excluirProduto,
     salvarOrdemProdutos,
     cadastrarVendedor,
+    entrarVendedor,
+    painelVendedor,
+    trocarSenhaVendedor,
+    sairVendedor,
+    registrarPedidoVendedor,
+    resetarSenhaVendedor,
+    listarPedidosVendedores,
+    atualizarPedidoVendedor,
     listarVendedores,
     atualizarVendedor,
     buscarEntregas,
