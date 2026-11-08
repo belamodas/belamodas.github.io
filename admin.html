@@ -1422,6 +1422,11 @@ async function carregarVendedoresAdmin() {
         const reset = document.createElement("button"); reset.type="button"; reset.className="acao-header"; reset.textContent="Gerar / redefinir senha";
         reset.onclick = () => resetarAcessoVendedor(v,reset); acoes.appendChild(reset);
       }
+      if (String(v.status || "").toLowerCase() === "aprovado") {
+        const excluir = document.createElement("button"); excluir.type="button"; excluir.className="acao-header"; excluir.textContent="Excluir vendedor";
+        excluir.style.borderColor="#9b1c31"; excluir.style.color="#9b1c31";
+        excluir.onclick = () => excluirVendedorAdmin(v,excluir); acoes.appendChild(excluir);
+      }
       if (String(v.status || "").toLowerCase() === "aprovado" && v.codigo) {
         const link = "https://belamodas.github.io/?vendedor=" + encodeURIComponent(v.codigo) + "&nomeVendedor=" + encodeURIComponent(v.nome || "Parceiro");
         const copiar = document.createElement("button"); copiar.type="button"; copiar.className="acao-header"; copiar.textContent="Copiar link do vendedor";
@@ -1436,6 +1441,19 @@ async function carregarVendedoresAdmin() {
   } catch (err) {
     area.textContent = "Não foi possível carregar os vendedores: " + (err.message || "erro desconhecido");
   } finally { if (botao) botao.disabled = false; }
+}
+async function excluirVendedorAdmin(vendedor, botao) {
+  const nome = vendedor.nome || "este vendedor";
+  if (!confirm("Excluir o acesso de " + nome + "? Ele não poderá mais entrar nem receber novos pedidos vinculados. O histórico de vendas e comissões será preservado.")) return;
+  botao.disabled = true;
+  try {
+    await BelaSync.excluirVendedor(vendedor.id);
+    await carregarVendedoresAdmin();
+    await carregarPedidosVendedoresAdmin();
+    alert("Acesso do vendedor excluído. O histórico foi preservado.");
+  } catch (err) {
+    alert(err.message || "Não foi possível excluir o vendedor.");
+  } finally { botao.disabled = false; }
 }
 async function resetarAcessoVendedor(vendedor, botao) {
   if (!confirm("Gerar uma nova senha temporária para " + (vendedor.nome || "este vendedor") + "? A senha atual deixará de funcionar.")) return;
