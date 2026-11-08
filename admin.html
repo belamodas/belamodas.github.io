@@ -697,7 +697,11 @@ footer { padding-top:24px; }
     <div class="promo-preco-original">Preço normal: <strong id="promo-preco-original"></strong></div>
     <label for="promo-novo-preco">Novo preço promocional (R$)</label>
     <input id="promo-novo-preco" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="89,99">
-    <p class="promo-ajuda">O preço original será mantido. O valor promocional precisa ser menor que o preço normal.</p>
+    <label for="promo-inicio">Início da promoção</label>
+    <input id="promo-inicio" type="datetime-local">
+    <label for="promo-fim">Encerramento da promoção</label>
+    <input id="promo-fim" type="datetime-local">
+    <p class="promo-ajuda">Defina quando a oferta começa e termina. O cronômetro aparecerá na foto do produto. A gravação permanente das datas será ativada na próxima atualização do Apps Script.</p>
     <div class="promo-acoes">
       <button type="button" id="cancelar-modal-promocao">Cancelar</button>
       <button type="button" id="retirar-promocao" hidden>Retirar promoção</button>
@@ -755,7 +759,13 @@ function normalizarProduto(p) {
     : [p.foto_principal, ...(String(p.fotos_adicionais || "").split("|").filter(Boolean))].filter(Boolean);
   const precoValor = Number(p.preco_valor ?? p.preco ?? 0) || 0;
   const precoPromocional = Number(p.preco_promocional || 0) || 0;
-  const emPromocao = precoPromocional > 0 && precoPromocional < precoValor;
+  const promocaoInicio = String(p.promocao_inicio || p.promo_inicio || "");
+  const promocaoFim = String(p.promocao_fim || p.promo_fim || "");
+  const agora = Date.now();
+  const inicioMs = promocaoInicio ? new Date(promocaoInicio).getTime() : 0;
+  const fimMs = promocaoFim ? new Date(promocaoFim).getTime() : 0;
+  const periodoValido = (!inicioMs || (Number.isFinite(inicioMs) && agora >= inicioMs)) && (!fimMs || (Number.isFinite(fimMs) && agora < fimMs));
+  const emPromocao = precoPromocional > 0 && precoPromocional < precoValor && periodoValido;
   const precoFinalValor = emPromocao ? precoPromocional : precoValor;
   return {
     codigo: String(p.codigo || ""),
@@ -764,7 +774,9 @@ function normalizarProduto(p) {
     categoria: String(p.categoria || ""),
     descricao: String(p.descricao || ""),
     precoValor,
-    precoPromocionalValor: emPromocao ? precoPromocional : 0,
+    precoPromocionalValor: precoPromocional > 0 && precoPromocional < precoValor ? precoPromocional : 0,
+    promocaoInicio,
+    promocaoFim,
     emPromocao,
     precoFinalValor,
     precoOriginal: precoValor ? moeda(precoValor) : "Consulte o preço",
@@ -1055,6 +1067,8 @@ async function alterarDestaqueRapido(produto, controle) {
       descricao: produto.descricao,
       preco: Number(produto.precoValor || 0),
       preco_promocional: produto.precoPromocionalValor || "",
+      promocao_inicio: produto.promocaoInicio || "",
+      promocao_fim: produto.promocaoFim || "",
       estoque: produto.estoque,
       disponibilidade: produto.disponibilidade,
       foto_principal: produto.foto || "",
@@ -1082,9 +1096,11 @@ function abrirModalPromocao(produto) {
   produtoSelecionadoPromocao = produto;
   document.getElementById("promo-produto-nome").textContent = `${produto.codigo} — ${produto.nome}`;
   document.getElementById("promo-preco-original").textContent = moeda(produto.precoValor);
-  document.getElementById("promo-novo-preco").value = produto.emPromocao ? produto.precoPromocionalValor : "";
-  document.getElementById("retirar-promocao").hidden = !produto.emPromocao;
-  document.getElementById("titulo-modal-promocao").textContent = produto.emPromocao ? "Alterar promoção" : "Colocar produto em promoção";
+  document.getElementById("promo-novo-preco").value = produto.precoPromocionalValor || "";
+  document.getElementById("promo-inicio").value = produto.promocaoInicio ? produto.promocaoInicio.slice(0,16) : "";
+  document.getElementById("promo-fim").value = produto.promocaoFim ? produto.promocaoFim.slice(0,16) : "";
+  document.getElementById("retirar-promocao").hidden = !produto.precoPromocionalValor;
+  document.getElementById("titulo-modal-promocao").textContent = produto.precoPromocionalValor ? "Alterar promoção" : "Colocar produto em promoção";
   const modal = document.getElementById("modal-promocao");
   modal.classList.add("aberto"); modal.setAttribute("aria-hidden", "false");
   setTimeout(() => document.getElementById("promo-novo-preco").focus(), 30);
@@ -1098,9 +1114,13 @@ async function gravarPromocao(valor) {
   const produto = produtoSelecionadoPromocao;
   if (!produto) return;
   const promocional = valor === "" ? "" : Number(valor);
+  const inicio = document.getElementById("promo-inicio").value;
+  const fim = document.getElementById("promo-fim").value;
   if (promocional !== "" && (!Number.isFinite(promocional) || promocional <= 0 || promocional >= Number(produto.precoValor))) {
     throw new Error("O preço promocional deve ser maior que zero e menor que o preço normal.");
   }
+  if (promocional !== "" && !fim) throw new Error("Informe a data e o horário de encerramento da promoção.");
+  if (inicio && fim && new Date(fim).getTime() <= new Date(inicio).getTime()) throw new Error("O encerramento deve ser posterior ao início da promoção.");
   const botao = document.getElementById("salvar-promocao");
   botao.disabled = true;
   try {
@@ -1108,6 +1128,8 @@ async function gravarPromocao(valor) {
       codigo: produto.codigo, nome: produto.nome, ordem: produto.ordem,
       categoria: produto.categoria, descricao: produto.descricao,
       preco: Number(produto.precoValor || 0), preco_promocional: promocional,
+      promocao_inicio: promocional === "" ? "" : inicio,
+      promocao_fim: promocional === "" ? "" : fim,
       estoque: produto.estoque, disponibilidade: produto.disponibilidade,
       foto_principal: produto.foto || "",
       fotos_adicionais: (produto.fotos || []).filter(url => url && url !== produto.foto).join("|"),
@@ -1115,8 +1137,13 @@ async function gravarPromocao(valor) {
       destaque: Boolean(produto.destaque), ativo: produto.ativo
     });
     produto.precoPromocionalValor = promocional === "" ? 0 : promocional;
-    produto.emPromocao = promocional !== "";
-    produto.precoFinalValor = promocional === "" ? produto.precoValor : promocional;
+    produto.promocaoInicio = promocional === "" ? "" : inicio;
+    produto.promocaoFim = promocional === "" ? "" : fim;
+    const agora = Date.now();
+    const comecou = !inicio || new Date(inicio).getTime() <= agora;
+    const naoVenceu = !fim || new Date(fim).getTime() > agora;
+    produto.emPromocao = promocional !== "" && comecou && naoVenceu;
+    produto.precoFinalValor = produto.emPromocao ? promocional : produto.precoValor;
     produto.preco = moeda(produto.precoFinalValor);
     salvarCacheProdutos();
     mostrarProdutos(); renderDestaques(); renderListaAdmin();
@@ -1471,6 +1498,8 @@ document.getElementById("form-produto").addEventListener("submit", async e => {
       descricao: document.getElementById("admin-descricao").value.trim(),
       preco: precoValor,
       preco_promocional: existente?.precoPromocionalValor || "",
+      promocao_inicio: existente?.promocaoInicio || "",
+      promocao_fim: existente?.promocaoFim || "",
       estoque: Number(document.getElementById("admin-estoque").value || 0),
       disponibilidade: document.getElementById("admin-disponibilidade").value.trim() || "Consulte disponibilidade",
       foto_principal: fotosOrdenadas[0] || "",
