@@ -954,11 +954,34 @@ footer { padding-top:24px; }
       <input id="vendedor-nome" name="nome" autocomplete="name" required maxlength="100" placeholder="Seu nome">
       <label for="vendedor-whatsapp">WhatsApp com DDD</label>
       <input id="vendedor-whatsapp" name="telefone" type="tel" autocomplete="tel" required maxlength="20" placeholder="(31) 99999-9999">
+      <label for="vendedor-email">E-mail para acessar sua área de vendedor</label>
+      <input id="vendedor-email" name="email" type="email" autocomplete="email" required maxlength="150" placeholder="seuemail@exemplo.com">
       <label for="vendedor-instagram">Instagram (opcional)</label>
       <input id="vendedor-instagram" name="instagram" maxlength="60" placeholder="@seuinstagram">
       <button class="botao-principal" type="submit">Enviar cadastro</button>
       <p id="resultado-cadastro-vendedor" role="status" aria-live="polite"></p>
     </form>
+  </details>
+  <details class="cadastro-vendedor" id="acesso-vendedor">
+    <summary>Já sou vendedor parceiro — acessar minha área</summary>
+    <form id="form-login-vendedor">
+      <label for="login-vendedor-email">E-mail</label><input id="login-vendedor-email" type="email" autocomplete="username" required>
+      <label for="login-vendedor-senha">Senha</label><input id="login-vendedor-senha" type="password" autocomplete="current-password" required>
+      <button class="botao-principal" type="submit">Entrar na área do vendedor</button>
+      <p id="status-login-vendedor" role="status" aria-live="polite"></p>
+    </form>
+    <section id="painel-vendedor-cliente" hidden>
+      <h3 id="painel-vendedor-nome"></h3><div id="painel-vendedor-resumo"></div>
+      <p><strong>Seu link exclusivo</strong></p><input id="painel-vendedor-link" readonly>
+      <button type="button" id="copiar-link-vendedor" class="botao-principal">Copiar meu link</button>
+      <h4>Minhas vendas</h4><div id="painel-vendedor-pedidos"></div>
+      <form id="form-trocar-senha-vendedor">
+        <h4>Trocar senha</h4><label for="nova-senha-vendedor">Nova senha (mínimo 8 caracteres)</label>
+        <input id="nova-senha-vendedor" type="password" minlength="8" required>
+        <button class="botao-principal" type="submit">Salvar nova senha</button>
+      </form>
+      <button type="button" id="sair-vendedor" class="acao-header">Sair</button>
+    </section>
   </details>
   <a id="abrir-admin" href="admin.html" target="_blank" rel="noopener">Acesso administrativo</a>
 </footer>
@@ -1080,10 +1103,11 @@ if (formularioVendedor) formularioVendedor.addEventListener("submit", async e =>
   const dados = {
     nome: document.getElementById("vendedor-nome").value.trim(),
     telefone: document.getElementById("vendedor-whatsapp").value.trim(),
-    instagram: document.getElementById("vendedor-instagram").value.trim()
+    instagram: document.getElementById("vendedor-instagram").value.trim(),
+    email: document.getElementById("vendedor-email").value.trim()
   };
-  if (dados.nome.length < 3 || dados.telefone.replace(/\D/g, "").length < 10) {
-    resultado.textContent = "Confira seu nome e informe um WhatsApp válido com DDD.";
+  if (dados.nome.length < 3 || dados.telefone.replace(/\D/g, "").length < 10 || !dados.email) {
+    resultado.textContent = "Confira seu nome, WhatsApp e e-mail.";
     return;
   }
   botao.disabled = true;
@@ -1096,6 +1120,65 @@ if (formularioVendedor) formularioVendedor.addEventListener("submit", async e =>
   } catch (err) {
     resultado.textContent = err.message || "Não foi possível enviar o cadastro. Tente novamente mais tarde.";
   } finally { botao.disabled = false; }
+});
+
+
+// Área individual do vendedor parceiro
+const formLoginVendedor = document.getElementById("form-login-vendedor");
+const areaPainelVendedor = document.getElementById("painel-vendedor-cliente");
+async function carregarPainelVendedorCliente() {
+  const dados = await BelaSync.painelVendedor();
+  const v = dados.vendedor, r = dados.resumo;
+  areaPainelVendedor.hidden = false;
+  formLoginVendedor.hidden = true;
+  document.getElementById("painel-vendedor-nome").textContent = "Olá, " + v.nome;
+  document.getElementById("painel-vendedor-link").value = location.origin + location.pathname + "?vendedor=" + encodeURIComponent(v.codigo) + "&nomeVendedor=" + encodeURIComponent(v.nome);
+  document.getElementById("painel-vendedor-resumo").textContent =
+    "Pedidos: " + r.totalPedidos + " · Vendas concluídas: " + r.vendasConcluidas +
+    " · Comissão pendente: " + moeda(r.comissaoPendente) + " · Comissão liberada: " + moeda(r.comissaoLiberada);
+  const lista = document.getElementById("painel-vendedor-pedidos");
+  lista.replaceChildren();
+  (dados.pedidos || []).forEach(p => {
+    const item = document.createElement("p");
+    item.textContent = new Date(p.criadoEm).toLocaleDateString("pt-BR") + " · Pedido " + p.id.slice(0,8) +
+      " · " + moeda(p.total) + " · Comissão " + moeda(p.comissao) + " · " + p.status;
+    lista.appendChild(item);
+  });
+  if (!dados.pedidos.length) lista.textContent = "Você ainda não possui pedidos registrados.";
+}
+formLoginVendedor?.addEventListener("submit", async e => {
+  e.preventDefault();
+  const status = document.getElementById("status-login-vendedor");
+  const botao = e.submitter;
+  botao.disabled = true; status.textContent = "Validando acesso…";
+  try {
+    const sessao = await BelaSync.entrarVendedor(document.getElementById("login-vendedor-email").value, document.getElementById("login-vendedor-senha").value);
+    if (sessao.trocarSenha) {
+      formLoginVendedor.hidden = true; areaPainelVendedor.hidden = false;
+      document.getElementById("painel-vendedor-nome").textContent = "Primeiro acesso: crie sua nova senha abaixo.";
+      document.getElementById("form-trocar-senha-vendedor").scrollIntoView({behavior:"smooth",block:"center"});
+    } else await carregarPainelVendedorCliente();
+    status.textContent = "";
+  } catch(err) { status.textContent = err.message || "Não foi possível entrar."; }
+  finally { botao.disabled = false; }
+});
+document.getElementById("form-trocar-senha-vendedor")?.addEventListener("submit", async e => {
+  e.preventDefault();
+  const senha = document.getElementById("nova-senha-vendedor").value;
+  try {
+    await BelaSync.trocarSenhaVendedor(senha);
+    document.getElementById("nova-senha-vendedor").value = "";
+    await carregarPainelVendedorCliente();
+    alert("Senha alterada com sucesso.");
+  } catch(err) { alert(err.message || "Não foi possível trocar a senha."); }
+});
+document.getElementById("copiar-link-vendedor")?.addEventListener("click", async () => {
+  const link = document.getElementById("painel-vendedor-link").value;
+  try { await navigator.clipboard.writeText(link); alert("Link copiado!"); }
+  catch(_) { window.prompt("Copie seu link exclusivo:", link); }
+});
+document.getElementById("sair-vendedor")?.addEventListener("click", async () => {
+  await BelaSync.sairVendedor(); areaPainelVendedor.hidden = true; formLoginVendedor.hidden = false;
 });
 
 function moeda(valor) {
@@ -1628,7 +1711,7 @@ botaoCalcularFrete.addEventListener("click", async () => {
   } finally { botaoCalcularFrete.disabled = false; }
 });
 
-document.getElementById("enviar-whatsapp").onclick = () => {
+document.getElementById("enviar-whatsapp").onclick = async () => {
   if (!carrinho.length) { alert("Sua sacola está vazia."); return; }
   if (!numeroWhatsAppLoja) { alert("O número de WhatsApp da Bela Modas ainda precisa ser configurado no código."); return; }
   const nome = document.getElementById("nome-cliente").value.trim() || "Cliente";
@@ -1675,6 +1758,22 @@ document.getElementById("enviar-whatsapp").onclick = () => {
   linhas.push("Observações: " + (document.getElementById("obs-pedido").value.trim() || "Nenhuma"));
   linhas.push("");
   linhas.push("IMPORTANTE: aguardo a confirmação da disponibilidade dos produtos e, se for entrega, do valor do frete antes de realizar qualquer pagamento.");
+  if (indicacao) {
+    try {
+      const pedidoId = (crypto.randomUUID ? crypto.randomUUID() : "BM" + Date.now() + Math.random().toString(16).slice(2));
+      await BelaSync.registrarPedidoVendedor({
+        id: pedidoId, codigoVendedor: indicacao.codigo, cliente: nome,
+        itens: carrinho.map(i => ({codigo:i.codigo, tamanho:i.tamanho || "", quantidade:i.quantidade})),
+        frete: entrega ? Number(cotacaoEntrega.frete || 0) : 0,
+        recebimento: entrega ? "entrega" : "retirada",
+        observacoes: document.getElementById("obs-pedido").value.trim()
+      });
+      linhas.push("Código do pedido registrado: " + pedidoId);
+    } catch (err) {
+      alert("Não foi possível registrar este pedido para o vendedor parceiro: " + (err.message || "falha no servidor") + ". O pedido não será aberto no WhatsApp para evitar perda do acompanhamento.");
+      return;
+    }
+  }
   window.open(`https://wa.me/${numeroWhatsAppLoja}?text=${encodeURIComponent(linhas.join("\n"))}`, "_blank", "noopener");
 };
 document.querySelectorAll(".categoria").forEach(botao => botao.addEventListener("click", () => {
