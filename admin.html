@@ -709,18 +709,19 @@ footer { padding-top:24px; }
     <div class="entrega-config">
       <h4>Entrega por distância</h4>
       <label for="admin-valor-km">Valor por quilômetro (R$)</label>
-      <input id="admin-valor-km" type="number" min="0" step="0.01" value="2.00" disabled>
+      <input id="admin-valor-km" type="number" min="0" step="0.01" value="2.00">
       <label for="admin-endereco-origem">Endereço de saída para entregas</label>
-      <input id="admin-endereco-origem" value="Avenida México, 87, Petrovale, Betim - MG, CEP 32668-052" disabled>
-      <p class="aviso-demo">O cálculo será feito pela distância da rota de carro, considerando somente a ida. O valor por km e o endereço poderão ser alterados nesta área quando a integração com o Apps Script estiver pronta.</p>
+      <input id="admin-endereco-origem" value="Avenida México, 87, Petrovale, Betim - MG, CEP 32668-052">
+      <p class="aviso-demo">O cálculo será baseado na distância da rota de carro, considerando somente a ida. A integração do cálculo automático no catálogo será uma etapa separada.</p>
     </div>
     <div class="entrega-config">
       <h4>Retirada na loja</h4>
       <label for="admin-endereco-retirada">Endereço informado para retirada</label>
-      <input id="admin-endereco-retirada" value="Avenida México, 87, Petrovale, Betim - MG, CEP 32668-052" disabled>
-      <p class="aviso-demo">O endereço de retirada poderá ser configurado separadamente do endereço usado como origem do cálculo de entrega.</p>
+      <input id="admin-endereco-retirada" value="Avenida México, 87, Petrovale, Betim - MG, CEP 32668-052">
+      <p class="aviso-demo">Este endereço será exibido como referência para a retirada na loja.</p>
     </div>
-    <p class="aviso-demo">Atenção: os campos estão em preparação e ainda não salvam configurações. Vamos ativar a edição e a gravação quando atualizarmos o Apps Script, para evitar que pareça salvo sem estar.</p>
+    <button class="botao-principal" id="salvar-config-entregas" type="button">Salvar configurações de entrega</button>
+    <p id="status-config-entregas" class="aviso-demo" role="status" aria-live="polite">As configurações serão salvas no Apps Script.</p>
   </section>
   <button class="acao-header" id="sair-admin" type="button">Sair da administração</button>
   </div>
@@ -1394,8 +1395,17 @@ async function carregarVendedoresAdmin() {
       const nome = document.createElement("strong"); nome.textContent = v.nome || "Sem nome";
       const dados = document.createElement("span");
       dados.textContent = "WhatsApp: " + (v.telefone || "não informado") + (v.instagram ? " · Instagram: " + v.instagram : "") + " · Status: " + (v.status || "pendente");
-      cartao.append(nome,dados);
+      const comissaoLinha = document.createElement("label");
+      comissaoLinha.style.cssText = "display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px";
+      comissaoLinha.appendChild(document.createTextNode("Comissão (%):"));
+      const comissaoInput = document.createElement("input");
+      comissaoInput.type = "number"; comissaoInput.min = "0"; comissaoInput.max = "100"; comissaoInput.step = "0.5";
+      comissaoInput.value = String(Number(v.comissao || 0)); comissaoInput.style.cssText = "width:100px;padding:8px;border:1px solid #d8c9c1;border-radius:7px";
+      comissaoLinha.appendChild(comissaoInput);
       const acoes = document.createElement("div"); acoes.style.cssText = "display:flex;gap:8px;flex-wrap:wrap";
+      const salvarComissao = document.createElement("button"); salvarComissao.type = "button"; salvarComissao.className = "acao-header"; salvarComissao.textContent = "Salvar comissão";
+      salvarComissao.onclick = () => salvarComissaoVendedor(v, comissaoInput, salvarComissao);
+      acoes.appendChild(salvarComissao);
       if (String(v.status || "pendente").toLowerCase() !== "aprovado") {
         const aprovar = document.createElement("button"); aprovar.type="button"; aprovar.className="botao-principal"; aprovar.textContent="Aprovar vendedor";
         aprovar.onclick = () => atualizarStatusVendedor(v,"aprovado"); acoes.appendChild(aprovar);
@@ -1413,11 +1423,22 @@ async function carregarVendedoresAdmin() {
         };
         acoes.appendChild(copiar);
       }
-      cartao.appendChild(acoes); area.appendChild(cartao);
+      cartao.append(nome,dados,comissaoLinha,acoes); area.appendChild(cartao);
     });
   } catch (err) {
     area.textContent = "Não foi possível carregar os vendedores: " + (err.message || "erro desconhecido");
   } finally { if (botao) botao.disabled = false; }
+}
+async function salvarComissaoVendedor(vendedor, input, botao) {
+  const valor = Number(input.value);
+  if (!Number.isFinite(valor) || valor < 0 || valor > 100) { alert("A comissão deve estar entre 0% e 100%."); return; }
+  botao.disabled = true;
+  try {
+    await BelaSync.atualizarVendedor(vendedor.id, vendedor.status || "pendente", valor);
+    vendedor.comissao = valor;
+    alert("Comissão atualizada com sucesso.");
+  } catch (err) { alert(err.message || "Não foi possível salvar a comissão."); }
+  finally { botao.disabled = false; }
 }
 async function atualizarStatusVendedor(vendedor,status) {
   if (!confirm((status === "aprovado" ? "Aprovar" : "Reprovar") + " o cadastro de " + (vendedor.nome || "vendedor") + "?")) return;
@@ -1428,6 +1449,39 @@ async function atualizarStatusVendedor(vendedor,status) {
   } catch (err) { alert(err.message || "Não foi possível atualizar o cadastro."); }
 }
 document.getElementById("atualizar-vendedores")?.addEventListener("click",carregarVendedoresAdmin);
+async function carregarConfigEntregasAdmin() {
+  const status = document.getElementById("status-config-entregas");
+  try {
+    const config = await BelaSync.buscarEntregas();
+    document.getElementById("admin-valor-km").value = Number(config.valorKm ?? 2).toFixed(2);
+    document.getElementById("admin-endereco-origem").value = config.enderecoOrigem || "";
+    document.getElementById("admin-endereco-retirada").value = config.enderecoRetirada || "";
+    status.textContent = "Configurações carregadas.";
+  } catch (err) { status.textContent = "Não foi possível carregar as configurações: " + (err.message || "erro desconhecido"); }
+}
+document.getElementById("salvar-config-entregas").addEventListener("click", async () => {
+  const botao = document.getElementById("salvar-config-entregas");
+  const status = document.getElementById("status-config-entregas");
+  const config = {
+    valorKm: document.getElementById("admin-valor-km").value,
+    enderecoOrigem: document.getElementById("admin-endereco-origem").value.trim(),
+    enderecoRetirada: document.getElementById("admin-endereco-retirada").value.trim()
+  };
+  if (!config.enderecoOrigem || !config.enderecoRetirada || !Number.isFinite(Number(config.valorKm)) || Number(config.valorKm) < 0) {
+    alert("Confira o valor por km e os dois endereços."); return;
+  }
+  botao.disabled = true; status.textContent = "Salvando configurações…";
+  try {
+    const salvo = await BelaSync.salvarEntregas(config);
+    document.getElementById("admin-valor-km").value = Number(salvo.valorKm).toFixed(2);
+    status.textContent = "Configurações de entrega salvas com sucesso.";
+    alert("Configurações de entrega salvas.");
+  } catch (err) {
+    status.textContent = "Falha ao salvar: " + (err.message || "erro desconhecido");
+    alert(err.message || "Não foi possível salvar as configurações.");
+  } finally { botao.disabled = false; }
+});
+
 function atualizarPainelAdmin() {
   const logado = BelaSync.estaLogado();
   document.getElementById("admin-login").hidden = logado;
@@ -1441,7 +1495,7 @@ document.getElementById("form-login").addEventListener("submit", async e => {
   try {
     await BelaSync.entrar(document.getElementById("admin-senha").value);
     document.getElementById("admin-senha").value = "";
-    await carregarProdutos(); await carregarBannerAdmin(); atualizarPainelAdmin();
+    await carregarProdutos(); await carregarBannerAdmin(); await carregarConfigEntregasAdmin(); atualizarPainelAdmin();
   } catch (err) { alert(err.message || "Falha ao entrar."); }
   finally { botao.disabled = false; }
 });
