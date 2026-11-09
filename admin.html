@@ -665,6 +665,7 @@ footer { padding-top:24px; }
     <button type="button" class="ativo" data-admin-aba="produtos" aria-selected="true"><span>🛍️</span>Produtos</button>
     <button type="button" data-admin-aba="vendedores" aria-selected="false"><span>🤝</span>Vendedores</button>
     <button type="button" data-admin-aba="entregas" aria-selected="false"><span>🚚</span>Entregas</button>
+    <button type="button" data-admin-aba="pagamentos" aria-selected="false"><span>💸</span>Pagamentos</button>
   </nav>
   <section class="admin-secao" id="secao-admin-produtos">
   <p class="aviso-demo">Cadastro, edição, fotos, vídeos, preços, estoque, destaques e promoções dos produtos.</p>
@@ -707,6 +708,7 @@ footer { padding-top:24px; }
     <button class="acao-header" id="atualizar-pedidos-vendedores" type="button">Atualizar pedidos</button>
   </section>
   </section>
+  <section class="admin-secao" id="secao-admin-pagamentos" hidden><h3>Pagamentos de comissões</h3><p>Selecione as vendas finalizadas, confira o total e anexe o comprovante do pagamento quinzenal.</p><button class="acao-header" id="atualizar-pagamentos-vendedores" type="button">Atualizar comissões</button><div id="lista-pagamentos-pendentes">Carregando comissões…</div><hr><h3>Pagamentos realizados</h3><div id="historico-pagamentos-admin"></div></section>
   <section class="admin-secao" id="secao-admin-entregas" hidden>
     <h3>Configurações de entrega</h3>
     <p>Reúna aqui as opções de frete, cálculo por quilômetro e retirada na loja.</p>
@@ -1483,8 +1485,8 @@ async function carregarPedidosVendedoresAdmin() {
       const resumo = document.createElement("span");
       resumo.textContent = "Pedido " + p.id + " · Produtos: " + moedaAdmin(p.totalProdutos) + " · Frete: " + moedaAdmin(p.frete) + " · Total: " + moedaAdmin(p.total) + " · Comissão: " + moedaAdmin(p.comissao) + " (" + p.comissaoPercentual + "%)";
       const status = document.createElement("select");
-      [["aguardando","Aguardando"],["confirmada","Confirmada"],["concluida","Concluída — liberar comissão"],["cancelada","Cancelada"]].forEach(([v,t]) => { const o=document.createElement("option");o.value=v;o.textContent=t;status.appendChild(o); });
-      status.value = p.status;
+      [["aguardando","Aguardando — confirmar produtos"],["confirmando","Confirmando — produtos disponíveis"],["finalizado","Finalizado — liberar comissão"],["cancelada","Cancelado"]].forEach(([v,t]) => { const o=document.createElement("option");o.value=v;o.textContent=t;status.appendChild(o); });
+      status.value=({confirmada:"confirmando",concluida:"finalizado"})[p.status]||p.status;
       status.addEventListener("change", async () => {
         status.disabled = true;
         try { await BelaSync.atualizarPedidoVendedor(p.id,status.value); await carregarPedidosVendedoresAdmin(); }
@@ -1501,6 +1503,8 @@ async function carregarPedidosVendedoresAdmin() {
 }
 function moedaAdmin(v) { return Number(v || 0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
 document.getElementById("atualizar-pedidos-vendedores")?.addEventListener("click",carregarPedidosVendedoresAdmin);
+async function carregarPagamentosVendedoresAdmin(){const area=document.getElementById("lista-pagamentos-pendentes"),hist=document.getElementById("historico-pagamentos-admin");if(!area)return;try{const dados=await BelaSync.listarPagamentosVendedores();area.replaceChildren();const grupos={};(dados.pedidos||[]).forEach(p=>(grupos[p.vendedorId]??={nome:p.vendedor,lista:[]}).lista.push(p));Object.entries(grupos).forEach(([id,g])=>{const box=document.createElement("div");box.style.cssText="border:1px solid #e5d4bd;padding:12px;margin:10px 0";const h=document.createElement("h4");h.textContent=g.nome;box.appendChild(h);g.lista.forEach(p=>{const label=document.createElement("label"),cb=document.createElement("input");cb.type="checkbox";cb.checked=true;cb.dataset.id=p.id;cb.style.width="auto";label.append(cb,document.createTextNode("Pedido "+p.id.slice(0,8)+" · "+moedaAdmin(p.comissao)));box.appendChild(label);});const pix=document.createElement("p");pix.textContent="Chave Pix: "+(g.lista[0].chavePix||"Não cadastrada");box.appendChild(pix);const file=document.createElement("input");file.type="file";file.accept="application/pdf,image/jpeg,image/png";box.appendChild(file);const btn=document.createElement("button");btn.className="botao-principal";btn.textContent="Registrar pagamento e comprovante";btn.addEventListener("click",async()=>{const ids=[...box.querySelectorAll("input[type=checkbox]:checked")].map(x=>x.dataset.id);if(!ids.length||!file.files[0]){alert("Selecione as vendas e anexe o comprovante.");return;}btn.disabled=true;try{await BelaSync.registrarPagamentoVendedor({vendedorId:id,pedidoIds:ids},file.files[0]);await carregarPagamentosVendedoresAdmin();await carregarPedidosVendedoresAdmin();alert("Pagamento registrado.");}catch(e){alert(e.message||"Falha ao registrar.");}finally{btn.disabled=false;}});box.appendChild(btn);area.appendChild(box);});if(!Object.keys(grupos).length)area.textContent="Não há comissões aguardando pagamento.";hist.replaceChildren();(dados.pagamentos||[]).forEach(p=>{const el=document.createElement("p");el.textContent=p.vendedor+" · "+p.periodo+" · "+moedaAdmin(p.valor)+" · ";const a=document.createElement("a");a.href=p.comprovanteUrl;a.target="_blank";a.textContent="Comprovante";el.append(a);hist.append(el);});if(!(dados.pagamentos||[]).length)hist.textContent="Nenhum pagamento registrado.";}catch(e){area.textContent=e.message||"Falha ao carregar pagamentos.";}}
+document.getElementById("atualizar-pagamentos-vendedores")?.addEventListener("click",carregarPagamentosVendedoresAdmin);
 
 async function salvarComissaoVendedor(vendedor, input, botao) {
   const valor = Number(input.value);
@@ -1559,7 +1563,7 @@ function atualizarPainelAdmin() {
   const logado = BelaSync.estaLogado();
   document.getElementById("admin-login").hidden = logado;
   document.getElementById("admin-conteudo").hidden = !logado;
-  if (logado) { renderListaAdmin(); carregarVendedoresAdmin(); carregarPedidosVendedoresAdmin(); }
+  if (logado) { renderListaAdmin(); carregarVendedoresAdmin(); carregarPedidosVendedoresAdmin(); carregarPagamentosVendedoresAdmin(); }
 }
 document.getElementById("form-login").addEventListener("submit", async e => {
   e.preventDefault();
