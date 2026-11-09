@@ -459,7 +459,7 @@ body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); background-colo
 .categoria-visual strong { margin:0 0 5px; color:#fff2d9; font:normal 17px Arial,sans-serif; }
 .categoria-visual small { color:#f5d28b; font-size:10px; }
 .categorias { display:none; }
-.navegacao-inferior { position:fixed; z-index:8; left:0; right:0; bottom:0; min-height:68px; padding:7px 4px calc(7px + env(safe-area-inset-bottom)); display:grid; grid-template-columns:repeat(4,1fr); background:linear-gradient(100deg,#250108,#650817 50%,#250108); border-top:1px solid #e8bd70; box-shadow:0 -8px 25px rgba(0,0,0,.35); }
+.navegacao-inferior { position:fixed; z-index:8; left:0; right:0; bottom:0; min-height:68px; padding:7px 4px calc(7px + env(safe-area-inset-bottom)); display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); background:linear-gradient(100deg,#250108,#650817 50%,#250108); border-top:1px solid #e8bd70; box-shadow:0 -8px 25px rgba(0,0,0,.35); }
 .navegacao-inferior button { min-width:0; border:0; border-right:1px solid rgba(232,189,112,.42); background:transparent; color:#f4d28e; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font:11px Arial,sans-serif; cursor:pointer; }
 .navegacao-inferior button:last-child { border-right:0; }
 .navegacao-inferior button span { font-size:26px; line-height:1.1; color:#f7d58e; }
@@ -816,7 +816,7 @@ footer { padding-top:24px; }
 }
 .busca::placeholder { color:#927b78; }
 .busca:focus { border-color:#e5bd70; outline:none; box-shadow:0 0 0 3px rgba(229,189,112,.2),0 6px 18px rgba(0,0,0,.18); }
-.navegacao-inferior { grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; padding-left:12px; padding-right:12px; }
+.navegacao-inferior { grid-template-columns:repeat(5,minmax(0,1fr)); gap:3px; padding-left:12px; padding-right:12px; }
 .navegacao-inferior button { border:0; border-radius:13px; transition:background .2s,transform .2s; }
 .navegacao-inferior button:active { transform:scale(.97); }
 .navegacao-inferior #nav-sacola {
@@ -861,6 +861,32 @@ footer { padding-top:24px; }
 .cadastro-vendedor input{width:100%;padding:12px;border:1px solid #d8c9c1;border-radius:8px;font:inherit}
 .cadastro-vendedor p{line-height:1.5}
 #resultado-cadastro-vendedor{min-height:1.3em;margin:4px 0 0}
+
+/* Ajustes pontuais da barra de cinco atalhos */
+.navegacao-inferior { gap:2px; padding-left:3px; padding-right:3px; }
+.navegacao-inferior button { border-right:0; gap:1px; font-size:9px; white-space:nowrap; }
+.navegacao-inferior button span { font-size:20px; line-height:1; }
+.navegacao-inferior .sacola-icone { width:24px; height:23px; }
+.navegacao-inferior .sacola-icone .icone-sacola-svg { width:22px; height:22px; }
+.navegacao-inferior .nav-avatar { padding:0; }
+.navegacao-inferior .nav-avatar .avatar-provisorio { display:grid; place-items:center; width:36px; height:36px; border-radius:50%; border:2px solid #e5bd70; background:#fff1d4; box-shadow:0 1px 6px rgba(0,0,0,.35); }
+.navegacao-inferior .nav-avatar .avatar-provisorio svg { display:block; width:100%; height:100%; }
+.menu-parceiros-fundo { position:fixed; z-index:50; inset:0; display:flex; align-items:flex-end; justify-content:center; padding:14px 10px calc(76px + env(safe-area-inset-bottom)); background:rgba(18,2,7,.68); }
+.menu-parceiros-fundo[hidden] { display:none !important; }
+.menu-parceiros { position:relative; width:min(480px,100%); max-height:78vh; overflow:auto; padding:20px 16px 16px; border:1px solid #e5bd70; border-radius:18px; background:#fff8ef; color:#351018; box-shadow:0 18px 50px rgba(0,0,0,.4); }
+.fechar-menu-parceiros { position:absolute; top:8px; right:10px; width:34px; height:34px; border:0; border-radius:50%; background:#f0e3d5; color:#650817; font-size:24px; }
+.cabecalho-menu-parceiros { padding:0 40px 12px 2px; border-bottom:1px solid #ead8c6; margin-bottom:8px; }
+.cabecalho-menu-parceiros strong { display:block; color:#650817; font:normal 20px Georgia,serif; }
+.cabecalho-menu-parceiros small { display:block; margin-top:3px; color:#82666a; font-size:11px; }
+.menu-parceiros .cadastro-vendedor { margin:0; padding:12px 3px; border-bottom:1px solid #eadfd5; }
+.menu-parceiros .cadastro-vendedor summary { color:#650817; font-weight:700; cursor:pointer; }
+.menu-parceiros .cadastro-vendedor form { display:grid; gap:7px; margin-top:10px; }
+.menu-parceiros .cadastro-vendedor input { width:100%; box-sizing:border-box; padding:10px; border:1px solid #d8c9c1; border-radius:8px; background:#fff; }
+.menu-parceiros #abrir-admin { display:block; margin:8px 0; padding:12px 4px; border:0; border-bottom:1px solid #eadfd5; border-radius:0; color:#650817; }
+.linha-menu-contato { padding:12px 3px 5px; color:#650817; font-weight:700; }
+.contato-menu-parceiros { display:block; padding:11px 4px; border-top:1px solid #eadfd5; color:#650817; text-decoration:none; font-size:13px; }
+@media(max-width:380px) { .navegacao-inferior button { font-size:8px; } .navegacao-inferior .nav-avatar .avatar-provisorio { width:32px; height:32px; } }
+
 </style>
 </head>
 
@@ -944,9 +970,19 @@ footer { padding-top:24px; }
   <section class="produtos" id="produtos"></section>
 </main>
 
-<footer id="rodape">
-  <strong>Bela Modas</strong>
-  <details class="cadastro-vendedor">
+<footer id="rodape"><strong>Bela Modas</strong></footer>
+<nav class="navegacao-inferior" aria-label="Navegação principal">
+  <button type="button" data-ir="inicio"><span>⌂</span>Início</button>
+  <button type="button" data-ir="destaques"><span>★</span>Destaques</button>
+  <button type="button" id="nav-parceiros" class="nav-avatar" aria-label="Abrir menu de parceiros" aria-expanded="false"><span class="avatar-provisorio"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle cx="32" cy="32" r="30" fill="#e5bd70"/><path d="M13 29C13 10 22 5 33 5s20 9 19 26v8H13z" fill="#4b1720"/><path d="M18 28c0-12 6-18 14-18s15 7 15 19v8c0 10-7 17-15 17S18 47 18 37z" fill="#f2c49b"/><path d="M17 27c2-14 10-20 18-19 9 1 14 8 15 19-7-2-12-6-14-11-5 6-11 9-19 11" fill="#4b1720"/><circle cx="26" cy="33" r="2" fill="#351018"/><circle cx="39" cy="33" r="2" fill="#351018"/><path d="M27 42q5 4 10 0" fill="none" stroke="#9d4c4b" stroke-width="2" stroke-linecap="round"/><path d="M9 64c2-13 10-19 23-19s21 6 23 19" fill="#650817"/></svg></span></button>
+  <button type="button" data-ir="categorias"><span>▦</span>Categorias</button>
+  <button type="button" id="nav-sacola"><span class="sacola-icone"><svg class="icone-sacola-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5.5 8.5h13l1.1 12h-15.2l1.1-12Z"/><path d="M9 9V6.8a3 3 0 0 1 6 0V9"/></svg><i id="contador-sacola-nav">0</i></span>Sacola</button>
+</nav>
+<div class="menu-parceiros-fundo" id="menu-parceiros" hidden>
+  <section class="menu-parceiros" role="dialog" aria-modal="true" aria-label="Menu de parceiros">
+    <button type="button" class="fechar-menu-parceiros" id="fechar-menu-parceiros" aria-label="Fechar">×</button>
+    <div class="cabecalho-menu-parceiros"><strong>Bela Modas</strong><small>Área de parceiros e atendimento</small></div>
+    <details class="cadastro-vendedor">
     <summary>Seja um vendedor parceiro da Bela Modas</summary>
     <p>Cadastre-se gratuitamente. Seu cadastro será analisado pela nossa equipe antes da liberação do link exclusivo.</p>
     <form id="form-cadastro-vendedor">
@@ -966,7 +1002,7 @@ footer { padding-top:24px; }
       <p id="resultado-cadastro-vendedor" role="status" aria-live="polite"></p>
     </form>
   </details>
-  <details class="cadastro-vendedor" id="acesso-vendedor">
+    <details class="cadastro-vendedor" id="acesso-vendedor">
     <summary>Já sou vendedor parceiro — acessar minha área</summary>
     <form id="form-login-vendedor">
       <label for="login-vendedor-email">E-mail</label><input id="login-vendedor-email" type="email" autocomplete="username" required>
@@ -987,14 +1023,12 @@ footer { padding-top:24px; }
       <button type="button" id="sair-vendedor" class="acao-header">Sair</button>
     </section>
   </details>
-  <a id="abrir-admin" href="admin.html" target="_blank" rel="noopener">Acesso administrativo</a>
-</footer>
-<nav class="navegacao-inferior" aria-label="Navegação principal">
-  <button type="button" data-ir="inicio"><span>⌂</span>Início</button>
-  <button type="button" data-ir="destaques"><span>★</span>Destaques</button>
-  <button type="button" data-ir="categorias"><span>▦</span>Categorias</button>
-  <button type="button" id="nav-sacola"><span class="sacola-icone"><svg class="icone-sacola-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5.5 8.5h13l1.1 12h-15.2l1.1-12Z"/><path d="M9 9V6.8a3 3 0 0 1 6 0V9"/></svg><i id="contador-sacola-nav">0</i></span>Sacola</button>
-</nav>
+    <a id="abrir-admin" href="admin.html" target="_blank" rel="noopener">Acesso administrativo</a>
+    <div class="linha-menu-contato"><strong>Fale conosco</strong></div>
+    <a class="contato-menu-parceiros" href="https://wa.me/5531997337304" target="_blank" rel="noopener">WhatsApp</a>
+    <a class="contato-menu-parceiros" href="https://www.instagram.com/belamodaspetro/" target="_blank" rel="noopener">Instagram @belamodaspetro</a>
+  </section>
+</div>
 
 <div class="modal-fundo" id="modal">
   <div class="modal">
@@ -1840,6 +1874,15 @@ document.querySelectorAll(".navegacao-inferior [data-ir]").forEach(botao => bota
   document.querySelector(destino)?.scrollIntoView({behavior:"smooth",block:"start"});
 }));
 document.getElementById("nav-sacola").addEventListener("click", () => abrirPainel("painel-carrinho"));
+
+const menuParceiros=document.getElementById("menu-parceiros");
+const botaoMenuParceiros=document.getElementById("nav-parceiros");
+function fecharMenuParceiros(){menuParceiros.hidden=true;botaoMenuParceiros.setAttribute("aria-expanded","false");}
+botaoMenuParceiros.addEventListener("click",()=>{menuParceiros.hidden=false;botaoMenuParceiros.setAttribute("aria-expanded","true");});
+document.getElementById("fechar-menu-parceiros").addEventListener("click",fecharMenuParceiros);
+menuParceiros.addEventListener("click",e=>{if(e.target===menuParceiros)fecharMenuParceiros();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!menuParceiros.hidden)fecharMenuParceiros();});
+
 
 (function carregarCacheInicial() {
   try {
