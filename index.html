@@ -460,29 +460,6 @@ body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); background-colo
 .categoria-visual small { color:#f5d28b; font-size:10px; }
 .categorias { display:none; }
 .navegacao-inferior { position:fixed; z-index:8; left:0; right:0; bottom:0; min-height:68px; padding:7px 4px calc(7px + env(safe-area-inset-bottom)); display:grid; grid-template-columns:repeat(4,1fr); background:linear-gradient(100deg,#250108,#650817 50%,#250108); border-top:1px solid #e8bd70; box-shadow:0 -8px 25px rgba(0,0,0,.35); }
-.navegacao-inferior { grid-template-columns:repeat(5,minmax(0,1fr)); }
-.navegacao-inferior .nav-avatar { position:relative; overflow:visible; border:0; gap:0; transform:translateY(-15px); }
-.avatar-provisorio { display:grid; place-items:center; width:58px; height:58px; padding:3px; border-radius:50%; background:linear-gradient(145deg,#fff0c7,#d9a54f); border:2px solid #f8e4b6; box-shadow:0 0 0 3px rgba(101,8,23,.9),0 4px 14px rgba(0,0,0,.4); }
-.avatar-provisorio svg { width:100%; height:100%; display:block; }
-.rotulo-avatar { margin-top:4px; font-size:10px!important; color:#f7d58e!important; white-space:nowrap; }
-.menu-parceiros-fundo { position:fixed; z-index:30; inset:0; display:flex; align-items:flex-end; justify-content:center; padding:16px 12px calc(82px + env(safe-area-inset-bottom)); background:rgba(18,2,7,.68); }
-.menu-parceiros-fundo[hidden] { display:none!important; }
-.menu-parceiros { position:relative; width:min(480px,100%); max-height:min(78vh,720px); overflow:auto; padding:20px 16px 16px; border:1px solid #e5bd70; border-radius:22px; color:#351018; background:#fff8ef; box-shadow:0 18px 50px rgba(0,0,0,.4); }
-.fechar-menu-parceiros { position:absolute; top:9px; right:12px; width:34px; height:34px; border:0; border-radius:50%; background:#f0e3d5; color:#650817; font-size:25px; cursor:pointer; }
-.cabecalho-menu-parceiros { display:flex; align-items:center; gap:12px; padding:2px 38px 17px 2px; border-bottom:1px solid #ead8c6; margin-bottom:10px; }
-.mini-avatar { display:grid; place-items:center; flex:0 0 48px; width:48px; height:48px; border-radius:50%; background:linear-gradient(145deg,#8b1230,#3b0612); color:#f5d28b; font:italic bold 27px Georgia,serif; border:2px solid #e5bd70; }
-.cabecalho-menu-parceiros strong { display:block; color:#650817; font:normal 18px Georgia,serif; }
-.cabecalho-menu-parceiros small,.item-menu-parceiros small,.linha-menu-contato small { display:block; margin-top:4px; color:#82666a; font-size:11px; line-height:1.4; }
-.item-menu-parceiros { display:flex; align-items:center; gap:12px; width:100%; padding:13px 8px; border:0; border-bottom:1px solid #eee1d5; background:transparent; color:#650817; text-align:left; text-decoration:none; cursor:pointer; font:inherit; }
-.item-menu-parceiros>span:first-child { display:grid; place-items:center; flex:0 0 38px; width:38px; height:38px; border-radius:12px; background:#f3e5d7; color:#650817; font-size:22px; }
-.item-menu-parceiros>span:nth-child(2) { flex:1; min-width:0; }
-.item-menu-parceiros strong { display:block; color:#650817; font-size:13px; }
-.item-menu-parceiros>b { color:#b18a4c; font-size:22px; font-weight:normal; }
-.linha-menu-contato { padding:15px 8px 5px; }
-.linha-menu-contato strong { color:#650817; font:normal 18px Georgia,serif; }
-.contato-menu { padding-top:9px; padding-bottom:9px; }
-@media(max-width:380px) { .avatar-provisorio { width:52px;height:52px; } .rotulo-avatar { font-size:9px!important; } .item-menu-parceiros { gap:8px; padding:11px 5px; } }
-
 .navegacao-inferior button { min-width:0; border:0; border-right:1px solid rgba(232,189,112,.42); background:transparent; color:#f4d28e; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font:11px Arial,sans-serif; cursor:pointer; }
 .navegacao-inferior button:last-child { border-right:0; }
 .navegacao-inferior button span { font-size:26px; line-height:1.1; color:#f7d58e; }
@@ -884,33 +861,6 @@ footer { padding-top:24px; }
 .cadastro-vendedor input{width:100%;padding:12px;border:1px solid #d8c9c1;border-radius:8px;font:inherit}
 .cadastro-vendedor p{line-height:1.5}
 #resultado-cadastro-vendedor{min-height:1.3em;margin:4px 0 0}
-
-.navegacao-inferior{grid-template-columns:repeat(5,minmax(0,1fr));min-height:62px;padding:5px 2px calc(5px + env(safe-area-inset-bottom))}
-.navegacao-inferior button{border-right:0;gap:1px;font-size:9px;white-space:nowrap}
-.navegacao-inferior button>span:not(.sacola-icone){font-size:19px;line-height:1}
-.navegacao-inferior .sacola-icone{width:24px;height:23px}.navegacao-inferior .sacola-icone .icone-sacola-svg{width:22px;height:22px}
-.navegacao-inferior .nav-avatar{gap:1px;transform:none}
-.avatar-provisorio{display:grid;place-items:center;width:35px;height:35px;padding:1px;border-radius:50%;background:#e5bd70;border:1px solid #f8e4b6;box-shadow:0 0 0 2px #650817}
-.avatar-provisorio svg{width:100%;height:100%;display:block}
-.menu-parceiros-fundo{position:fixed;z-index:30;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:14px 10px calc(70px + env(safe-area-inset-bottom));background:rgba(18,2,7,.68)}
-.menu-parceiros-fundo[hidden]{display:none!important}
-.menu-parceiros{position:relative;width:min(480px,100%);max-height:80vh;overflow:auto;padding:18px 15px 14px;border:1px solid #e5bd70;border-radius:20px;color:#351018;background:#fff8ef;box-shadow:0 18px 50px rgba(0,0,0,.4)}
-.fechar-menu-parceiros{position:absolute;top:8px;right:10px;width:32px;height:32px;border:0;border-radius:50%;background:#f0e3d5;color:#650817;font-size:24px}
-.cabecalho-menu-parceiros{display:flex;align-items:center;gap:10px;padding:0 38px 13px 0;border-bottom:1px solid #ead8c6;margin-bottom:10px}
-.mini-avatar{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:linear-gradient(145deg,#8b1230,#3b0612);color:#f5d28b;font:bold italic 24px Georgia,serif;border:2px solid #e5bd70}
-.cabecalho-menu-parceiros strong{display:block;color:#650817;font:normal 18px Georgia,serif}
-.cabecalho-menu-parceiros small,.linha-menu-contato small{display:block;margin-top:3px;color:#82666a;font-size:11px}
-.menu-parceiros .cadastro-vendedor{margin:0;border-bottom:1px solid #eee1d5;padding:12px 4px}
-.menu-parceiros .cadastro-vendedor summary,.menu-parceiros #acesso-vendedor summary{color:#650817;font-weight:700;cursor:pointer}
-.menu-parceiros .cadastro-vendedor p,.menu-parceiros .cadastro-vendedor label{color:#5b4145}
-.menu-parceiros .cadastro-vendedor input{width:100%;padding:11px;border:1px solid #d8c9c1;border-radius:8px;background:white}
-.menu-parceiros .cadastro-vendedor form{display:grid;gap:7px;margin-top:12px}
-.menu-parceiros #abrir-admin{display:flex;margin:8px 0;padding:12px 5px;border:0;border-top:1px solid #eee1d5;border-radius:0;color:#650817}
-.linha-menu-contato{padding:13px 5px 4px;border-top:1px solid #ead8c6}.linha-menu-contato strong{color:#650817;font:normal 17px Georgia,serif}
-.item-menu-parceiros{display:flex;align-items:center;gap:10px;width:100%;padding:10px 5px;border-bottom:1px solid #eee1d5;color:#650817;text-decoration:none}
-.item-menu-parceiros>span:first-child{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#f3e5d7;font-size:20px}
-.item-menu-parceiros>span:nth-child(2){flex:1}.item-menu-parceiros strong{display:block;font-size:12px}.item-menu-parceiros small{display:block;margin-top:3px;color:#82666a;font-size:10px}
-@media(max-width:380px){.navegacao-inferior button{font-size:8px}.avatar-provisorio{width:32px;height:32px}}
 </style>
 </head>
 
@@ -994,13 +944,8 @@ footer { padding-top:24px; }
   <section class="produtos" id="produtos"></section>
 </main>
 
-<footer id="rodape"><strong>Bela Modas</strong><p>Moda para toda família</p></footer>
-<nav class="navegacao-inferior" aria-label="Navegação principal">
-<button type="button" data-ir="inicio"><span>⌂</span>Início</button><button type="button" data-ir="destaques"><span>★</span>Destaques</button>
-<button type="button" id="nav-parceiros" class="nav-avatar" aria-label="Parceiros e contato" aria-expanded="false"><span class="avatar-provisorio"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#e5bd70"/><path d="M13 29C13 10 22 5 33 5s20 9 19 26v8H13z" fill="#4b1720"/><path d="M18 28c0-12 6-18 14-18s15 7 15 19v8c0 10-7 17-15 17S18 47 18 37z" fill="#f2c49b"/><path d="M17 27c2-14 10-20 18-19 9 1 14 8 15 19-7-2-12-6-14-11-5 6-11 9-19 11" fill="#4b1720"/><circle cx="26" cy="33" r="2" fill="#351018"/><circle cx="39" cy="33" r="2" fill="#351018"/><path d="M27 42q5 4 10 0" fill="none" stroke="#9d4c4b" stroke-width="2"/><path d="M9 64c2-13 10-19 23-19s21 6 23 19" fill="#650817"/></svg></span>Parceiros</button>
-<button type="button" data-ir="categorias"><span>▦</span>Categorias</button><button type="button" id="nav-sacola"><span class="sacola-icone"><svg class="icone-sacola-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 8.5h13l1.1 12h-15.2l1.1-12Z"/><path d="M9 9V6.8a3 3 0 0 1 6 0V9"/></svg><i id="contador-sacola-nav">0</i></span>Sacola</button></nav><div class="menu-parceiros-fundo" id="menu-parceiros" hidden><section class="menu-parceiros" role="dialog" aria-modal="true" aria-labelledby="titulo-menu-parceiros">
-<button type="button" class="fechar-menu-parceiros" id="fechar-menu-parceiros" aria-label="Fechar">×</button>
-<div class="cabecalho-menu-parceiros"><span class="mini-avatar">B</span><div><strong id="titulo-menu-parceiros">Bela Modas</strong><small>Como podemos ajudar?</small></div></div>
+<footer id="rodape">
+  <strong>Bela Modas</strong>
   <details class="cadastro-vendedor">
     <summary>Seja um vendedor parceiro da Bela Modas</summary>
     <p>Cadastre-se gratuitamente. Seu cadastro será analisado pela nossa equipe antes da liberação do link exclusivo.</p>
@@ -1043,25 +988,13 @@ footer { padding-top:24px; }
     </section>
   </details>
   <a id="abrir-admin" href="admin.html" target="_blank" rel="noopener">Acesso administrativo</a>
-<div class="linha-menu-contato"><strong>Fale conosco</strong><small>Estamos à disposição para atender você.</small></div>
-<a class="item-menu-parceiros" href="https://wa.me/5531997337304" target="_blank" rel="noopener"><span>☏</span><span><strong>WhatsApp</strong><small>Converse diretamente com a loja</small></span><b>↗</b></a>
-<a class="item-menu-parceiros" href="https://www.instagram.com/belamodaspetro/" target="_blank" rel="noopener"><span>◎</span><span><strong>Instagram</strong><small>@belamodaspetro</small></span><b>↗</b></a>
-</section></div>
-<div class="menu-parceiros-fundo" id="menu-parceiros" hidden>
-  <section class="menu-parceiros" role="dialog" aria-modal="true" aria-labelledby="titulo-menu-parceiros">
-    <button type="button" class="fechar-menu-parceiros" id="fechar-menu-parceiros" aria-label="Fechar">×</button>
-    <div class="cabecalho-menu-parceiros">
-      <span class="mini-avatar">B</span>
-      <div><strong id="titulo-menu-parceiros">Olá! Bem-vindo à Bela Modas</strong><small>Como podemos ajudar?</small></div>
-    </div>
-    <button type="button" class="item-menu-parceiros" data-menu-acao="cadastro"><span>♧</span><span><strong>Quero ser vendedor parceiro</strong><small>Cadastre-se para divulgar nossos produtos</small></span><b>›</b></button>
-    <button type="button" class="item-menu-parceiros" data-menu-acao="login"><span>♙</span><span><strong>Já sou vendedor parceiro</strong><small>Acesse sua área e acompanhe suas vendas</small></span><b>›</b></button>
-    <a class="item-menu-parceiros" href="admin.html" target="_blank" rel="noopener"><span>⚙</span><span><strong>Acesso administrativo</strong><small>Área de gestão da Bela Modas</small></span><b>›</b></a>
-    <div class="linha-menu-contato"><strong>Fale conosco</strong><small>Estamos à disposição para atender você.</small></div>
-    <a class="item-menu-parceiros contato-menu" href="https://wa.me/5531997337304" target="_blank" rel="noopener"><span>☏</span><span><strong>WhatsApp</strong><small>Converse diretamente com a loja</small></span><b>↗</b></a>
-    <a class="item-menu-parceiros contato-menu" href="https://www.instagram.com/belamodaspetro/" target="_blank" rel="noopener"><span>◎</span><span><strong>Instagram</strong><small>@belamodaspetro</small></span><b>↗</b></a>
-  </section>
-</div>
+</footer>
+<nav class="navegacao-inferior" aria-label="Navegação principal">
+  <button type="button" data-ir="inicio"><span>⌂</span>Início</button>
+  <button type="button" data-ir="destaques"><span>★</span>Destaques</button>
+  <button type="button" data-ir="categorias"><span>▦</span>Categorias</button>
+  <button type="button" id="nav-sacola"><span class="sacola-icone"><svg class="icone-sacola-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5.5 8.5h13l1.1 12h-15.2l1.1-12Z"/><path d="M9 9V6.8a3 3 0 0 1 6 0V9"/></svg><i id="contador-sacola-nav">0</i></span>Sacola</button>
+</nav>
 
 <div class="modal-fundo" id="modal">
   <div class="modal">
@@ -1907,37 +1840,6 @@ document.querySelectorAll(".navegacao-inferior [data-ir]").forEach(botao => bota
   document.querySelector(destino)?.scrollIntoView({behavior:"smooth",block:"start"});
 }));
 document.getElementById("nav-sacola").addEventListener("click", () => abrirPainel("painel-carrinho"));
-const menuParceiros=document.getElementById("menu-parceiros"),botaoMenuParceiros=document.getElementById("nav-parceiros");
-function fecharMenuParceiros(){menuParceiros.hidden=true;botaoMenuParceiros.setAttribute("aria-expanded","false");}
-botaoMenuParceiros.addEventListener("click",()=>{menuParceiros.hidden=false;botaoMenuParceiros.setAttribute("aria-expanded","true");});
-document.getElementById("fechar-menu-parceiros").addEventListener("click",fecharMenuParceiros);
-menuParceiros.addEventListener("click",e=>{if(e.target===menuParceiros)fecharMenuParceiros();});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!menuParceiros.hidden)fecharMenuParceiros();});
-
-const menuParceiros = document.getElementById("menu-parceiros");
-const botaoMenuParceiros = document.getElementById("nav-parceiros");
-function fecharMenuParceiros() {
-  menuParceiros.hidden = true;
-  botaoMenuParceiros.setAttribute("aria-expanded","false");
-}
-botaoMenuParceiros.addEventListener("click", () => {
-  menuParceiros.hidden = false;
-  botaoMenuParceiros.setAttribute("aria-expanded","true");
-});
-document.getElementById("fechar-menu-parceiros").addEventListener("click",fecharMenuParceiros);
-menuParceiros.addEventListener("click",e => { if(e.target === menuParceiros) fecharMenuParceiros(); });
-document.addEventListener("keydown",e => { if(e.key === "Escape" && !menuParceiros.hidden) fecharMenuParceiros(); });
-document.querySelectorAll("[data-menu-acao]").forEach(botao => botao.addEventListener("click",() => {
-  const acao = botao.dataset.menuAcao;
-  fecharMenuParceiros();
-  const detalhe = acao === "cadastro" ? document.querySelector(".cadastro-vendedor:not(#acesso-vendedor)") : document.getElementById("acesso-vendedor");
-  if (detalhe) {
-    detalhe.open = true;
-    detalhe.scrollIntoView({behavior:"smooth",block:"center"});
-    setTimeout(() => detalhe.querySelector("form")?.querySelector("input")?.focus({preventScroll:true}),350);
-  }
-}));
-
 
 (function carregarCacheInicial() {
   try {
