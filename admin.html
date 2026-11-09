@@ -1503,7 +1503,67 @@ async function carregarPedidosVendedoresAdmin() {
 }
 function moedaAdmin(v) { return Number(v || 0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
 document.getElementById("atualizar-pedidos-vendedores")?.addEventListener("click",carregarPedidosVendedoresAdmin);
-async function carregarPagamentosVendedoresAdmin(){const area=document.getElementById("lista-pagamentos-pendentes"),hist=document.getElementById("historico-pagamentos-admin");if(!area)return;try{const dados=await BelaSync.listarPagamentosVendedores();area.replaceChildren();const grupos={};(dados.pedidos||[]).forEach(p=>(grupos[p.vendedorId]??={nome:p.vendedor,lista:[]}).lista.push(p));Object.entries(grupos).forEach(([id,g])=>{const box=document.createElement("div");box.style.cssText="border:1px solid #e5d4bd;padding:12px;margin:10px 0";const h=document.createElement("h4");h.textContent=g.nome;box.appendChild(h);let soma=0;g.lista.forEach(p=>{soma+=Number(p.comissao||0);const label=document.createElement("label"),cb=document.createElement("input");cb.type="checkbox";cb.checked=true;cb.dataset.id=p.id;cb.dataset.valor=String(Number(p.comissao||0));cb.style.width="auto";label.append(cb,document.createTextNode("Pedido "+p.id.slice(0,8)+" · "+moedaAdmin(p.comissao)));box.appendChild(label);});const total=document.createElement("strong");const atualizarTotal=()=>{const valor=[...box.querySelectorAll("input[type=checkbox]:checked")].reduce((acc,el)=>acc+Number(el.dataset.valor||0),0);total.textContent="Total selecionado: "+moedaAdmin(valor);};box.querySelectorAll("input[type=checkbox]").forEach(cb=>cb.addEventListener("change",atualizarTotal));atualizarTotal();box.appendChild(total);const pix=document.createElement("p");pix.textContent="Chave Pix: "+(g.lista[0].chavePix||"Não cadastrada");box.appendChild(pix);const file=document.createElement("input");file.type="file";file.accept="application/pdf,image/jpeg,image/png";box.appendChild(file);const btn=document.createElement("button");btn.className="botao-principal";btn.textContent="Registrar pagamento e comprovante";btn.addEventListener("click",async()=>{const ids=[...box.querySelectorAll("input[type=checkbox]:checked")].map(x=>x.dataset.id);if(!ids.length||!file.files[0]){alert("Selecione as vendas e anexe o comprovante.");return;}btn.disabled=true;try{await BelaSync.registrarPagamentoVendedor({vendedorId:id,pedidoIds:ids},file.files[0]);await carregarPagamentosVendedoresAdmin();await carregarPedidosVendedoresAdmin();alert("Pagamento registrado.");}catch(e){alert(e.message||"Falha ao registrar.");}finally{btn.disabled=false;}});box.appendChild(btn);area.appendChild(box);});if(!Object.keys(grupos).length)area.textContent="Não há comissões aguardando pagamento.";hist.replaceChildren();(dados.pagamentos||[]).forEach(p=>{const el=document.createElement("p");el.textContent=p.vendedor+" · "+p.periodo+" · "+moedaAdmin(p.valor)+" · ";const a=document.createElement("a");a.href=p.comprovanteUrl;a.target="_blank";a.textContent="Comprovante";el.append(a);hist.append(el);});if(!(dados.pagamentos||[]).length)hist.textContent="Nenhum pagamento registrado.";}catch(e){area.textContent=e.message||"Falha ao carregar pagamentos.";}}
+async function carregarPagamentosVendedoresAdmin(){
+  const area=document.getElementById("lista-pagamentos-pendentes"),hist=document.getElementById("historico-pagamentos-admin");
+  if(!area)return;
+  try{
+    const dados=await BelaSync.listarPagamentosVendedores();
+    area.replaceChildren();
+    const grupos={};
+    (dados.pedidos||[]).forEach(p=>{
+      const chave=String(p.vendedorId)+"|"+String(p.periodoChave||"sem-periodo");
+      (grupos[chave]??={nome:p.vendedor,periodo:p.periodo||"Quinzena não identificada",lista:[]}).lista.push(p);
+    });
+    Object.entries(grupos).forEach(([chave,g])=>{
+      const box=document.createElement("div");
+      box.style.cssText="border:1px solid #e5d4bd;padding:12px;margin:10px 0";
+      const h=document.createElement("h4");
+      h.textContent=g.nome+" · "+g.periodo;
+      box.appendChild(h);
+      g.lista.forEach(p=>{
+        const label=document.createElement("label"),cb=document.createElement("input");
+        cb.type="checkbox";cb.checked=true;cb.dataset.id=p.id;cb.dataset.valor=String(Number(p.comissao||0));cb.style.width="auto";
+        label.append(cb,document.createTextNode("Pedido "+p.id.slice(0,8)+" · "+moedaAdmin(p.comissao)));
+        box.appendChild(label);
+      });
+      const total=document.createElement("strong");
+      const atualizarTotal=()=>{
+        const valor=[...box.querySelectorAll('input[type="checkbox"]:checked')].reduce((acc,el)=>acc+Number(el.dataset.valor||0),0);
+        total.textContent="Total selecionado: "+moedaAdmin(valor);
+      };
+      box.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.addEventListener("change",atualizarTotal));
+      atualizarTotal();box.appendChild(total);
+      const pix=document.createElement("p");
+      pix.textContent="Chave Pix: "+(g.lista[0].chavePix||"Não cadastrada");
+      box.appendChild(pix);
+      const file=document.createElement("input");
+      file.type="file";file.accept="application/pdf,image/jpeg,image/png";box.appendChild(file);
+      const btn=document.createElement("button");
+      btn.className="botao-principal";btn.textContent="Registrar pagamento e comprovante";
+      btn.addEventListener("click",async()=>{
+        const ids=[...box.querySelectorAll('input[type="checkbox"]:checked')].map(x=>x.dataset.id);
+        if(!ids.length||!file.files[0]){alert("Selecione as vendas e anexe o comprovante.");return;}
+        btn.disabled=true;
+        try{
+          await BelaSync.registrarPagamentoVendedor({vendedorId:g.lista[0].vendedorId,pedidoIds:ids},file.files[0]);
+          await carregarPagamentosVendedoresAdmin();await carregarPedidosVendedoresAdmin();
+          alert("Pagamento registrado.");
+        }catch(e){alert(e.message||"Falha ao registrar.");}
+        finally{btn.disabled=false;}
+      });
+      box.appendChild(btn);area.appendChild(box);
+    });
+    if(!Object.keys(grupos).length)area.textContent="Não há comissões aguardando pagamento.";
+    hist.replaceChildren();
+    (dados.pagamentos||[]).forEach(p=>{
+      const el=document.createElement("p");
+      el.textContent=p.vendedor+" · "+p.periodo+" · "+moedaAdmin(p.valor)+" · ";
+      const a=document.createElement("a");a.href=p.comprovanteUrl;a.target="_blank";a.rel="noopener";a.textContent="Comprovante";
+      el.append(a);hist.append(el);
+    });
+    if(!(dados.pagamentos||[]).length)hist.textContent="Nenhum pagamento registrado.";
+  }catch(e){area.textContent=e.message||"Falha ao carregar pagamentos.";}
+}
 document.getElementById("atualizar-pagamentos-vendedores")?.addEventListener("click",carregarPagamentosVendedoresAdmin);
 
 async function salvarComissaoVendedor(vendedor, input, botao) {
