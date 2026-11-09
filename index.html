@@ -884,6 +884,33 @@ footer { padding-top:24px; }
 .cadastro-vendedor input{width:100%;padding:12px;border:1px solid #d8c9c1;border-radius:8px;font:inherit}
 .cadastro-vendedor p{line-height:1.5}
 #resultado-cadastro-vendedor{min-height:1.3em;margin:4px 0 0}
+
+.navegacao-inferior{grid-template-columns:repeat(5,minmax(0,1fr));min-height:62px;padding:5px 2px calc(5px + env(safe-area-inset-bottom))}
+.navegacao-inferior button{border-right:0;gap:1px;font-size:9px;white-space:nowrap}
+.navegacao-inferior button>span:not(.sacola-icone){font-size:19px;line-height:1}
+.navegacao-inferior .sacola-icone{width:24px;height:23px}.navegacao-inferior .sacola-icone .icone-sacola-svg{width:22px;height:22px}
+.navegacao-inferior .nav-avatar{gap:1px;transform:none}
+.avatar-provisorio{display:grid;place-items:center;width:35px;height:35px;padding:1px;border-radius:50%;background:#e5bd70;border:1px solid #f8e4b6;box-shadow:0 0 0 2px #650817}
+.avatar-provisorio svg{width:100%;height:100%;display:block}
+.menu-parceiros-fundo{position:fixed;z-index:30;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:14px 10px calc(70px + env(safe-area-inset-bottom));background:rgba(18,2,7,.68)}
+.menu-parceiros-fundo[hidden]{display:none!important}
+.menu-parceiros{position:relative;width:min(480px,100%);max-height:80vh;overflow:auto;padding:18px 15px 14px;border:1px solid #e5bd70;border-radius:20px;color:#351018;background:#fff8ef;box-shadow:0 18px 50px rgba(0,0,0,.4)}
+.fechar-menu-parceiros{position:absolute;top:8px;right:10px;width:32px;height:32px;border:0;border-radius:50%;background:#f0e3d5;color:#650817;font-size:24px}
+.cabecalho-menu-parceiros{display:flex;align-items:center;gap:10px;padding:0 38px 13px 0;border-bottom:1px solid #ead8c6;margin-bottom:10px}
+.mini-avatar{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:linear-gradient(145deg,#8b1230,#3b0612);color:#f5d28b;font:bold italic 24px Georgia,serif;border:2px solid #e5bd70}
+.cabecalho-menu-parceiros strong{display:block;color:#650817;font:normal 18px Georgia,serif}
+.cabecalho-menu-parceiros small,.linha-menu-contato small{display:block;margin-top:3px;color:#82666a;font-size:11px}
+.menu-parceiros .cadastro-vendedor{margin:0;border-bottom:1px solid #eee1d5;padding:12px 4px}
+.menu-parceiros .cadastro-vendedor summary,.menu-parceiros #acesso-vendedor summary{color:#650817;font-weight:700;cursor:pointer}
+.menu-parceiros .cadastro-vendedor p,.menu-parceiros .cadastro-vendedor label{color:#5b4145}
+.menu-parceiros .cadastro-vendedor input{width:100%;padding:11px;border:1px solid #d8c9c1;border-radius:8px;background:white}
+.menu-parceiros .cadastro-vendedor form{display:grid;gap:7px;margin-top:12px}
+.menu-parceiros #abrir-admin{display:flex;margin:8px 0;padding:12px 5px;border:0;border-top:1px solid #eee1d5;border-radius:0;color:#650817}
+.linha-menu-contato{padding:13px 5px 4px;border-top:1px solid #ead8c6}.linha-menu-contato strong{color:#650817;font:normal 17px Georgia,serif}
+.item-menu-parceiros{display:flex;align-items:center;gap:10px;width:100%;padding:10px 5px;border-bottom:1px solid #eee1d5;color:#650817;text-decoration:none}
+.item-menu-parceiros>span:first-child{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#f3e5d7;font-size:20px}
+.item-menu-parceiros>span:nth-child(2){flex:1}.item-menu-parceiros strong{display:block;font-size:12px}.item-menu-parceiros small{display:block;margin-top:3px;color:#82666a;font-size:10px}
+@media(max-width:380px){.navegacao-inferior button{font-size:8px}.avatar-provisorio{width:32px;height:32px}}
 </style>
 </head>
 
@@ -967,8 +994,13 @@ footer { padding-top:24px; }
   <section class="produtos" id="produtos"></section>
 </main>
 
-<footer id="rodape">
-  <strong>Bela Modas</strong>
+<footer id="rodape"><strong>Bela Modas</strong><p>Moda para toda família</p></footer>
+<nav class="navegacao-inferior" aria-label="Navegação principal">
+<button type="button" data-ir="inicio"><span>⌂</span>Início</button><button type="button" data-ir="destaques"><span>★</span>Destaques</button>
+<button type="button" id="nav-parceiros" class="nav-avatar" aria-label="Parceiros e contato" aria-expanded="false"><span class="avatar-provisorio"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#e5bd70"/><path d="M13 29C13 10 22 5 33 5s20 9 19 26v8H13z" fill="#4b1720"/><path d="M18 28c0-12 6-18 14-18s15 7 15 19v8c0 10-7 17-15 17S18 47 18 37z" fill="#f2c49b"/><path d="M17 27c2-14 10-20 18-19 9 1 14 8 15 19-7-2-12-6-14-11-5 6-11 9-19 11" fill="#4b1720"/><circle cx="26" cy="33" r="2" fill="#351018"/><circle cx="39" cy="33" r="2" fill="#351018"/><path d="M27 42q5 4 10 0" fill="none" stroke="#9d4c4b" stroke-width="2"/><path d="M9 64c2-13 10-19 23-19s21 6 23 19" fill="#650817"/></svg></span>Parceiros</button>
+<button type="button" data-ir="categorias"><span>▦</span>Categorias</button><button type="button" id="nav-sacola"><span class="sacola-icone"><svg class="icone-sacola-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 8.5h13l1.1 12h-15.2l1.1-12Z"/><path d="M9 9V6.8a3 3 0 0 1 6 0V9"/></svg><i id="contador-sacola-nav">0</i></span>Sacola</button></nav><div class="menu-parceiros-fundo" id="menu-parceiros" hidden><section class="menu-parceiros" role="dialog" aria-modal="true" aria-labelledby="titulo-menu-parceiros">
+<button type="button" class="fechar-menu-parceiros" id="fechar-menu-parceiros" aria-label="Fechar">×</button>
+<div class="cabecalho-menu-parceiros"><span class="mini-avatar">B</span><div><strong id="titulo-menu-parceiros">Bela Modas</strong><small>Como podemos ajudar?</small></div></div>
   <details class="cadastro-vendedor">
     <summary>Seja um vendedor parceiro da Bela Modas</summary>
     <p>Cadastre-se gratuitamente. Seu cadastro será analisado pela nossa equipe antes da liberação do link exclusivo.</p>
@@ -1011,29 +1043,10 @@ footer { padding-top:24px; }
     </section>
   </details>
   <a id="abrir-admin" href="admin.html" target="_blank" rel="noopener">Acesso administrativo</a>
-</footer>
-<nav class="navegacao-inferior" aria-label="Navegação principal">
-  <button type="button" data-ir="inicio"><span>⌂</span>Início</button>
-  <button type="button" data-ir="destaques"><span>★</span>Destaques</button>
-  <button type="button" id="nav-parceiros" class="nav-avatar" aria-label="Abrir menu de parceiros e contato" aria-expanded="false">
-    <span class="avatar-provisorio" aria-hidden="true">
-      <svg viewBox="0 0 64 64" role="img">
-        <defs><linearGradient id="avatarFundo" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8dfa5"/><stop offset="1" stop-color="#d69b55"/></linearGradient></defs>
-        <circle cx="32" cy="32" r="31" fill="url(#avatarFundo)"/>
-        <path d="M12 27c0-15 8-22 20-22s21 8 21 23v9H12z" fill="#4b1720"/>
-        <path d="M18 27c0-11 6-17 14-17s15 6 15 17v9c0 11-7 18-15 18S18 47 18 36z" fill="#f2c49b"/>
-        <path d="M17 27c1-13 8-20 17-20 9 0 15 7 16 18-5-1-9-5-12-10-5 6-12 9-21 12" fill="#4b1720"/>
-        <ellipse cx="26" cy="32" rx="1.8" ry="2.2" fill="#351018"/><ellipse cx="39" cy="32" rx="1.8" ry="2.2" fill="#351018"/>
-        <path d="M27 42q5 4 10 0" fill="none" stroke="#9d4c4b" stroke-width="2" stroke-linecap="round"/>
-        <path d="M10 63c2-12 10-18 22-18s20 6 22 18" fill="#650817"/>
-        <path d="M24 49l8 8 8-8" fill="#f8e7ce"/>
-      </svg>
-    </span>
-    <span class="rotulo-avatar">Parceiros</span>
-  </button>
-  <button type="button" data-ir="categorias"><span>▦</span>Categorias</button>
-  <button type="button" id="nav-sacola"><span class="sacola-icone"><svg class="icone-sacola-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5.5 8.5h13l1.1 12h-15.2l1.1-12Z"/><path d="M9 9V6.8a3 3 0 0 1 6 0V9"/></svg><i id="contador-sacola-nav">0</i></span>Sacola</button>
-</nav>
+<div class="linha-menu-contato"><strong>Fale conosco</strong><small>Estamos à disposição para atender você.</small></div>
+<a class="item-menu-parceiros" href="https://wa.me/5531997337304" target="_blank" rel="noopener"><span>☏</span><span><strong>WhatsApp</strong><small>Converse diretamente com a loja</small></span><b>↗</b></a>
+<a class="item-menu-parceiros" href="https://www.instagram.com/belamodaspetro/" target="_blank" rel="noopener"><span>◎</span><span><strong>Instagram</strong><small>@belamodaspetro</small></span><b>↗</b></a>
+</section></div>
 <div class="menu-parceiros-fundo" id="menu-parceiros" hidden>
   <section class="menu-parceiros" role="dialog" aria-modal="true" aria-labelledby="titulo-menu-parceiros">
     <button type="button" class="fechar-menu-parceiros" id="fechar-menu-parceiros" aria-label="Fechar">×</button>
@@ -1894,6 +1907,13 @@ document.querySelectorAll(".navegacao-inferior [data-ir]").forEach(botao => bota
   document.querySelector(destino)?.scrollIntoView({behavior:"smooth",block:"start"});
 }));
 document.getElementById("nav-sacola").addEventListener("click", () => abrirPainel("painel-carrinho"));
+const menuParceiros=document.getElementById("menu-parceiros"),botaoMenuParceiros=document.getElementById("nav-parceiros");
+function fecharMenuParceiros(){menuParceiros.hidden=true;botaoMenuParceiros.setAttribute("aria-expanded","false");}
+botaoMenuParceiros.addEventListener("click",()=>{menuParceiros.hidden=false;botaoMenuParceiros.setAttribute("aria-expanded","true");});
+document.getElementById("fechar-menu-parceiros").addEventListener("click",fecharMenuParceiros);
+menuParceiros.addEventListener("click",e=>{if(e.target===menuParceiros)fecharMenuParceiros();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!menuParceiros.hidden)fecharMenuParceiros();});
+
 const menuParceiros = document.getElementById("menu-parceiros");
 const botaoMenuParceiros = document.getElementById("nav-parceiros");
 function fecharMenuParceiros() {
