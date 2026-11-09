@@ -412,6 +412,7 @@
     exigirSessaoVendedor();
     return requisicaoPost({ acao: "painelVendedor", tokenVendedor });
   }
+  async function salvarChavePixVendedor(chavePix){exigirSessaoVendedor();return requisicaoPost({acao:"salvarChavePixVendedor",tokenVendedor,chavePix:String(chavePix||"")});}
 
   async function trocarSenhaVendedor(novaSenha) {
     exigirSessaoVendedor();
@@ -443,6 +444,8 @@
     exigirSessao();
     return requisicaoPost({ acao: "atualizarPedidoVendedor", token: tokenAdmin, id, status });
   }
+  async function listarPagamentosVendedores(){exigirSessao();return requisicaoPost({acao:"listarPagamentosVendedores",token:tokenAdmin});}
+  async function registrarPagamentoVendedor(dados,arquivo){exigirSessao();const base64=await arquivoBase64(arquivo,["application/pdf","image/jpeg","image/png"],3*1024*1024);return requisicaoPost({acao:"registrarPagamentoVendedor",token:tokenAdmin,pagamento:{...dados,nomeArquivo:arquivo.name,tipo:arquivo.type,base64}});}
 
   async function listarVendedores() {
     exigirSessao();
@@ -515,12 +518,15 @@
     cadastrarVendedor,
     entrarVendedor,
     painelVendedor,
+    salvarChavePixVendedor,
     trocarSenhaVendedor,
     sairVendedor,
     registrarPedidoVendedor,
     resetarSenhaVendedor,
     listarPedidosVendedores,
     atualizarPedidoVendedor,
+    listarPagamentosVendedores,
+    registrarPagamentoVendedor,
     listarVendedores,
     atualizarVendedor,
     excluirVendedor,
