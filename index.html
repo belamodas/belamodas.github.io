@@ -887,6 +887,38 @@ footer { padding-top:24px; }
 .contato-menu-parceiros { display:block; padding:11px 4px; border-top:1px solid #eadfd5; color:#650817; text-decoration:none; font-size:13px; }
 @media(max-width:380px) { .navegacao-inferior button { font-size:8px; } .navegacao-inferior .nav-avatar .avatar-provisorio { width:32px; height:32px; } }
 
+
+/* Refinamento visual mobile-first: acabamento da vitrine sem alterar funcionalidades */
+.cabecalho-marca { min-height:0; padding:22px 12px 18px; }
+.marca-nome { font-size:clamp(38px,6vw,58px); }
+.marca-assinatura { margin-top:7px; letter-spacing:2px; }
+.categorias-visuais { gap:10px; margin:12px 0 22px; }
+.categoria-visual { min-height:112px; padding:12px 8px; border-radius:14px; box-shadow:0 4px 13px rgba(0,0,0,.2); }
+.produtos { gap:18px 13px; }
+.produto { overflow:hidden; border:1px solid rgba(229,189,112,.25); border-radius:12px; background:#fff8ef; color:#351018; box-shadow:0 4px 14px rgba(0,0,0,.16); }
+.produto .foto { border-radius:11px 11px 0 0; }
+.produto .informacoes { padding:10px 11px 13px; }
+.produto .tipo { color:#8b6570; letter-spacing:1.2px; }
+.produto .nome { color:#351018; font-size:16px; line-height:1.25; }
+.produto .preco { color:#650817; font-size:14px; }
+.produto .disponibilidade { color:#765e62; }
+.navegacao-inferior { min-height:62px; padding:5px 3px calc(5px + env(safe-area-inset-bottom)); }
+.navegacao-inferior button { gap:1px; font-size:10px; }
+.navegacao-inferior button span { font-size:22px; }
+.navegacao-inferior .nav-avatar .avatar-provisorio { width:32px; height:32px; }
+@media(max-width:520px) {
+  .cabecalho-marca { padding:17px 10px 14px; }
+  .marca-nome { font-size:clamp(36px,10vw,48px); }
+  .marca-assinatura { font-size:8px; letter-spacing:1.5px; gap:7px; }
+  .marca-assinatura span { width:20px; }
+  .categorias-visuais { gap:7px; margin:10px 0 18px; }
+  .categoria-visual { min-height:88px; padding:10px 4px; }
+  .produtos { gap:14px 9px; }
+  .produto .informacoes { padding:9px 8px 11px; }
+  .produto .nome { font-size:14px; }
+  .produto .preco { font-size:13px; }
+}
+
 </style>
 </head>
 
