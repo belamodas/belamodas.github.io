@@ -460,6 +460,29 @@ body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); background-colo
 .categoria-visual small { color:#f5d28b; font-size:10px; }
 .categorias { display:none; }
 .navegacao-inferior { position:fixed; z-index:8; left:0; right:0; bottom:0; min-height:68px; padding:7px 4px calc(7px + env(safe-area-inset-bottom)); display:grid; grid-template-columns:repeat(4,1fr); background:linear-gradient(100deg,#250108,#650817 50%,#250108); border-top:1px solid #e8bd70; box-shadow:0 -8px 25px rgba(0,0,0,.35); }
+.navegacao-inferior { grid-template-columns:repeat(5,minmax(0,1fr)); }
+.navegacao-inferior .nav-avatar { position:relative; overflow:visible; border:0; gap:0; transform:translateY(-15px); }
+.avatar-provisorio { display:grid; place-items:center; width:58px; height:58px; padding:3px; border-radius:50%; background:linear-gradient(145deg,#fff0c7,#d9a54f); border:2px solid #f8e4b6; box-shadow:0 0 0 3px rgba(101,8,23,.9),0 4px 14px rgba(0,0,0,.4); }
+.avatar-provisorio svg { width:100%; height:100%; display:block; }
+.rotulo-avatar { margin-top:4px; font-size:10px!important; color:#f7d58e!important; white-space:nowrap; }
+.menu-parceiros-fundo { position:fixed; z-index:30; inset:0; display:flex; align-items:flex-end; justify-content:center; padding:16px 12px calc(82px + env(safe-area-inset-bottom)); background:rgba(18,2,7,.68); }
+.menu-parceiros-fundo[hidden] { display:none!important; }
+.menu-parceiros { position:relative; width:min(480px,100%); max-height:min(78vh,720px); overflow:auto; padding:20px 16px 16px; border:1px solid #e5bd70; border-radius:22px; color:#351018; background:#fff8ef; box-shadow:0 18px 50px rgba(0,0,0,.4); }
+.fechar-menu-parceiros { position:absolute; top:9px; right:12px; width:34px; height:34px; border:0; border-radius:50%; background:#f0e3d5; color:#650817; font-size:25px; cursor:pointer; }
+.cabecalho-menu-parceiros { display:flex; align-items:center; gap:12px; padding:2px 38px 17px 2px; border-bottom:1px solid #ead8c6; margin-bottom:10px; }
+.mini-avatar { display:grid; place-items:center; flex:0 0 48px; width:48px; height:48px; border-radius:50%; background:linear-gradient(145deg,#8b1230,#3b0612); color:#f5d28b; font:italic bold 27px Georgia,serif; border:2px solid #e5bd70; }
+.cabecalho-menu-parceiros strong { display:block; color:#650817; font:normal 18px Georgia,serif; }
+.cabecalho-menu-parceiros small,.item-menu-parceiros small,.linha-menu-contato small { display:block; margin-top:4px; color:#82666a; font-size:11px; line-height:1.4; }
+.item-menu-parceiros { display:flex; align-items:center; gap:12px; width:100%; padding:13px 8px; border:0; border-bottom:1px solid #eee1d5; background:transparent; color:#650817; text-align:left; text-decoration:none; cursor:pointer; font:inherit; }
+.item-menu-parceiros>span:first-child { display:grid; place-items:center; flex:0 0 38px; width:38px; height:38px; border-radius:12px; background:#f3e5d7; color:#650817; font-size:22px; }
+.item-menu-parceiros>span:nth-child(2) { flex:1; min-width:0; }
+.item-menu-parceiros strong { display:block; color:#650817; font-size:13px; }
+.item-menu-parceiros>b { color:#b18a4c; font-size:22px; font-weight:normal; }
+.linha-menu-contato { padding:15px 8px 5px; }
+.linha-menu-contato strong { color:#650817; font:normal 18px Georgia,serif; }
+.contato-menu { padding-top:9px; padding-bottom:9px; }
+@media(max-width:380px) { .avatar-provisorio { width:52px;height:52px; } .rotulo-avatar { font-size:9px!important; } .item-menu-parceiros { gap:8px; padding:11px 5px; } }
+
 .navegacao-inferior button { min-width:0; border:0; border-right:1px solid rgba(232,189,112,.42); background:transparent; color:#f4d28e; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font:11px Arial,sans-serif; cursor:pointer; }
 .navegacao-inferior button:last-child { border-right:0; }
 .navegacao-inferior button span { font-size:26px; line-height:1.1; color:#f7d58e; }
@@ -992,9 +1015,40 @@ footer { padding-top:24px; }
 <nav class="navegacao-inferior" aria-label="Navegação principal">
   <button type="button" data-ir="inicio"><span>⌂</span>Início</button>
   <button type="button" data-ir="destaques"><span>★</span>Destaques</button>
+  <button type="button" id="nav-parceiros" class="nav-avatar" aria-label="Abrir menu de parceiros e contato" aria-expanded="false">
+    <span class="avatar-provisorio" aria-hidden="true">
+      <svg viewBox="0 0 64 64" role="img">
+        <defs><linearGradient id="avatarFundo" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8dfa5"/><stop offset="1" stop-color="#d69b55"/></linearGradient></defs>
+        <circle cx="32" cy="32" r="31" fill="url(#avatarFundo)"/>
+        <path d="M12 27c0-15 8-22 20-22s21 8 21 23v9H12z" fill="#4b1720"/>
+        <path d="M18 27c0-11 6-17 14-17s15 6 15 17v9c0 11-7 18-15 18S18 47 18 36z" fill="#f2c49b"/>
+        <path d="M17 27c1-13 8-20 17-20 9 0 15 7 16 18-5-1-9-5-12-10-5 6-12 9-21 12" fill="#4b1720"/>
+        <ellipse cx="26" cy="32" rx="1.8" ry="2.2" fill="#351018"/><ellipse cx="39" cy="32" rx="1.8" ry="2.2" fill="#351018"/>
+        <path d="M27 42q5 4 10 0" fill="none" stroke="#9d4c4b" stroke-width="2" stroke-linecap="round"/>
+        <path d="M10 63c2-12 10-18 22-18s20 6 22 18" fill="#650817"/>
+        <path d="M24 49l8 8 8-8" fill="#f8e7ce"/>
+      </svg>
+    </span>
+    <span class="rotulo-avatar">Parceiros</span>
+  </button>
   <button type="button" data-ir="categorias"><span>▦</span>Categorias</button>
   <button type="button" id="nav-sacola"><span class="sacola-icone"><svg class="icone-sacola-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5.5 8.5h13l1.1 12h-15.2l1.1-12Z"/><path d="M9 9V6.8a3 3 0 0 1 6 0V9"/></svg><i id="contador-sacola-nav">0</i></span>Sacola</button>
 </nav>
+<div class="menu-parceiros-fundo" id="menu-parceiros" hidden>
+  <section class="menu-parceiros" role="dialog" aria-modal="true" aria-labelledby="titulo-menu-parceiros">
+    <button type="button" class="fechar-menu-parceiros" id="fechar-menu-parceiros" aria-label="Fechar">×</button>
+    <div class="cabecalho-menu-parceiros">
+      <span class="mini-avatar">B</span>
+      <div><strong id="titulo-menu-parceiros">Olá! Bem-vindo à Bela Modas</strong><small>Como podemos ajudar?</small></div>
+    </div>
+    <button type="button" class="item-menu-parceiros" data-menu-acao="cadastro"><span>♧</span><span><strong>Quero ser vendedor parceiro</strong><small>Cadastre-se para divulgar nossos produtos</small></span><b>›</b></button>
+    <button type="button" class="item-menu-parceiros" data-menu-acao="login"><span>♙</span><span><strong>Já sou vendedor parceiro</strong><small>Acesse sua área e acompanhe suas vendas</small></span><b>›</b></button>
+    <a class="item-menu-parceiros" href="admin.html" target="_blank" rel="noopener"><span>⚙</span><span><strong>Acesso administrativo</strong><small>Área de gestão da Bela Modas</small></span><b>›</b></a>
+    <div class="linha-menu-contato"><strong>Fale conosco</strong><small>Estamos à disposição para atender você.</small></div>
+    <a class="item-menu-parceiros contato-menu" href="https://wa.me/5531997337304" target="_blank" rel="noopener"><span>☏</span><span><strong>WhatsApp</strong><small>Converse diretamente com a loja</small></span><b>↗</b></a>
+    <a class="item-menu-parceiros contato-menu" href="https://www.instagram.com/belamodaspetro/" target="_blank" rel="noopener"><span>◎</span><span><strong>Instagram</strong><small>@belamodaspetro</small></span><b>↗</b></a>
+  </section>
+</div>
 
 <div class="modal-fundo" id="modal">
   <div class="modal">
@@ -1840,6 +1894,30 @@ document.querySelectorAll(".navegacao-inferior [data-ir]").forEach(botao => bota
   document.querySelector(destino)?.scrollIntoView({behavior:"smooth",block:"start"});
 }));
 document.getElementById("nav-sacola").addEventListener("click", () => abrirPainel("painel-carrinho"));
+const menuParceiros = document.getElementById("menu-parceiros");
+const botaoMenuParceiros = document.getElementById("nav-parceiros");
+function fecharMenuParceiros() {
+  menuParceiros.hidden = true;
+  botaoMenuParceiros.setAttribute("aria-expanded","false");
+}
+botaoMenuParceiros.addEventListener("click", () => {
+  menuParceiros.hidden = false;
+  botaoMenuParceiros.setAttribute("aria-expanded","true");
+});
+document.getElementById("fechar-menu-parceiros").addEventListener("click",fecharMenuParceiros);
+menuParceiros.addEventListener("click",e => { if(e.target === menuParceiros) fecharMenuParceiros(); });
+document.addEventListener("keydown",e => { if(e.key === "Escape" && !menuParceiros.hidden) fecharMenuParceiros(); });
+document.querySelectorAll("[data-menu-acao]").forEach(botao => botao.addEventListener("click",() => {
+  const acao = botao.dataset.menuAcao;
+  fecharMenuParceiros();
+  const detalhe = acao === "cadastro" ? document.querySelector(".cadastro-vendedor:not(#acesso-vendedor)") : document.getElementById("acesso-vendedor");
+  if (detalhe) {
+    detalhe.open = true;
+    detalhe.scrollIntoView({behavior:"smooth",block:"center"});
+    setTimeout(() => detalhe.querySelector("form")?.querySelector("input")?.focus({preventScroll:true}),350);
+  }
+}));
+
 
 (function carregarCacheInicial() {
   try {
