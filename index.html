@@ -918,6 +918,99 @@ footer { padding-top:24px; }
   .produto .preco { font-size:13px; }
 }
 
+
+
+/* Telas dedicadas para cadastro e acesso do vendedor */
+body.menu-parceiros-aberto { overflow:hidden; }
+.menu-parceiros-fundo.modo-pagina {
+  align-items:stretch;
+  justify-content:stretch;
+  padding:0;
+  background:#fff8ef;
+}
+.menu-parceiros-fundo.modo-pagina .menu-parceiros {
+  width:100%;
+  max-width:none;
+  height:100vh;
+  height:100dvh;
+  max-height:none;
+  overflow:auto;
+  padding:82px 18px 28px;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+}
+.menu-parceiros-fundo.modo-pagina .cabecalho-menu-parceiros {
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  min-height:64px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:10px 58px;
+  margin:0;
+  border:0;
+  border-bottom:1px solid rgba(229,189,112,.65);
+  background:linear-gradient(110deg,#260208,#650817 52%,#260208);
+  text-align:center;
+}
+.menu-parceiros-fundo.modo-pagina .cabecalho-menu-parceiros strong { color:#ffe8bd; font-size:19px; }
+.menu-parceiros-fundo.modo-pagina .cabecalho-menu-parceiros small { color:#f3d9b0; }
+.menu-parceiros-fundo.modo-pagina .fechar-menu-parceiros {
+  position:fixed;
+  z-index:2;
+  top:12px;
+  left:12px;
+  right:auto;
+  width:40px;
+  height:40px;
+  border:1px solid rgba(229,189,112,.65);
+  background:#fff4e3;
+  font-size:25px;
+}
+.menu-parceiros-fundo.modo-pagina .menu-parceiros > details.cadastro-vendedor:not([open]),
+.menu-parceiros-fundo.modo-pagina .menu-parceiros > #abrir-admin,
+.menu-parceiros-fundo.modo-pagina .menu-parceiros > .linha-menu-contato,
+.menu-parceiros-fundo.modo-pagina .menu-parceiros > .contato-menu-parceiros { display:none !important; }
+.menu-parceiros-fundo.modo-pagina .menu-parceiros > details.cadastro-vendedor[open] {
+  display:block;
+  width:min(680px,100%);
+  max-width:680px;
+  margin:8px auto 0;
+  padding:18px 0 24px;
+  border:0;
+  border-bottom:0;
+}
+.menu-parceiros-fundo.modo-pagina .menu-parceiros > details.cadastro-vendedor[open] > summary {
+  display:block;
+  padding:8px 0 16px;
+  border-bottom:1px solid #ead8c6;
+  font:normal 25px Georgia,serif;
+}
+.menu-parceiros-fundo.modo-pagina .menu-parceiros > details.cadastro-vendedor[open] > p {
+  margin:14px 0 18px;
+  line-height:1.6;
+}
+.menu-parceiros-fundo.modo-pagina .menu-parceiros > details.cadastro-vendedor[open] form {
+  gap:10px;
+  margin-top:16px;
+}
+.menu-parceiros-fundo.modo-pagina .menu-parceiros > details.cadastro-vendedor[open] input {
+  box-sizing:border-box;
+  min-height:46px;
+  padding:12px;
+}
+.menu-parceiros-fundo.modo-pagina .menu-parceiros > details.cadastro-vendedor[open] .botao-principal {
+  min-height:48px;
+  margin-top:8px;
+}
+@media(max-width:520px) {
+  .menu-parceiros-fundo.modo-pagina .menu-parceiros { padding:76px 16px 24px; }
+  .menu-parceiros-fundo.modo-pagina .menu-parceiros > details.cadastro-vendedor[open] > summary { font-size:22px; }
+}
+
 </style>
 </head>
 
@@ -1908,11 +2001,51 @@ document.getElementById("nav-sacola").addEventListener("click", () => abrirPaine
 
 const menuParceiros=document.getElementById("menu-parceiros");
 const botaoMenuParceiros=document.getElementById("nav-parceiros");
-function fecharMenuParceiros(){menuParceiros.hidden=true;botaoMenuParceiros.setAttribute("aria-expanded","false");}
-botaoMenuParceiros.addEventListener("click",()=>{menuParceiros.hidden=false;botaoMenuParceiros.setAttribute("aria-expanded","true");});
-document.getElementById("fechar-menu-parceiros").addEventListener("click",fecharMenuParceiros);
+const botaoFecharMenuParceiros=document.getElementById("fechar-menu-parceiros");
+const secoesParceiros=menuParceiros.querySelectorAll("details.cadastro-vendedor");
+function atualizarModoMenuParceiros(){
+  const paginaAberta=menuParceiros.querySelector("details.cadastro-vendedor[open]");
+  menuParceiros.classList.toggle("modo-pagina",Boolean(paginaAberta));
+  if(paginaAberta){
+    botaoFecharMenuParceiros.textContent="←";
+    botaoFecharMenuParceiros.setAttribute("aria-label","Voltar ao menu de parceiros");
+  } else {
+    botaoFecharMenuParceiros.textContent="×";
+    botaoFecharMenuParceiros.setAttribute("aria-label","Fechar");
+  }
+}
+function fecharMenuParceiros(){
+  secoesParceiros.forEach(secao=>{secao.open=false;});
+  menuParceiros.classList.remove("modo-pagina");
+  menuParceiros.hidden=true;
+  document.body.classList.remove("menu-parceiros-aberto");
+  botaoMenuParceiros.setAttribute("aria-expanded","false");
+  atualizarModoMenuParceiros();
+}
+secoesParceiros.forEach(secao=>secao.addEventListener("toggle",()=>{
+  if(secao.open) secoesParceiros.forEach(outra=>{if(outra!==secao)outra.open=false;});
+  atualizarModoMenuParceiros();
+}));
+botaoMenuParceiros.addEventListener("click",()=>{
+  menuParceiros.hidden=false;
+  document.body.classList.add("menu-parceiros-aberto");
+  botaoMenuParceiros.setAttribute("aria-expanded","true");
+});
+botaoFecharMenuParceiros.addEventListener("click",()=>{
+  if(menuParceiros.classList.contains("modo-pagina")){
+    secoesParceiros.forEach(secao=>{secao.open=false;});
+    atualizarModoMenuParceiros();
+  } else fecharMenuParceiros();
+});
 menuParceiros.addEventListener("click",e=>{if(e.target===menuParceiros)fecharMenuParceiros();});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!menuParceiros.hidden)fecharMenuParceiros();});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&!menuParceiros.hidden){
+    if(menuParceiros.classList.contains("modo-pagina")){
+      secoesParceiros.forEach(secao=>{secao.open=false;});
+      atualizarModoMenuParceiros();
+    } else fecharMenuParceiros();
+  }
+});
 
 
 (function carregarCacheInicial() {
