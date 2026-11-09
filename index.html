@@ -1138,7 +1138,8 @@ body.menu-parceiros-aberto { overflow:hidden; }
       <h3 id="painel-vendedor-nome"></h3><div id="painel-vendedor-resumo"></div>
       <p><strong>Seu link exclusivo</strong></p><input id="painel-vendedor-link" readonly>
       <button type="button" id="copiar-link-vendedor" class="botao-principal">Copiar meu link</button>
-      <h4>Minhas vendas</h4><div id="painel-vendedor-pedidos"></div>
+      <form id="form-chave-pix-vendedor"><h4>Minha chave Pix</h4><label for="chave-pix-vendedor">Chave Pix para receber comissões</label><input id="chave-pix-vendedor" maxlength="150" placeholder="CPF, CNPJ, e-mail, celular ou chave aleatória"><button class="botao-principal" type="submit">Salvar chave Pix</button><p id="status-chave-pix" role="status"></p></form>
+      <h4>Minhas vendas</h4><div id="painel-vendedor-pedidos"></div><h4>Histórico de pagamentos</h4><div id="painel-vendedor-pagamentos"></div>
       <form id="form-trocar-senha-vendedor">
         <h4>Trocar senha</h4><label for="nova-senha-vendedor">Nova senha (mínimo 8 caracteres)</label>
         <input id="nova-senha-vendedor" type="password" minlength="8" required>
@@ -1306,19 +1307,20 @@ async function carregarPainelVendedorCliente() {
   formLoginVendedor.hidden = true;
   document.getElementById("painel-vendedor-nome").textContent = "Olá, " + v.nome;
   document.getElementById("painel-vendedor-link").value = location.origin + location.pathname + "?vendedor=" + encodeURIComponent(v.codigo) + "&nomeVendedor=" + encodeURIComponent(v.nome);
-  document.getElementById("painel-vendedor-resumo").textContent =
-    "Pedidos: " + r.totalPedidos + " · Vendas concluídas: " + r.vendasConcluidas +
-    " · Comissão pendente: " + moeda(r.comissaoPendente) + " · Comissão liberada: " + moeda(r.comissaoLiberada);
+  document.getElementById("painel-vendedor-resumo").textContent="Pedidos: "+r.totalPedidos+" · Vendas finalizadas: "+r.vendasConcluidas+" · Aguardando pagamento: "+moeda(r.comissaoPendente)+" · Já pagas: "+moeda(r.comissaoPaga);
+  document.getElementById("chave-pix-vendedor").value=v.chavePix||"";
   const lista = document.getElementById("painel-vendedor-pedidos");
   lista.replaceChildren();
   (dados.pedidos || []).forEach(p => {
     const item = document.createElement("p");
-    item.textContent = new Date(p.criadoEm).toLocaleDateString("pt-BR") + " · Pedido " + p.id.slice(0,8) +
-      " · " + moeda(p.total) + " · Comissão " + moeda(p.comissao) + " · " + p.status;
+    const st=({aguardando:"Aguardando confirmação dos produtos",confirmando:"Produtos disponíveis — aguardando entrega e pagamento",finalizado:"Finalizado",cancelada:"Cancelado"})[p.status]||p.status;
+    item.textContent=new Date(p.criadoEm).toLocaleDateString("pt-BR")+" · Pedido "+p.id.slice(0,8)+" · "+moeda(p.total)+" · Comissão "+moeda(p.comissao)+" · "+st+(p.status==="finalizado"?" · "+p.statusComissao:"");
     lista.appendChild(item);
   });
   if (!dados.pedidos.length) lista.textContent = "Você ainda não possui pedidos registrados.";
+  const hist=document.getElementById("painel-vendedor-pagamentos");hist.replaceChildren();(dados.historico||[]).forEach(p=>{const linha=document.createElement("p");linha.textContent=p.periodo+" · "+p.quantidade+" venda(s) · "+moeda(p.valor)+" · Pago ";if(p.comprovanteUrl){const a=document.createElement("a");a.href=p.comprovanteUrl;a.target="_blank";a.rel="noopener";a.textContent="Ver comprovante";linha.appendChild(a);}hist.appendChild(linha);});if(!(dados.historico||[]).length)hist.textContent="Nenhum pagamento registrado até o momento.";
 }
+document.getElementById("form-chave-pix-vendedor")?.addEventListener("submit",async e=>{e.preventDefault();const b=e.submitter,s=document.getElementById("status-chave-pix");b.disabled=true;try{await BelaSync.salvarChavePixVendedor(document.getElementById("chave-pix-vendedor").value);s.textContent="Chave Pix salva com sucesso.";}catch(err){s.textContent=err.message||"Falha ao salvar Pix.";}finally{b.disabled=false;}});
 formLoginVendedor?.addEventListener("submit", async e => {
   e.preventDefault();
   const status = document.getElementById("status-login-vendedor");
