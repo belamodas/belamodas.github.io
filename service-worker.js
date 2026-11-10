@@ -35,22 +35,22 @@ self.addEventListener("fetch", event => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Abre imediatamente a última página guardada e atualiza em segundo plano.
+  // Abre a página salva rapidamente e atualiza o cache em segundo plano.
   if (request.mode === "navigate") {
-    event.respondWith((async () => {
-      const cache = await caches.open(CACHE_NAME);
-      const paginaSalva = await cache.match("./index.html");
-      const atualizacao = fetch(request).then(response => {
-        if (response && response.ok) {
-          cache.put("./index.html", response.clone());
-        }
+    const cachePromise = caches.open(CACHE_NAME);
+    const atualizacao = cachePromise.then(cache =>
+      fetch(request).then(response => {
+        if (response && response.ok) cache.put(request, response.clone());
         return response;
-      });
-      if (paginaSalva) {
-        event.waitUntil(atualizacao.then(() => undefined).catch(() => undefined));
-        return paginaSalva;
-      }
-      return atualizacao.catch(() => cache.match("./"));
+      })
+    );
+    event.waitUntil(atualizacao.then(() => undefined).catch(() => undefined));
+    event.respondWith((async () => {
+      const cache = await cachePromise;
+      const paginaSalva = await cache.match(request);
+      if (paginaSalva) return paginaSalva;
+      const raizSalva = await cache.match("./index.html");
+      return atualizacao.catch(() => raizSalva || cache.match("./"));
     })());
     return;
   }
