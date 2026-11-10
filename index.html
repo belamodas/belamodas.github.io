@@ -166,6 +166,10 @@ h2 {
   gap: 9px;
   margin-bottom: 27px;
 }
+.subcategorias { display:flex; flex-wrap:wrap; gap:8px; margin:-10px 0 24px; }
+.subcategorias[hidden] { display:none; }
+.subcategorias button { padding:8px 13px; border:1px solid rgba(229,189,112,.65); border-radius:20px; background:rgba(45,3,12,.55); color:#f4dfc2; font-size:11px; cursor:pointer; }
+.subcategorias button.ativa { background:linear-gradient(100deg,#e8c477,#c68c39); color:#350611; border-color:#f4d99c; }
 
 .categoria {
   padding: 10px 17px;
@@ -1092,6 +1096,7 @@ body.menu-parceiros-aberto { overflow:hidden; }
     <button class="categoria" data-categoria="Infantil">Infantil</button>
     <button class="categoria" data-categoria="Acessórios">Acessórios</button>
   </nav>
+  <nav class="subcategorias" id="subcategorias" aria-label="Subcategorias" hidden></nav>
 
   <section class="produtos" id="produtos"></section>
 </main>
@@ -1237,6 +1242,7 @@ body.menu-parceiros-aberto { overflow:hidden; }
 
 let produtos = [];
 let categoriaAtual = "Todos";
+let subcategoriaAtual = "Todas";
 let somentePromocoes = false;
 let carrinho = [];
 let cotacaoEntrega = null;
@@ -1391,6 +1397,7 @@ function normalizarProduto(p) {
   return {
     codigo: String(p.codigo || ""),
     ordem: Number.isFinite(Number(p.ordem)) && Number(p.ordem) > 0 ? Number(p.ordem) : 0,
+    dataCadastro: String(p.data_cadastro || p.dataCadastro || ""),
     nome: String(p.nome || ""),
     categoria: String(p.categoria || ""),
     descricao: String(p.descricao || ""),
@@ -1536,20 +1543,75 @@ document.getElementById("carrossel-destaques").addEventListener("scroll", () => 
   document.querySelectorAll(".ponto-carrossel").forEach((p,i)=>p.classList.toggle("ativo",i===maisProximo));
 }, {passive:true});
 
+function normalizarTexto(valor) {
+  return String(valor || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR").trim();
+}
+function obterSubcategoria(produto) {
+  const categoria = normalizarTexto(produto.categoria);
+  const texto = normalizarTexto([produto.nome, produto.descricao, produto.categoria].join(" "));
+  const tem = (...termos) => termos.some(t => texto.includes(normalizarTexto(t)));
+  const calcado = tem("sandalia", "tenis", "rasteira", "chinelo", "calcado", "sapato", "bota", "sapatilha", "chuteira", "mocassim", "scarpin", "papete");
+  const jeans = tem("jeans", "denim");
+  const camisa = tem("camisa", "camiseta", "polo");
+  const roupa = tem("roupa", "vestido", "blusa", "camisa", "camiseta", "polo", "short", "bermuda", "saia", "conjunto", "calca", "legging", "jaqueta", "moletom", "casaco", "body", "macacao", "cropped");
+  if (categoria === "feminino") {
+    if (jeans) return "Jeans";
+    if (tem("sandalia")) return "Sandálias";
+    if (tem("tenis")) return "Tênis";
+    if (tem("rasteira")) return "Rasteiras";
+    if (roupa) return "Roupas";
+  }
+  if (categoria === "masculino") {
+    if (jeans) return "Jeans";
+    if (tem("tenis")) return "Tênis";
+    if (camisa) return "Camisas";
+  }
+  if (categoria === "infantil") {
+    const menino = tem("menino", "meninos", "masculino", "boy", "boys");
+    const menina = tem("menina", "meninas", "feminino", "girl", "girls");
+    if (calcado && menino && !menina) return "Calçados menino";
+    if (calcado && menina && !menino) return "Calçados menina";
+    if (roupa && menino && !menina) return "Roupas menino";
+    if (roupa && menina && !menino) return "Roupas menina";
+  }
+  return "";
+}
+function renderSubcategorias() {
+  const area = document.getElementById("subcategorias");
+  if (!area) return;
+  const opcoes = {
+    Feminino: ["Sandálias", "Tênis", "Rasteiras", "Roupas", "Jeans"],
+    Masculino: ["Tênis", "Jeans", "Camisas"],
+    Infantil: ["Calçados menino", "Calçados menina", "Roupas menino", "Roupas menina"]
+  };
+  const lista = opcoes[categoriaAtual];
+  area.replaceChildren();
+  if (!lista) { area.hidden = true; return; }
+  area.hidden = false;
+  [["Todas", "Todas"], ...lista.map(x => [x, x])].forEach(([valor, rotulo]) => {
+    const botao = document.createElement("button");
+    botao.type = "button"; botao.textContent = rotulo;
+    botao.classList.toggle("ativa", subcategoriaAtual === valor);
+    botao.addEventListener("click", () => { subcategoriaAtual = valor; renderSubcategorias(); mostrarProdutos(); });
+    area.appendChild(botao);
+  });
+}
 function mostrarProdutos() {
-  const termo = busca.value.toLocaleLowerCase("pt-BR").trim();
+  const termo = normalizarTexto(busca.value.trim());
   const tituloLista = document.getElementById("titulo-listagem-produtos");
   const subtituloLista = document.getElementById("subtitulo-listagem-produtos");
   const limparPromocoes = document.getElementById("limpar-filtro-promocoes");
   if (tituloLista) tituloLista.textContent = somentePromocoes ? "Ofertas especiais" : "Explore a coleção";
   if (subtituloLista) subtituloLista.textContent = somentePromocoes ? "Produtos com promoção ativa no catálogo." : "Uma vitrine feita para você navegar com calma.";
   if (limparPromocoes) limparPromocoes.hidden = !somentePromocoes;
-  const encontrados = produtos.filter(p =>
-    p.ativo &&
-    (!somentePromocoes || p.emPromocao) &&
-    (categoriaAtual === "Todos" || p.categoria === categoriaAtual) &&
-    (p.nome.toLocaleLowerCase("pt-BR").includes(termo) || p.codigo.toLocaleLowerCase("pt-BR").includes(termo))
-  );
+  const encontrados = produtos.filter(p => {
+    const categoriaProduto = normalizarTexto(p.categoria);
+    const categoriaSelecionada = normalizarTexto(categoriaAtual);
+    const correspondeCategoria = categoriaAtual === "Todos" || categoriaProduto === categoriaSelecionada;
+    const correspondeSubcategoria = subcategoriaAtual === "Todas" || obterSubcategoria(p) === subcategoriaAtual;
+    const textoBusca = normalizarTexto([p.nome, p.codigo, p.categoria, p.descricao].join(" "));
+    return p.ativo && (!somentePromocoes || p.emPromocao) && correspondeCategoria && correspondeSubcategoria && (!termo || textoBusca.includes(termo));
+  });
   areaProdutos.replaceChildren();
   if (!encontrados.length) {
     const vazio = document.createElement("div");
@@ -1734,6 +1796,11 @@ document.querySelectorAll("[data-fechar]").forEach(b => b.onclick = () => docume
 
 function ordenarProdutosLocalmente() {
   produtos.sort((a, b) => {
+    const dataA = Date.parse(a.dataCadastro || "") || 0;
+    const dataB = Date.parse(b.dataCadastro || "") || 0;
+    if (dataA && dataB && dataA !== dataB) return dataB - dataA;
+    if (dataA && !dataB) return -1;
+    if (!dataA && dataB) return 1;
     const ordemA = Number(a.ordem) || Number.MAX_SAFE_INTEGER;
     const ordemB = Number(b.ordem) || Number.MAX_SAFE_INTEGER;
     return ordemA - ordemB;
@@ -1958,7 +2025,9 @@ document.getElementById("enviar-whatsapp").onclick = async () => {
 document.querySelectorAll(".categoria").forEach(botao => botao.addEventListener("click", () => {
   somentePromocoes = false;
   categoriaAtual = botao.dataset.categoria;
+  subcategoriaAtual = "Todas";
   document.querySelectorAll(".categoria").forEach(item => item.classList.toggle("ativa", item === botao));
+  renderSubcategorias();
   mostrarProdutos();
 }));
 document.querySelectorAll("[data-categoria-visual]").forEach(botao => botao.addEventListener("click", () => {
@@ -1968,7 +2037,7 @@ document.querySelectorAll("[data-categoria-visual]").forEach(botao => botao.addE
   document.getElementById("produtos").scrollIntoView({behavior:"smooth",block:"start"});
 }));
 document.getElementById("aproveitar-promocoes").addEventListener("click", () => {
-  somentePromocoes = true; categoriaAtual = "Todos"; busca.value = "";
+  somentePromocoes = true; categoriaAtual = "Todos"; subcategoriaAtual = "Todas"; busca.value = ""; renderSubcategorias();
   document.querySelectorAll(".categoria").forEach(item => item.classList.toggle("ativa", item.dataset.categoria === "Todos"));
   mostrarProdutos(); document.getElementById("produtos").scrollIntoView({behavior:"smooth",block:"start"});
 });
