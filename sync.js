@@ -9,13 +9,22 @@
   const CONFIG = {
     API_URL: "https://script.google.com/macros/s/AKfycbz6AaXYjisiiGS3M7Za_18Dzf2u9bZACZPH_u5njtO_7cXLjuwNe9hBjTI7SydWsesy/exec",
     TIMEOUT: 30000,
-    INTERVALO_CONSULTA: 800,
+    INTERVALO_CONSULTA: 400,
     MAX_FOTO_BYTES: 5 * 1024 * 1024
   };
 
   let tokenAdmin = null;
   let sessaoValidaAte = 0;
   let tokenVendedor = null;
+  try {
+    const sessaoSalva = JSON.parse(localStorage.getItem("bela_admin_sessao") || "null");
+    if (sessaoSalva && sessaoSalva.token && Number(sessaoSalva.validadeAte) > Date.now()) {
+      tokenAdmin = String(sessaoSalva.token);
+      sessaoValidaAte = Number(sessaoSalva.validadeAte);
+    } else {
+      localStorage.removeItem("bela_admin_sessao");
+    }
+  } catch (_) {}
   try { tokenVendedor = localStorage.getItem("bela_vendedor_token") || null; } catch (_) {}
 
   function verificarConfiguracao() {
@@ -303,9 +312,13 @@
     }
 
     tokenAdmin = result.token;
-
-    sessaoValidaAte =
-      Date.now() + Number(result.validadeSegundos) * 1000;
+    sessaoValidaAte = Date.now() + Number(result.validadeSegundos) * 1000;
+    try {
+      localStorage.setItem("bela_admin_sessao", JSON.stringify({
+        token: tokenAdmin,
+        validadeAte: sessaoValidaAte
+      }));
+    } catch (_) {}
 
     return { conectado: true };
   }
@@ -326,6 +339,7 @@
   function sair() {
     tokenAdmin = null;
     sessaoValidaAte = 0;
+    try { localStorage.removeItem("bela_admin_sessao"); } catch (_) {}
   }
 
   async function salvarProduto(produto) {
@@ -400,12 +414,29 @@
     const result = await requisicaoPost({ acao: "loginVendedor", email: String(email || "").trim().toLowerCase(), senha: String(senha || "") });
     if (!result?.token || !Number(result.validadeSegundos)) throw new Error("Não foi possível iniciar a sessão do vendedor.");
     tokenVendedor = result.token;
-    try { localStorage.setItem("bela_vendedor_token", tokenVendedor); } catch (_) {}
+    try {
+      localStorage.setItem("bela_vendedor_token", tokenVendedor);
+      localStorage.setItem("bela_vendedor_validade", String(Date.now() + Number(result.validadeSegundos) * 1000));
+    } catch (_) {}
     return result;
   }
 
+  function temSessaoVendedor() {
+    if (!tokenVendedor) return false;
+    try {
+      const validade = Number(localStorage.getItem("bela_vendedor_validade") || 0);
+      if (validade && Date.now() >= validade) {
+        tokenVendedor = null;
+        localStorage.removeItem("bela_vendedor_token");
+        localStorage.removeItem("bela_vendedor_validade");
+        return false;
+      }
+    } catch (_) {}
+    return true;
+  }
+
   function exigirSessaoVendedor() {
-    if (!tokenVendedor) throw new Error("Entre na sua conta de vendedor.");
+    if (!temSessaoVendedor()) throw new Error("Sua sessão expirou. Entre novamente.");
   }
 
   async function painelVendedor() {
@@ -422,7 +453,10 @@
   async function sairVendedor() {
     if (tokenVendedor) { try { await requisicaoPost({ acao: "sairVendedor", tokenVendedor }); } catch (_) {} }
     tokenVendedor = null;
-    try { localStorage.removeItem("bela_vendedor_token"); } catch (_) {}
+    try {
+      localStorage.removeItem("bela_vendedor_token");
+      localStorage.removeItem("bela_vendedor_validade");
+    } catch (_) {}
   }
 
   async function registrarPedidoVendedor(pedido) {
@@ -517,6 +551,7 @@
     salvarOrdemProdutos,
     cadastrarVendedor,
     entrarVendedor,
+    temSessaoVendedor,
     painelVendedor,
     salvarChavePixVendedor,
     trocarSenhaVendedor,
