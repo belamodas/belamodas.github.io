@@ -802,9 +802,11 @@ function gerarUrlMiniatura(url) {
 function numeroPrecoValido(...valores) {
   for (const valor of valores) {
     if (valor === null || valor === undefined || String(valor).trim() === "") continue;
-    let texto = String(valor).trim().replace(/^R\\$\\s*/i, "").replace(/\\s/g, "");
-    // Aceita tanto números do Sheets quanto preços digitados no padrão brasileiro.
-    if (texto.includes(",")) texto = texto.replace(/\\./g, "").replace(",", ".");
+    if (typeof valor === "number" && Number.isFinite(valor) && valor > 0) return valor;
+    let texto = String(valor).trim().replace(/^R\$\s*/i, "").replace(/\s/g, "");
+    if (texto.includes(",")) {
+      texto = texto.replace(/\./g, "").replace(",", ".");
+    }
     const numero = Number(texto);
     if (Number.isFinite(numero) && numero > 0) return numero;
   }
@@ -815,7 +817,7 @@ function normalizarProduto(p) {
     ? p.fotos
     : [p.foto_principal, ...(String(p.fotos_adicionais || "").split("|").filter(Boolean))].filter(Boolean);
   const precoValor = numeroPrecoValido(p.preco_valor, p.preco);
-  const precoPromocional = Number(p.preco_promocional || 0) || 0;
+  const precoPromocional = numeroPrecoValido(p.preco_promocional);
   const promocaoInicio = String(p.promocao_inicio || p.promo_inicio || "");
   const promocaoFim = String(p.promocao_fim || p.promo_fim || "");
   const agora = Date.now();
@@ -1263,7 +1265,7 @@ function preencherFormulario(p) {
   document.getElementById("admin-nome").value = p.nome;
   document.getElementById("admin-categoria").value = p.categoria;
   document.getElementById("admin-descricao").value = p.descricao || "";
-  document.getElementById("admin-preco").value = p.precoValor || "";
+  const precoParaEditar = numeroPrecoValido(p.precoValor, p.preco_valor, p.preco);\n  document.getElementById("admin-preco").value = precoParaEditar > 0 ? precoParaEditar.toFixed(2) : "";
   document.getElementById("admin-estoque").value = p.estoque ?? 0;
   document.getElementById("admin-tamanhos").value = p.tamanhos || "";
   document.getElementById("admin-disponibilidade").value = p.disponibilidade || "Consulte disponibilidade";
