@@ -1217,6 +1217,7 @@ body.menu-parceiros-aberto { overflow:hidden; }
     <p id="status-frete" class="status-cep" role="status" aria-live="polite">Informe o endereço completo e calcule o frete para continuar.</p>
     <div id="resumo-frete" class="resumo-frete" hidden>
       <div><span>Distância da rota (ida)</span><strong id="distancia-frete">—</strong></div>
+      <div><span>Taxa mínima</span><strong id="valor-minimo-frete">—</strong></div>
       <div><span>Valor por km</span><strong id="valor-km-frete">—</strong></div>
       <div><span>Frete</span><strong id="valor-frete">—</strong></div>
       <div class="total-com-frete"><span>Total com entrega</span><strong id="total-com-frete">—</strong></div>
@@ -1866,6 +1867,7 @@ function atualizarResumoFrete() {
     document.getElementById("valor-total").textContent = moeda(totalProdutosCarrinho());
   } else if (cotacaoEntrega) {
     document.getElementById("distancia-frete").textContent = Number(cotacaoEntrega.distanciaKm).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " km";
+    document.getElementById("valor-minimo-frete").textContent = moeda(cotacaoEntrega.valorMinimo ?? 5);
     document.getElementById("valor-km-frete").textContent = moeda(cotacaoEntrega.valorKm) + " / km";
     document.getElementById("valor-frete").textContent = moeda(cotacaoEntrega.frete);
     document.getElementById("total-com-frete").textContent = moeda(totalProdutosCarrinho() + Number(cotacaoEntrega.frete));
@@ -1994,6 +1996,7 @@ document.getElementById("enviar-whatsapp").onclick = async () => {
     linhas.push("Cidade/UF: " + cidade + "/" + document.getElementById("estado-entrega").value.trim());
     linhas.push("CEP: " + cep);
     linhas.push("Distância da rota (ida): " + Number(cotacaoEntrega.distanciaKm).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " km");
+    linhas.push("Taxa mínima: " + moeda(cotacaoEntrega.valorMinimo ?? 5));
     linhas.push("Valor por km: " + moeda(cotacaoEntrega.valorKm));
     linhas.push("Frete calculado: " + moeda(cotacaoEntrega.frete));
     linhas.push("Total com entrega: " + moeda(total + Number(cotacaoEntrega.frete)));
