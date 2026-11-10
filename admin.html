@@ -1265,7 +1265,8 @@ function preencherFormulario(p) {
   document.getElementById("admin-nome").value = p.nome;
   document.getElementById("admin-categoria").value = p.categoria;
   document.getElementById("admin-descricao").value = p.descricao || "";
-  const precoParaEditar = numeroPrecoValido(p.precoValor, p.preco_valor, p.preco);\n  document.getElementById("admin-preco").value = precoParaEditar > 0 ? precoParaEditar.toFixed(2) : "";
+  const precoParaEditar = numeroPrecoValido(p.precoValor, p.preco_valor, p.preco);
+  document.getElementById("admin-preco").value = precoParaEditar > 0 ? precoParaEditar.toFixed(2) : "";
   document.getElementById("admin-estoque").value = p.estoque ?? 0;
   document.getElementById("admin-tamanhos").value = p.tamanhos || "";
   document.getElementById("admin-disponibilidade").value = p.disponibilidade || "Consulte disponibilidade";
