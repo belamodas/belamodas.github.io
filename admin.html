@@ -714,17 +714,9 @@ footer { padding-top:24px; }
     <p>Reúna aqui as opções de frete, cálculo por quilômetro e retirada na loja.</p>
     <div class="entrega-config">
       <h4>Entrega por distância</h4>
-      <div class="linha-form">
-        <div>
-          <label for="admin-valor-minimo">Taxa mínima fixa (R$)</label>
-          <input id="admin-valor-minimo" type="number" min="0" max="1000" step="0.01" value="5.00">
-        </div>
-        <div>
-          <label for="admin-valor-km">Valor por quilômetro (R$)</label>
-          <input id="admin-valor-km" type="number" min="0" max="1000" step="0.01" value="2.00">
-        </div>
-      </div>
-      <p class="aviso-demo" id="resumo-tarifa-entrega">Tarifa atual: R$ 5,00 + R$ 2,00/km. Exemplo: 3 km = R$ 11,00.</p>
+      <label for="admin-tarifa-entrega">Taxa mínima + valor por quilômetro</label>
+      <input id="admin-tarifa-entrega" type="text" inputmode="decimal" maxlength="32" value="5,00 + 2,00/km" placeholder="5,00 + 2,00/km" aria-describedby="resumo-tarifa-entrega">
+      <p class="aviso-demo" id="resumo-tarifa-entrega">Exemplo: 3 km = R$ 11,00.</p>
       <label for="admin-endereco-origem">Endereço de saída para entregas</label>
       <input id="admin-endereco-origem" value="Avenida México, 87, Petrovale, Betim - MG, CEP 32668-052">
       <p class="aviso-demo">O cálculo será baseado na distância da rota de carro, considerando somente a ida. A integração do cálculo automático no catálogo será uma etapa separada.</p>
@@ -1565,22 +1557,37 @@ async function atualizarStatusVendedor(vendedor,status) {
   } catch (err) { alert(err.message || "Não foi possível atualizar o cadastro."); }
 }
 document.getElementById("atualizar-vendedores")?.addEventListener("click",carregarVendedoresAdmin);
-function atualizarResumoTarifaEntregaAdmin() {
-  const minimo = Math.max(0, Number(document.getElementById("admin-valor-minimo")?.value || 0));
-  const porKm = Math.max(0, Number(document.getElementById("admin-valor-km")?.value || 0));
-  const exemplo = Math.round((minimo + 3 * porKm) * 100) / 100;
-  const resumo = document.getElementById("resumo-tarifa-entrega");
-  if (resumo) resumo.textContent = "Tarifa atual: " + moedaAdmin(minimo) + " + " + moedaAdmin(porKm) + "/km. Exemplo: 3 km = " + moedaAdmin(exemplo) + ".";
+function interpretarTarifaEntregaAdmin() {
+  const campo = document.getElementById("admin-tarifa-entrega");
+  const texto = String(campo?.value || "").trim();
+  const m = texto.match(/^\s*(\d+(?:[.,]\d{1,2})?)\s*\+\s*(\d+(?:[.,]\d{1,2})?)\s*(?:\/\s*km)?\s*$/i);
+  if (!m) throw new Error("Use o formato 5,00 + 2,00/km (taxa mínima + valor por km).");
+  const minimo = Number(m[1].replace(",", "."));
+  const porKm = Number(m[2].replace(",", "."));
+  if (!Number.isFinite(minimo) || !Number.isFinite(porKm) || minimo < 0 || porKm < 0 || minimo > 1000 || porKm > 1000) {
+    throw new Error("Os valores da tarifa devem estar entre R$ 0 e R$ 1.000.");
+  }
+  return { valorMinimo: minimo, valorKm: porKm };
 }
-document.getElementById("admin-valor-minimo")?.addEventListener("input", atualizarResumoTarifaEntregaAdmin);
-document.getElementById("admin-valor-km")?.addEventListener("input", atualizarResumoTarifaEntregaAdmin);
+function atualizarResumoTarifaEntregaAdmin() {
+  const resumo = document.getElementById("resumo-tarifa-entrega");
+  if (!resumo) return;
+  try {
+    const tarifa = interpretarTarifaEntregaAdmin();
+    resumo.textContent = "Tarifa: " + moedaAdmin(tarifa.valorMinimo) + " + " + moedaAdmin(tarifa.valorKm) + "/km. Exemplo: 3 km = " + moedaAdmin(tarifa.valorMinimo + 3 * tarifa.valorKm) + ".";
+    resumo.style.color = "#27633d";
+  } catch (err) {
+    resumo.textContent = err.message;
+    resumo.style.color = "#a32232";
+  }
+}
+document.getElementById("admin-tarifa-entrega")?.addEventListener("input", atualizarResumoTarifaEntregaAdmin);
 
 async function carregarConfigEntregasAdmin() {
   const status = document.getElementById("status-config-entregas");
   try {
     const config = await BelaSync.buscarEntregas();
-    document.getElementById("admin-valor-minimo").value = Number(config.valorMinimo ?? 5).toFixed(2);
-    document.getElementById("admin-valor-km").value = Number(config.valorKm ?? 2).toFixed(2);
+    document.getElementById("admin-tarifa-entrega").value = Number(config.valorMinimo ?? 5).toLocaleString("pt-BR", {minimumFractionDigits:2,maximumFractionDigits:2}) + " + " + Number(config.valorKm ?? 2).toLocaleString("pt-BR", {minimumFractionDigits:2,maximumFractionDigits:2}) + "/km";
     atualizarResumoTarifaEntregaAdmin();
     document.getElementById("admin-endereco-origem").value = config.enderecoOrigem || "";
     document.getElementById("admin-endereco-retirada").value = config.enderecoRetirada || "";
@@ -1590,22 +1597,22 @@ async function carregarConfigEntregasAdmin() {
 document.getElementById("salvar-config-entregas").addEventListener("click", async () => {
   const botao = document.getElementById("salvar-config-entregas");
   const status = document.getElementById("status-config-entregas");
+  let tarifa;
+  try { tarifa = interpretarTarifaEntregaAdmin(); }
+  catch (err) { alert(err.message); document.getElementById("admin-tarifa-entrega").focus(); return; }
   const config = {
-    valorMinimo: document.getElementById("admin-valor-minimo").value,
-    valorKm: document.getElementById("admin-valor-km").value,
+    valorMinimo: tarifa.valorMinimo,
+    valorKm: tarifa.valorKm,
     enderecoOrigem: document.getElementById("admin-endereco-origem").value.trim(),
     enderecoRetirada: document.getElementById("admin-endereco-retirada").value.trim()
   };
-  if (!config.enderecoOrigem || !config.enderecoRetirada ||
-      !Number.isFinite(Number(config.valorMinimo)) || Number(config.valorMinimo) < 0 || Number(config.valorMinimo) > 1000 ||
-      !Number.isFinite(Number(config.valorKm)) || Number(config.valorKm) < 0 || Number(config.valorKm) > 1000) {
-    alert("Confira a taxa mínima, o valor por km e os dois endereços."); return;
+  if (!config.enderecoOrigem || !config.enderecoRetirada) {
+    alert("Confira os dois endereços."); return;
   }
   botao.disabled = true; status.textContent = "Salvando configurações…";
   try {
     const salvo = await BelaSync.salvarEntregas(config);
-    document.getElementById("admin-valor-minimo").value = Number(salvo.valorMinimo ?? config.valorMinimo).toFixed(2);
-    document.getElementById("admin-valor-km").value = Number(salvo.valorKm).toFixed(2);
+    document.getElementById("admin-tarifa-entrega").value = Number(salvo.valorMinimo ?? config.valorMinimo).toLocaleString("pt-BR", {minimumFractionDigits:2,maximumFractionDigits:2}) + " + " + Number(salvo.valorKm).toLocaleString("pt-BR", {minimumFractionDigits:2,maximumFractionDigits:2}) + "/km";
     atualizarResumoTarifaEntregaAdmin();
     status.textContent = "Configurações de entrega salvas com sucesso.";
     alert("Configurações de entrega salvas.");
