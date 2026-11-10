@@ -1131,8 +1131,8 @@ body.menu-parceiros-aberto { overflow:hidden; }
     <details class="cadastro-vendedor" id="acesso-vendedor">
     <summary>Já sou vendedor parceiro — acessar minha área</summary>
     <form id="form-login-vendedor">
-      <label for="login-vendedor-email">E-mail</label><input id="login-vendedor-email" type="email" autocomplete="username" required>
-      <label for="login-vendedor-senha">Senha</label><input id="login-vendedor-senha" type="password" autocomplete="current-password" required>
+      <label for="login-vendedor-email">E-mail</label><input id="login-vendedor-email" name="username" type="email" autocomplete="username" required>
+      <label for="login-vendedor-senha">Senha</label><input id="login-vendedor-senha" name="password" type="password" autocomplete="current-password" required>
       <button class="botao-principal" type="submit">Entrar na área do vendedor</button>
       <p id="status-login-vendedor" role="status" aria-live="polite"></p>
     </form>
@@ -2030,6 +2030,29 @@ secoesParceiros.forEach(secao=>secao.addEventListener("toggle",()=>{
   if(secao.open) secoesParceiros.forEach(outra=>{if(outra!==secao)outra.open=false;});
   atualizarModoMenuParceiros();
 }));
+
+// Ao abrir a área do vendedor, tenta recuperar a sessão salva neste aparelho.
+let restaurandoSessaoVendedor = false;
+document.getElementById("acesso-vendedor")?.addEventListener("toggle", async e => {
+  const secao = e.currentTarget;
+  if (!secao.open || restaurandoSessaoVendedor || !BelaSync.temSessaoVendedor()) return;
+  restaurandoSessaoVendedor = true;
+  const status = document.getElementById("status-login-vendedor");
+  formLoginVendedor.hidden = true;
+  areaPainelVendedor.hidden = false;
+  document.getElementById("painel-vendedor-nome").textContent = "Recuperando seu acesso…";
+  try {
+    await carregarPainelVendedorCliente();
+    status.textContent = "";
+  } catch (err) {
+    await BelaSync.sairVendedor();
+    areaPainelVendedor.hidden = true;
+    formLoginVendedor.hidden = false;
+    status.textContent = "Sua sessão expirou. Entre novamente.";
+  } finally {
+    restaurandoSessaoVendedor = false;
+  }
+});
 botaoMenuParceiros.addEventListener("click",()=>{
   menuParceiros.hidden=false;
   document.body.classList.add("menu-parceiros-aberto");
