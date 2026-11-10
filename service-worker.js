@@ -1,11 +1,12 @@
-const CACHE_NAME = "bela-modas-app-v2";
+const CACHE_NAME = "bela-modas-app-v3";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./sync.js",
   "./manifest.webmanifest",
   "./icone-bela.svg",
-  "./isabela-avatar.jpg"
+  "./isabela-avatar.jpg",
+  "./icone-avatar-app.svg"
 ];
 
 self.addEventListener("install", event => {
