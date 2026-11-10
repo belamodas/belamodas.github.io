@@ -463,6 +463,8 @@ body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); background-colo
 .navegacao-inferior button { min-width:0; border:0; border-right:1px solid rgba(232,189,112,.42); background:transparent; color:#f4d28e; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font:11px Arial,sans-serif; cursor:pointer; }
 .navegacao-inferior button:last-child { border-right:0; }
 .navegacao-inferior button span { font-size:26px; line-height:1.1; color:#f7d58e; }
+.navegacao-inferior .nav-avatar .avatar-provisorio { display:grid; place-items:center; width:43px; height:43px; border-radius:50%; overflow:hidden; border:2px solid #e8bd70; box-shadow:0 0 8px rgba(232,189,112,.35); }
+.navegacao-inferior .nav-avatar .avatar-provisorio img { width:100%; height:100%; display:block; object-fit:cover; }
 .navegacao-inferior .sacola-icone { position:relative; display:grid; place-items:center; width:30px; height:29px; }
 .navegacao-inferior .sacola-icone .icone-sacola-svg { width:27px; height:27px; display:block; fill:none; stroke:#f7d58e; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .navegacao-inferior .sacola-icone i { position:absolute; right:-11px; top:-5px; min-width:16px; height:16px; padding:1px 4px; border-radius:20px; background:#f5d28a; color:#3a0611; font: bold 10px Arial; font-style:normal; }
@@ -1098,7 +1100,7 @@ body.menu-parceiros-aberto { overflow:hidden; }
 <nav class="navegacao-inferior" aria-label="Navegação principal">
   <button type="button" data-ir="inicio"><span>⌂</span>Início</button>
   <button type="button" data-ir="destaques"><span>★</span>Destaques</button>
-  <button type="button" id="nav-parceiros" class="nav-avatar" aria-label="Abrir menu de parceiros" aria-expanded="false"><span class="avatar-provisorio"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle cx="32" cy="32" r="30" fill="#e5bd70"/><path d="M13 29C13 10 22 5 33 5s20 9 19 26v8H13z" fill="#4b1720"/><path d="M18 28c0-12 6-18 14-18s15 7 15 19v8c0 10-7 17-15 17S18 47 18 37z" fill="#f2c49b"/><path d="M17 27c2-14 10-20 18-19 9 1 14 8 15 19-7-2-12-6-14-11-5 6-11 9-19 11" fill="#4b1720"/><circle cx="26" cy="33" r="2" fill="#351018"/><circle cx="39" cy="33" r="2" fill="#351018"/><path d="M27 42q5 4 10 0" fill="none" stroke="#9d4c4b" stroke-width="2" stroke-linecap="round"/><path d="M9 64c2-13 10-19 23-19s21 6 23 19" fill="#650817"/></svg></span></button>
+  <button type="button" id="nav-parceiros" class="nav-avatar" aria-label="Abrir menu de parceiros" aria-expanded="false"><span class="avatar-provisorio"><img src="isabela-avatar.jpg?v=1" alt="" aria-hidden="true"></span></button>
   <button type="button" data-ir="categorias"><span>▦</span>Categorias</button>
   <button type="button" id="nav-sacola"><span class="sacola-icone"><svg class="icone-sacola-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5.5 8.5h13l1.1 12h-15.2l1.1-12Z"/><path d="M9 9V6.8a3 3 0 0 1 6 0V9"/></svg><i id="contador-sacola-nav">0</i></span>Sacola</button>
 </nav>
