@@ -5,6 +5,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#5B0614">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bela Modas">
+<link rel="icon" href="./icone-bela.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icone-bela.svg">
 <title>Bela Modas | Catálogo</title>
 
 <style>
@@ -1017,6 +1023,9 @@ body.menu-parceiros-aberto { overflow:hidden; }
   .menu-parceiros-fundo.modo-pagina .menu-parceiros > details.cadastro-vendedor[open] > summary { font-size:22px; }
 }
 
+
+/* Instalação do aplicativo Bela Modas */
+#instalar-app-bela{position:fixed;top:12px;right:12px;z-index:10050;border:1px solid #f4d28f;border-radius:24px;padding:10px 15px;background:linear-gradient(100deg,#f8d994,#d99d43);color:#3b0710;font-size:12px;font-weight:800;box-shadow:0 4px 16px rgba(0,0,0,.35);cursor:pointer}#instalar-app-bela[hidden]{display:none!important}@media(max-width:520px){#instalar-app-bela{top:8px;right:8px;padding:9px 12px;font-size:11px}}
 </style>
 </head>
 
@@ -2192,7 +2201,22 @@ async function carregarVideoBanner() {
     areaProdutos.innerHTML = '<div class="vazio">A vitrine está aguardando a configuração da conexão. Volte em instantes.</div>';
   }
 })();
+/* PWA: instalação e cache essencial do catálogo */
+(function configurarAplicativoInstalavel(){
+  const botao=document.getElementById("instalar-app-bela");
+  if(!botao)return;
+  let instalacaoPendente=null;
+  const ehIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const jaEstaInstalado=window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;
+  if(jaEstaInstalado)return;
+  if(ehIOS){botao.hidden=false;botao.addEventListener("click",()=>alert('Para instalar a Bela Modas no iPhone: toque em Compartilhar no Safari e depois em "Adicionar à Tela de Início".'));}
+  window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();instalacaoPendente=event;botao.hidden=false;});
+  botao.addEventListener("click",async()=>{if(!instalacaoPendente)return;instalacaoPendente.prompt();await instalacaoPendente.userChoice;instalacaoPendente=null;botao.hidden=true;});
+  window.addEventListener("appinstalled",()=>{instalacaoPendente=null;botao.hidden=true;});
+  if("serviceWorker" in navigator&&location.protocol==="https:"){window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(erro=>console.warn("Não foi possível ativar o modo aplicativo:",erro)));}
+})();
 </script>
 
+<button id="instalar-app-bela" type="button" hidden>＋ Instalar app</button>
 </body>
 </html>
