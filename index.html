@@ -1040,7 +1040,7 @@ body.menu-parceiros-aberto { overflow:hidden; }
 <section class="hero-banner-carousel" id="hero-banner-carousel" aria-label="Banners promocionais">
   <div class="hero-banner-track" id="hero-banner-track">
     <section class="banner-editorial hero-banner-slide" aria-label="Conheça a coleção Bela Modas">
-      <video id="banner-video" autoplay muted loop playsinline preload="metadata" aria-label="Vídeo de apresentação da Bela Modas"><source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4"></video>
+      <video id="banner-video" muted loop playsinline preload="none" aria-label="Vídeo de apresentação da Bela Modas"></video>
       <div class="banner-editorial-conteudo">
         <p class="banner-editorial-selo">Bela Modas apresenta</p>
         <h1>Vista-se de você.</h1>
@@ -2203,13 +2203,18 @@ async function carregarVideoBanner() {
     console.error("sync.js não foi carregado.");
     return;
   }
-  try {
-    await carregarVideoBanner();
-    await carregarProdutos();
-  }
-  catch (err) {
-    console.warn("Catálogo remoto indisponível:", err.message);
-    areaProdutos.innerHTML = '<div class="vazio">A vitrine está aguardando a configuração da conexão. Volte em instantes.</div>';
+
+  // O vídeo do banner e os produtos são independentes: carregam em paralelo.
+  const tarefas = await Promise.allSettled([
+    carregarProdutos(),
+    carregarVideoBanner()
+  ]);
+
+  if (tarefas[0].status === "rejected") {
+    console.warn("Catálogo remoto indisponível:", tarefas[0].reason?.message || tarefas[0].reason);
+    if (!produtos.length) {
+      areaProdutos.innerHTML = '<div class="vazio">A vitrine está aguardando a configuração da conexão. Volte em instantes.</div>';
+    }
   }
 })();
 /* PWA: instalação e cache essencial do catálogo */
