@@ -799,11 +799,22 @@ function gerarUrlMiniatura(url) {
   } catch (_) {}
   return url;
 }
+function numeroPrecoValido(...valores) {
+  for (const valor of valores) {
+    if (valor === null || valor === undefined || String(valor).trim() === "") continue;
+    let texto = String(valor).trim().replace(/^R\\$\\s*/i, "").replace(/\\s/g, "");
+    // Aceita tanto números do Sheets quanto preços digitados no padrão brasileiro.
+    if (texto.includes(",")) texto = texto.replace(/\\./g, "").replace(",", ".");
+    const numero = Number(texto);
+    if (Number.isFinite(numero) && numero > 0) return numero;
+  }
+  return 0;
+}
 function normalizarProduto(p) {
   const fotos = Array.isArray(p.fotos)
     ? p.fotos
     : [p.foto_principal, ...(String(p.fotos_adicionais || "").split("|").filter(Boolean))].filter(Boolean);
-  const precoValor = Number(p.preco_valor ?? p.preco ?? 0) || 0;
+  const precoValor = numeroPrecoValido(p.preco_valor, p.preco);
   const precoPromocional = Number(p.preco_promocional || 0) || 0;
   const promocaoInicio = String(p.promocao_inicio || p.promo_inicio || "");
   const promocaoFim = String(p.promocao_fim || p.promo_fim || "");
