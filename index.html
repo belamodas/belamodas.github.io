@@ -1315,8 +1315,10 @@ async function carregarPainelVendedorCliente() {
   lista.replaceChildren();
   (dados.pedidos || []).forEach(p => {
     const item = document.createElement("p");
-    const st=({aguardando:"Aguardando confirmação dos produtos",confirmando:"Produtos disponíveis — aguardando entrega e pagamento",finalizado:"Finalizado",cancelada:"Cancelado"})[p.status]||p.status;
-    item.textContent=new Date(p.criadoEm).toLocaleDateString("pt-BR")+" · Pedido "+p.id.slice(0,8)+" · "+moeda(p.total)+" · Comissão "+moeda(p.comissao)+" · "+st+(p.status==="finalizado"?" · "+p.statusComissao:"");
+    const st=({aguardando:"Aguardando confirmação dos produtos",confirmada:"Produtos disponíveis — aguardando entrega e pagamento",confirmando:"Produtos disponíveis — aguardando entrega e pagamento",concluida:"Finalizado",finalizado:"Finalizado",cancelada:"Cancelado"})[p.status]||p.status;
+    const comissaoSt=({aguardando_pagamento:"Aguardando pagamento",paga:"Paga",cancelada:"Cancelada",nao_liberada:"Ainda não liberada"})[p.statusComissao]||p.statusComissao||"";
+    const pedidoFinalizado=p.status==="concluida"||p.status==="finalizado";
+    item.textContent=new Date(p.criadoEm).toLocaleDateString("pt-BR")+" · Pedido "+p.id.slice(0,8)+" · "+moeda(p.total)+" · Comissão "+moeda(p.comissao)+" · "+st+(pedidoFinalizado&&comissaoSt?" · Comissão: "+comissaoSt:"");
     lista.appendChild(item);
   });
   if (!dados.pedidos.length) lista.textContent = "Você ainda não possui pedidos registrados.";
@@ -1383,7 +1385,7 @@ function normalizarProduto(p) {
   const agora = Date.now();
   const inicioMs = promocaoInicio ? new Date(promocaoInicio).getTime() : 0;
   const fimMs = promocaoFim ? new Date(promocaoFim).getTime() : 0;
-  const periodoValido = (!inicioMs || (Number.isFinite(inicioMs) && agora >= inicioMs)) && (!fimMs || (Number.isFinite(fimMs) && agora < fimMs));
+  const periodoValido = (!inicioMs || (Number.isFinite(inicioMs) && agora >= inicioMs)) && (!fimMs || (Number.isFinite(fimMs) && agora <= fimMs));
   const emPromocao = precoPromocional > 0 && precoPromocional < precoValor && periodoValido;
   const precoFinalValor = emPromocao ? precoPromocional : precoValor;
   return {
@@ -1471,7 +1473,7 @@ function atualizarContagensPromocao() {
     const inicio = p.promocaoInicio ? new Date(p.promocaoInicio).getTime() : 0;
     const fim = p.promocaoFim ? new Date(p.promocaoFim).getTime() : 0;
     const temPrecoPromocional = Number(p.precoPromocionalValor) > 0 && Number(p.precoPromocionalValor) < Number(p.precoValor);
-    const ativa = temPrecoPromocional && (!inicio || (Number.isFinite(inicio) && agora >= inicio)) && (!fim || (Number.isFinite(fim) && agora < fim));
+    const ativa = temPrecoPromocional && (!inicio || (Number.isFinite(inicio) && agora >= inicio)) && (!fim || (Number.isFinite(fim) && agora <= fim));
     if (ativa !== p.emPromocao) {
       p.emPromocao = ativa;
       p.precoFinalValor = ativa ? Number(p.precoPromocionalValor) : Number(p.precoValor);
