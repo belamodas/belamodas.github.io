@@ -815,6 +815,7 @@ function normalizarProduto(p) {
   return {
     codigo: String(p.codigo || ""),
     ordem: Number.isFinite(Number(p.ordem)) && Number(p.ordem) > 0 ? Number(p.ordem) : 0,
+    dataCadastro: String(p.data_cadastro || p.dataCadastro || ""),
     nome: String(p.nome || ""),
     categoria: String(p.categoria || ""),
     descricao: String(p.descricao || ""),
@@ -1064,40 +1065,15 @@ document.querySelectorAll("[data-fechar]").forEach(b => b.onclick = () => docume
 
 function ordenarProdutosLocalmente() {
   produtos.sort((a, b) => {
+    const dataA = Date.parse(a.dataCadastro || "") || 0;
+    const dataB = Date.parse(b.dataCadastro || "") || 0;
+    if (dataA && dataB && dataA !== dataB) return dataB - dataA;
+    if (dataA && !dataB) return -1;
+    if (!dataA && dataB) return 1;
     const ordemA = Number(a.ordem) || Number.MAX_SAFE_INTEGER;
     const ordemB = Number(b.ordem) || Number.MAX_SAFE_INTEGER;
     return ordemA - ordemB;
   });
-}
-
-async function moverProduto(codigo, deslocamento) {
-  if (!BelaSync || typeof BelaSync.salvarOrdemProdutos !== "function") {
-    alert("A conexão ainda não está preparada para salvar a ordem. Atualize também o arquivo sync.js.");
-    return;
-  }
-  const indice = produtos.findIndex(p => p.codigo === codigo);
-  const destino = indice + deslocamento;
-  if (indice < 0 || destino < 0 || destino >= produtos.length) return;
-
-  const anterior = produtos.map(p => ({ ...p }));
-  [produtos[indice], produtos[destino]] = [produtos[destino], produtos[indice]];
-  produtos.forEach((p, i) => { p.ordem = i + 1; });
-  renderListaAdmin();
-  mostrarProdutos();
-  renderDestaques();
-
-  try {
-    const codigos = produtos.map(p => p.codigo);
-    await BelaSync.salvarOrdemProdutos(codigos);
-    salvarCacheProdutos();
-  } catch (err) {
-    produtos = anterior;
-    ordenarProdutosLocalmente();
-    renderListaAdmin();
-    mostrarProdutos();
-    renderDestaques();
-    alert(err.message || "Não foi possível salvar a ordem dos produtos.");
-  }
 }
 
 async function alterarDestaqueRapido(produto, controle) {
@@ -1213,15 +1189,9 @@ document.getElementById("retirar-promocao").onclick = async () => {
 
 function renderListaAdmin() {
   const area = document.getElementById("lista-admin"); area.replaceChildren();
-  produtos.forEach((p, indice) => {
+  produtos.forEach(p => {
     const linha = document.createElement("div"); linha.className = "item-carrinho";
     const nome = document.createElement("span"); nome.textContent = `${p.codigo} — ${p.nome}${p.ativo ? "" : " (inativo)"}`;
-    const subir = document.createElement("button"); subir.type = "button"; subir.textContent = "↑";
-    subir.title = "Mover produto para cima"; subir.setAttribute("aria-label", `Mover ${p.nome} para cima`);
-    subir.disabled = indice === 0; subir.onclick = () => moverProduto(p.codigo, -1);
-    const descer = document.createElement("button"); descer.type = "button"; descer.textContent = "↓";
-    descer.title = "Mover produto para baixo"; descer.setAttribute("aria-label", `Mover ${p.nome} para baixo`);
-    descer.disabled = indice === produtos.length - 1; descer.onclick = () => moverProduto(p.codigo, 1);
     const destaqueLabel = document.createElement("label");
     destaqueLabel.className = "admin-destaque-toggle";
     destaqueLabel.title = p.destaque ? "Remover da vitrine de destaques" : "Colocar na vitrine de destaques";
@@ -1244,7 +1214,7 @@ function renderListaAdmin() {
       try { await BelaSync.excluirProduto(p.codigo); produtos = produtos.filter(x => x.codigo !== p.codigo); salvarCacheProdutos(); mostrarProdutos(); renderListaAdmin(); }
       catch (err) { alert(err.message || "Não foi possível excluir o produto."); }
     };
-    linha.append(nome, subir, descer, destaqueLabel, promocao, editar, apagar); area.appendChild(linha);
+    linha.append(nome, destaqueLabel, promocao, editar, apagar); area.appendChild(linha);
   });
 }
 function renderFotosExistentes() {
