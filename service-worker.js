@@ -1,4 +1,4 @@
-const CACHE_NAME = "bela-modas-app-v6";
+const CACHE_NAME = "bela-modas-app-v7";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -35,19 +35,23 @@ self.addEventListener("fetch", event => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Navegação: tenta a versão publicada e usa a última cópia se estiver sem internet.
+  // Abre imediatamente a última página guardada e atualiza em segundo plano.
   if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request)
-        .then(response => {
-          if (response && response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put("./index.html", copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match("./index.html").then(cached => cached || caches.match("./")))
-    );
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const paginaSalva = await cache.match("./index.html");
+      const atualizacao = fetch(request).then(response => {
+        if (response && response.ok) {
+          cache.put("./index.html", response.clone());
+        }
+        return response;
+      });
+      if (paginaSalva) {
+        event.waitUntil(atualizacao.then(() => undefined).catch(() => undefined));
+        return paginaSalva;
+      }
+      return atualizacao.catch(() => cache.match("./"));
+    })());
     return;
   }
 
