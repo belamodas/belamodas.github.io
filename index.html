@@ -1390,12 +1390,23 @@ function gerarUrlMiniatura(url) {
   } catch (_) {}
   return url;
 }
+function numeroPrecoCatalogo(...valores) {
+  for (const valor of valores) {
+    if (valor === null || valor === undefined || String(valor).trim() === "") continue;
+    if (typeof valor === "number" && Number.isFinite(valor) && valor > 0) return valor;
+    let texto = String(valor).trim().replace(/^R\$\s*/i, "").replace(/\s/g, "");
+    if (texto.includes(",")) texto = texto.replace(/\./g, "").replace(",", ".");
+    const numero = Number(texto);
+    if (Number.isFinite(numero) && numero > 0) return numero;
+  }
+  return 0;
+}
 function normalizarProduto(p) {
   const fotos = Array.isArray(p.fotos)
     ? p.fotos
     : [p.foto_principal, ...(String(p.fotos_adicionais || "").split("|").filter(Boolean))].filter(Boolean);
-  const precoValor = Number(p.preco_valor ?? p.preco ?? 0) || 0;
-  const precoPromocional = Number(p.preco_promocional || 0) || 0;
+  const precoValor = numeroPrecoCatalogo(p.preco_valor, p.preco);
+  const precoPromocional = numeroPrecoCatalogo(p.preco_promocional);
   const promocaoInicio = String(p.promocao_inicio || p.promo_inicio || "");
   const promocaoFim = String(p.promocao_fim || p.promo_fim || "");
   const agora = Date.now();
