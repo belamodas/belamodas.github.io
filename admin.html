@@ -1649,7 +1649,7 @@ document.getElementById("form-login").addEventListener("submit", async e => {
   try {
     await BelaSync.entrar(document.getElementById("admin-senha").value);
     document.getElementById("admin-senha").value = "";
-    await Promise.all([carregarProdutos(), carregarBannerAdmin(), carregarConfigEntregasAdmin()]); atualizarPainelAdmin();
+    await Promise.allSettled([carregarProdutos(), carregarBannerAdmin(), carregarConfigEntregasAdmin()]); atualizarPainelAdmin();
   } catch (err) { alert(err.message || "Falha ao entrar."); }
   finally { botao.disabled = false; }
 });
