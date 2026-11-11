@@ -2015,18 +2015,14 @@ document.getElementById("enviar-whatsapp").onclick = async () => {
     linhas.push("Bairro: " + bairro);
     linhas.push("Cidade/UF: " + cidade + "/" + document.getElementById("estado-entrega").value.trim());
     linhas.push("CEP: " + cep);
-    linhas.push("Distância da rota (ida): " + Number(cotacaoEntrega.distanciaKm).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " km");
-    linhas.push("Taxa mínima: " + moeda(cotacaoEntrega.valorMinimo ?? 5));
-    linhas.push("Valor por km: " + moeda(cotacaoEntrega.valorKm));
-    linhas.push("Frete calculado: " + moeda(cotacaoEntrega.frete));
+    linhas.push("Frete: " + moeda(cotacaoEntrega.frete));
     linhas.push("Total com entrega: " + moeda(total + Number(cotacaoEntrega.frete)));
   } else {
     linhas.push("Forma de recebimento: Retirada na loja");
   }
   linhas.push("Forma de pagamento pretendida: " + pagamento);
   linhas.push("Observações: " + (document.getElementById("obs-pedido").value.trim() || "Nenhuma"));
-  linhas.push("");
-  linhas.push("IMPORTANTE: aguardo a confirmação da disponibilidade dos produtos e, se for entrega, do valor do frete antes de realizar qualquer pagamento.");
+
   if (indicacao) {
     try {
       const pedidoId = (crypto.randomUUID ? crypto.randomUUID() : "BM" + Date.now() + Math.random().toString(16).slice(2));
