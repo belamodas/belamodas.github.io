@@ -1,11 +1,11 @@
 {
-  "id": "./",
+  "id": "https://belamodas.github.io/vendedor/",
   "name": "Bela Modas | Vendedor",
   "short_name": "Bela Vendedor",
   "description": "Aplicativo independente dos vendedores parceiros da Bela Modas",
   "lang": "pt-BR",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "https://belamodas.github.io/vendedor/",
+  "scope": "https://belamodas.github.io/vendedor/",
   "display": "standalone",
   "display_override": [
     "standalone",
