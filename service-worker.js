@@ -1,9 +1,7 @@
-const CACHE_NAME = "bela-modas-app-v8";
+const CACHE_NAME = "bela-modas-app-v9";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./vendedor.html",
-  "./manifest-vendedor.webmanifest",
   "./sync.js",
   "./manifest.webmanifest",
   "./icone-bela.svg",
