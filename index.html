@@ -2210,6 +2210,13 @@ async function carregarVideoBanner() {
     carregarVideoBanner()
   ]);
 
+  // Abre automaticamente o produto recebido em um link de indicação.
+  const codigoProdutoDireto = parametrosVendedor.get("produto") || "";
+  if (codigoProdutoDireto && tarefas[0].status === "fulfilled") {
+    const produtoDireto = produtos.find(p => String(p.codigo) === codigoProdutoDireto);
+    if (produtoDireto) abrirProduto(produtoDireto);
+  }
+
   if (tarefas[0].status === "rejected") {
     console.warn("Catálogo remoto indisponível:", tarefas[0].reason?.message || tarefas[0].reason);
     if (!produtos.length) {
