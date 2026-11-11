@@ -2,7 +2,14 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#650817"><title>Bela Modas | App do Vendedor</title>
+<meta name="theme-color" content="#650817">
+<link rel="manifest" href="./manifest-vendedor.webmanifest">
+<link rel="icon" href="./icone-avatar-app.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./isabela-avatar.jpg">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bela Vendedor">
+<title>Bela Modas | App do Vendedor</title>
 <style>
 :root{--v:#650817;--g:#e5bd70;--bg:#fff8ef;--ink:#351018;--line:#eadbc9}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px Arial,sans-serif}
@@ -82,5 +89,6 @@ $("pix-form").addEventListener("submit",async e=>{e.preventDefault();const b=e.s
 $("senha-form").addEventListener("submit",async e=>{e.preventDefault();try{await BelaSync.trocarSenhaVendedor($("senha-nova").value);$("senha-nova").value="";setText($("senha-msg"),"Senha alterada com sucesso.");}catch(err){setText($("senha-msg"),err.message||"Falha ao alterar senha.");}});
 $("sair").addEventListener("click",async()=>{await BelaSync.sairVendedor();seller=null;$("app").classList.add("hidden");$("login").classList.remove("hidden");$("senha").value="";});
 (async()=>{if(!window.BelaSync){setText($("login-msg"),"Não foi possível carregar a conexão com o servidor.");return;}if(BelaSync.temSessaoVendedor()){try{await loadPanel();await loadProducts();}catch(e){await BelaSync.sairVendedor();setText($("login-msg"),"Sua sessão expirou. Entre novamente.");}}})();
+if("serviceWorker" in navigator&&location.protocol==="https:"){window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(err=>console.warn("Falha ao ativar modo aplicativo:",err)));}
 </script>
 </body></html>
