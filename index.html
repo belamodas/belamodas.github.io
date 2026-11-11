@@ -1334,7 +1334,7 @@ async function carregarPainelVendedorCliente() {
     const st=({aguardando:"Aguardando confirmação dos produtos",confirmada:"Produtos disponíveis — aguardando entrega e pagamento",confirmando:"Produtos disponíveis — aguardando entrega e pagamento",concluida:"Finalizado",finalizado:"Finalizado",cancelada:"Cancelado"})[p.status]||p.status;
     const comissaoSt=({aguardando_pagamento:"Aguardando pagamento",paga:"Paga",cancelada:"Cancelada",nao_liberada:"Ainda não liberada"})[p.statusComissao]||p.statusComissao||"";
     const pedidoFinalizado=p.status==="concluida"||p.status==="finalizado";
-    item.textContent=new Date(p.criadoEm).toLocaleDateString("pt-BR")+" · Pedido "+p.id.slice(0,8)+" · "+moeda(p.total)+" · Comissão "+moeda(p.comissao)+" · "+st+(pedidoFinalizado&&comissaoSt?" · Comissão: "+comissaoSt:"");
+    item.textContent=new Date(p.criadoEm).toLocaleDateString("pt-BR")+" · Pedido "+p.id.slice(0,8)+" · Produtos "+moeda(p.totalProdutos)+" · Frete "+moeda(p.frete)+" · Comissão "+moeda(p.comissao)+" · "+st+(pedidoFinalizado&&comissaoSt?" · Comissão: "+comissaoSt:"");
     lista.appendChild(item);
   });
   if (!dados.pedidos.length) lista.textContent = "Você ainda não possui pedidos registrados.";
