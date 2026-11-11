@@ -335,7 +335,7 @@ footer p { color:#e6c98c; font-size:10px; letter-spacing:2px; margin:10px 0 22px
 .foto img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
 .galeria-produto { display:block; margin:12px 0; }
 .visualizador { position:relative; width:100%; height: min(58vh, 430px); min-height:240px; background:#eee5df; border-radius:9px; overflow:hidden; display:flex; align-items:center; justify-content:center; touch-action:pan-y; }
-.visualizador img { width:100%; height:100%; object-fit:contain; }
+.visualizador img { width:100%; height:100%; object-fit:contain; transition:transform .16s ease; transform-origin:center center; will-change:transform; }
 .visualizador video { width:100%; height:100%; object-fit:contain; background:#171313; }
 .navegar-foto { position:absolute; top:50%; transform:translateY(-50%); border:0; border-radius:50%; width:38px; height:38px; background:rgba(255,255,255,.88); color:#302724; font-size:24px; cursor:pointer; z-index:2; }
 .navegar-foto.anterior { left:9px; } .navegar-foto.proxima { right:9px; }
@@ -1786,7 +1786,22 @@ function abrirProduto(produto) {
   const midias = fotos.map(src => ({ tipo: "foto", src }));
   if (produto.video) midias.push({ tipo: "video", src: produto.video });
   let indice = 0;
+  let zoomFoto = 1, deslocX = 0, deslocY = 0;
+  let toqueX = 0, toqueY = 0, ultimoToque = 0, distanciaInicial = 0, zoomInicial = 1;
+  let gestoPinça = false, arrastandoZoom = false;
   const quadro = document.createElement("div"); quadro.className = "visualizador";
+  function aplicarZoom() {
+    const img = quadro.querySelector("img");
+    if (!img) return;
+    img.style.transform = `translate(${deslocX}px, ${deslocY}px) scale(${zoomFoto})`;
+    img.style.transformOrigin = "center center";
+    img.style.cursor = zoomFoto > 1 ? "grab" : "zoom-in";
+    img.style.transition = arrastandoZoom ? "none" : "transform .16s ease";
+  }
+  function resetarZoom() {
+    zoomFoto = 1; deslocX = 0; deslocY = 0;
+    aplicarZoom();
+  }
   const contador = document.createElement("div"); contador.className = "contador-foto";
   const pontos = document.createElement("div"); pontos.className = "pontos-foto";
   const anterior = document.createElement("button"); anterior.className = "navegar-foto anterior"; anterior.type = "button"; anterior.textContent = "‹"; anterior.setAttribute("aria-label", "Mídia anterior");
@@ -1798,7 +1813,16 @@ function abrirProduto(produto) {
       if (item.tipo === "foto") {
         const img = document.createElement("img"); img.alt = produto.nome + " — foto " + (indice + 1);
         img.loading = "eager"; img.decoding = "async"; img.fetchPriority = indice === 0 ? "high" : "low";
-        img.src = item.src; quadro.appendChild(img);
+        img.src = item.src;
+        img.draggable = false;
+        img.style.touchAction = "none";
+        quadro.appendChild(img);
+        resetarZoom();
+        img.addEventListener("dblclick", e => {
+          e.preventDefault();
+          if (zoomFoto > 1) resetarZoom();
+          else { zoomFoto = 2; aplicarZoom(); }
+        });
         if (indice === 0 && fotos.length > 1) {
           const iniciarPreload = () => {
             const preparar = () => {
@@ -1834,10 +1858,49 @@ function abrirProduto(produto) {
   }
   anterior.onclick = () => { indice = (indice - 1 + midias.length) % midias.length; mostrarMidia(); };
   proxima.onclick = () => { indice = (indice + 1) % midias.length; mostrarMidia(); };
-  let toqueInicial = 0;
-  quadro.addEventListener("touchstart", e => { toqueInicial = e.changedTouches[0].clientX; }, { passive: true });
+  quadro.addEventListener("touchstart", e => {
+    if (e.touches.length === 2) {
+      gestoPinça = true; arrastandoZoom = true;
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      distanciaInicial = Math.hypot(dx, dy); zoomInicial = zoomFoto;
+      e.preventDefault();
+      return;
+    }
+    if (e.touches.length === 1) {
+      toqueX = e.touches[0].clientX; toqueY = e.touches[0].clientY;
+      if (zoomFoto > 1) arrastandoZoom = true;
+      else {
+        const agora = Date.now();
+        if (agora - ultimoToque < 300) {
+          zoomFoto = zoomFoto > 1 ? 1 : 2;
+          deslocX = 0; deslocY = 0; aplicarZoom();
+          ultimoToque = 0;
+          e.preventDefault();
+        } else ultimoToque = agora;
+      }
+    }
+  }, { passive: false });
+  quadro.addEventListener("touchmove", e => {
+    if (gestoPinça && e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      zoomFoto = Math.max(1, Math.min(4, zoomInicial * (Math.hypot(dx, dy) / Math.max(1, distanciaInicial))));
+      if (zoomFoto === 1) { deslocX = 0; deslocY = 0; }
+      aplicarZoom(); e.preventDefault();
+    } else if (arrastandoZoom && zoomFoto > 1 && e.touches.length === 1) {
+      const x = e.touches[0].clientX, y = e.touches[0].clientY;
+      deslocX += x - toqueX; deslocY += y - toqueY;
+      toqueX = x; toqueY = y; aplicarZoom(); e.preventDefault();
+    }
+  }, { passive: false });
   quadro.addEventListener("touchend", e => {
-    const delta = e.changedTouches[0].clientX - toqueInicial;
+    if (gestoPinça) {
+      if (e.touches.length < 2) { gestoPinça = false; arrastandoZoom = false; }
+      return;
+    }
+    if (zoomFoto > 1) { arrastandoZoom = false; return; }
+    const delta = e.changedTouches[0].clientX - toqueX;
     if (Math.abs(delta) > 45 && midias.length > 1) {
       indice = (indice + (delta < 0 ? 1 : -1) + midias.length) % midias.length; mostrarMidia();
     }
