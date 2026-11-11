@@ -1,11 +1,11 @@
 {
-  "id": "./",
+  "id": "https://belamodas.github.io/",
   "name": "Bela Modas",
   "short_name": "Bela Modas",
   "description": "Catálogo virtual da Bela Modas",
   "lang": "pt-BR",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "https://belamodas.github.io/",
+  "scope": "https://belamodas.github.io/",
   "display": "standalone",
   "display_override": [
     "standalone",
