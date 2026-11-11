@@ -885,6 +885,8 @@ footer { padding-top:24px; }
 .apresentacao-parceiro h3{margin:0 0 10px;color:#650817;font:normal 25px Georgia,serif}
 .apresentacao-parceiro p{margin:8px 0;line-height:1.55}
 .apresentacao-parceiro ul{padding-left:20px;margin:10px 0;color:#5b4145;font-size:13px;line-height:1.65}
+#form-cadastro-vendedor[hidden]{display:none!important}
+#seguir-cadastro-vendedor{width:100%;margin-top:12px}
 .aceite-parceiro{margin:10px 0;padding:14px;border:1px solid #e5bd70;border-radius:10px;background:#fff8ef}
 .aceite-parceiro>h4{margin:0 0 10px;color:#650817;font-size:14px}
 .termos-parceiro{border:1px solid #e5d4bd;border-radius:8px;background:#fff;padding:10px}
@@ -1235,9 +1237,10 @@ body.menu-parceiros-aberto { overflow:hidden; }
         <li>Pagamentos quinzenais, sem valor mínimo para receber.</li>
         <li>Acompanhe seus pedidos e comissões pelo aplicativo.</li>
       </ul>
-      <p>Preencha seus dados abaixo para solicitar sua participação. Seu cadastro será analisado pela Bela Modas.</p>
+      <p>Se você deseja participar, conheça as condições e, ao final, siga para preencher sua inscrição.</p>
+      <button class="botao-principal" type="button" id="seguir-cadastro-vendedor">Seguir para cadastro</button>
     </div>
-    <form id="form-cadastro-vendedor">
+    <form id="form-cadastro-vendedor" hidden>
       <label for="vendedor-nome">Nome completo</label>
       <input id="vendedor-nome" name="nome" autocomplete="name" required maxlength="100" placeholder="Seu nome">
       <label for="vendedor-whatsapp">WhatsApp com DDD</label>
@@ -1428,6 +1431,14 @@ function obterIndicacaoVendedor() {
   } catch (_) { return null; }
 }
 const formularioVendedor = document.getElementById("form-cadastro-vendedor");
+const apresentacaoVendedor = document.querySelector(".apresentacao-parceiro");
+document.getElementById("seguir-cadastro-vendedor")?.addEventListener("click", () => {
+  if (apresentacaoVendedor) apresentacaoVendedor.hidden = true;
+  if (formularioVendedor) {
+    formularioVendedor.hidden = false;
+    formularioVendedor.scrollIntoView({behavior:"smooth",block:"start"});
+  }
+});
 if (formularioVendedor) formularioVendedor.addEventListener("submit", async e => {
   e.preventDefault();
   const botao = formularioVendedor.querySelector('button[type="submit"]');
