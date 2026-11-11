@@ -560,12 +560,13 @@ footer { padding-top:24px; }
 #modal .modal {
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
   width: min(560px, 100%);
+  height: auto;
   max-height: calc(100vh - 24px);
   max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 12px 18px 18px;
+  overflow: hidden;
+  padding: 5px 18px 7px;
   margin: auto;
   border-radius: 14px;
 }
@@ -612,10 +613,14 @@ footer { padding-top:24px; }
   }
 
   #modal .modal {
+    box-sizing: border-box;
     width: 100%;
-    max-height: calc(100vh - 20px);
-    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px);
-    padding: 10px 14px 16px;
+    height: auto;
+    max-height: calc(100vh - 12px);
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 12px);
+    overflow: hidden;
+    padding: 3px 12px 5px;
+    gap: 0;
   }
 
   #modal .visualizador {
