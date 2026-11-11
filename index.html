@@ -333,7 +333,7 @@ footer p { color:#e6c98c; font-size:10px; letter-spacing:2px; margin:10px 0 22px
 .header-info .acao-header { background: var(--principal); color: white; border-color: var(--principal); }
 .header-info .acao-header.discreto { background: transparent; color: var(--principal); border-color: #D8C9C1; }
 .foto img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
-.galeria-produto { display:block; margin:6px 0 2px; }
+.galeria-produto { display:block; margin:12px 0; }
 .visualizador { position:relative; width:100%; height: min(58vh, 430px); min-height:240px; background:#eee5df; border-radius:9px; overflow:hidden; display:flex; align-items:center; justify-content:center; touch-action:pan-y; }
 .visualizador img { width:100%; height:100%; object-fit:contain; }
 .visualizador video { width:100%; height:100%; object-fit:contain; background:#171313; }
@@ -565,7 +565,7 @@ footer { padding-top:24px; }
   max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 8px 18px 10px;
+  padding: 12px 18px 18px;
   margin: auto;
   border-radius: 14px;
 }
@@ -615,7 +615,7 @@ footer { padding-top:24px; }
     width: 100%;
     max-height: calc(100vh - 20px);
     max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px);
-    padding: 6px 14px 8px;
+    padding: 10px 14px 16px;
   }
 
   #modal .visualizador {
@@ -1068,6 +1068,45 @@ body.menu-parceiros-aberto { overflow:hidden; }
 
 
 /* A galeria mantém o dimensionamento amplo da versão anterior. O pré-carregamento das fotos permanece ativo no JavaScript. */
+
+/* Ajuste do modal no celular: card compacto sem rolagem.
+   Mantém intactos o visualizador, o tamanho das fotos e o JavaScript da galeria. */
+@media (max-width: 520px) {
+  #modal.modal-fundo {
+    padding: max(6px, env(safe-area-inset-top)) 8px
+             max(6px, env(safe-area-inset-bottom));
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+  }
+  #modal .modal {
+    box-sizing: border-box;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 12px);
+    overflow: hidden;
+    padding: 4px 14px 6px;
+    margin: auto;
+    gap: 0;
+  }
+  #modal .fechar {
+    position: absolute;
+    top: 7px;
+    right: 12px;
+    flex: none;
+    width: 34px;
+    height: 34px;
+    margin: 0;
+  }
+  #modal .tipo { margin: 0; }
+  #modal .modal h3 { margin: 0 42px 2px 0; }
+  #modal #modal-preco { margin: 0; line-height: 1.35; }
+  #modal .galeria-produto { margin: 2px 0 0; }
+  #modal .contador-foto { margin-top: 4px; }
+  #modal .pontos-foto { margin-top: 5px; }
+}
+
 </style>
 </head>
 
