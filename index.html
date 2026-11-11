@@ -881,6 +881,20 @@ footer { padding-top:24px; }
 .cadastro-vendedor form{display:grid;gap:8px;margin-top:14px}
 .cadastro-vendedor input{width:100%;padding:12px;border:1px solid #d8c9c1;border-radius:8px;font:inherit}
 .cadastro-vendedor p{line-height:1.5}
+.apresentacao-parceiro{margin:14px 0 18px;padding:15px;border:1px solid #e5bd70;border-radius:12px;background:linear-gradient(145deg,#fffaf2,#f8ecdf);color:#3c2927}
+.apresentacao-parceiro h3{margin:0 0 10px;color:#650817;font:normal 25px Georgia,serif}
+.apresentacao-parceiro p{margin:8px 0;line-height:1.55}
+.apresentacao-parceiro ul{padding-left:20px;margin:10px 0;color:#5b4145;font-size:13px;line-height:1.65}
+.aceite-parceiro{margin:10px 0;padding:14px;border:1px solid #e5bd70;border-radius:10px;background:#fff8ef}
+.aceite-parceiro>h4{margin:0 0 10px;color:#650817;font-size:14px}
+.termos-parceiro{border:1px solid #e5d4bd;border-radius:8px;background:#fff;padding:10px}
+.termos-parceiro summary{font-size:13px;line-height:1.4}
+.texto-termo-parceiro{max-height:330px;overflow:auto;margin-top:10px;padding:12px;border-top:1px solid #eadfd5;color:#3c2927;font-size:12px;line-height:1.55}
+.texto-termo-parceiro h4{color:#650817;font-size:14px;line-height:1.4}
+.texto-termo-parceiro h5{margin:14px 0 4px;color:#650817;font-size:12px}
+.texto-termo-parceiro p{margin:5px 0 9px;color:#4c3b38}
+.check-aceite-parceiro{display:flex!important;align-items:flex-start;gap:9px;margin:13px 0 3px!important;color:#3c2927;font-size:12px!important;line-height:1.5}
+.check-aceite-parceiro input{width:18px!important;height:18px;flex:0 0 18px;margin:0!important;accent-color:#650817}
 #resultado-cadastro-vendedor{min-height:1.3em;margin:4px 0 0}
 
 /* Ajustes pontuais da barra de cinco atalhos */
@@ -1210,7 +1224,19 @@ body.menu-parceiros-aberto { overflow:hidden; }
     <div class="cabecalho-menu-parceiros"><strong>Bela Modas</strong><small>Área de parceiros e atendimento</small></div>
     <details class="cadastro-vendedor">
     <summary>Seja um vendedor parceiro da Bela Modas</summary>
-    <p>Cadastre-se gratuitamente. Seu cadastro será analisado pela nossa equipe antes da liberação do link exclusivo.</p>
+    <div class="apresentacao-parceiro">
+      <h3>Seja um Vendedor Parceiro Bela Modas!</h3>
+      <p>Já pensou em ganhar dinheiro indicando produtos que as pessoas adoram? Com o programa de Vendedores Parceiros da <strong>Bela Modas</strong>, você divulga nossos produtos para amigos, familiares e clientes utilizando seu próprio link de vendedor.</p>
+      <p>Quando uma venda for realizada, paga e confirmada pela loja, você recebe comissão sobre o valor dos produtos vendidos. A comissão padrão é de <strong>5%</strong>, com possibilidade de percentuais especiais em campanhas promocionais.</p>
+      <ul>
+        <li>Cadastro gratuito, sem mensalidade.</li>
+        <li>Não precisa comprar produtos nem manter estoque.</li>
+        <li>Você divulga quando e onde quiser, com autonomia e sem exclusividade.</li>
+        <li>Pagamentos quinzenais, sem valor mínimo para receber.</li>
+        <li>Acompanhe seus pedidos e comissões pelo aplicativo.</li>
+      </ul>
+      <p>Preencha seus dados abaixo para solicitar sua participação. Seu cadastro será analisado pela Bela Modas.</p>
+    </div>
     <form id="form-cadastro-vendedor">
       <label for="vendedor-nome">Nome completo</label>
       <input id="vendedor-nome" name="nome" autocomplete="name" required maxlength="100" placeholder="Seu nome">
@@ -1224,6 +1250,45 @@ body.menu-parceiros-aberto { overflow:hidden; }
       <input id="vendedor-senha" name="senha" type="password" autocomplete="new-password" minlength="8" maxlength="72" required placeholder="Crie uma senha">
       <label for="vendedor-confirma-senha">Confirme sua senha</label>
       <input id="vendedor-confirma-senha" name="confirmaSenha" type="password" autocomplete="new-password" minlength="8" maxlength="72" required placeholder="Digite a senha novamente">
+
+      <section class="aceite-parceiro" aria-label="Termo de adesão">
+        <h4>Última etapa: leia e aceite o termo de participação</h4>
+        <details class="termos-parceiro">
+          <summary>Ler contrato de adesão ao Programa de Vendedores Parceiros</summary>
+          <div class="texto-termo-parceiro">
+            <h4>CONTRATO DE ADESÃO AO PROGRAMA DE VENDEDORES PARCEIROS INDEPENDENTES — BELA MODAS</h4>
+            <p>Este documento estabelece as condições de participação no Programa de Vendedores Parceiros da Bela Modas. Ao enviar a inscrição com o aceite eletrônico, o interessado declara que leu, compreendeu e concorda com as regras abaixo.</p>
+            <h5>1. Participação no programa</h5>
+            <p>A participação é gratuita, sem taxa de inscrição ou mensalidade. O cadastro será analisado e dependerá da aprovação da Bela Modas. O programa permite que pessoas independentes divulguem produtos da loja e recebam comissões por vendas efetivamente realizadas e confirmadas.</p>
+            <h5>2. Natureza da parceria e ausência de vínculo empregatício</h5>
+            <p>A participação possui natureza de parceria comercial independente, destinada à divulgação e indicação dos produtos da Bela Modas, mediante comissões sobre vendas confirmadas. O Vendedor Parceiro atua por conta própria, com autonomia para decidir se, quando, onde e de que forma realizará a divulgação, respeitadas as condições comerciais e as regras de uso da marca.</p>
+            <p>A parceria não constitui contratação como empregado ou funcionário da Bela Modas, nem estabelece, por si só, vínculo empregatício, sociedade, franquia ou relação de subordinação entre as partes. Não existe jornada ou horário fixo, obrigação de comparecimento à loja, exclusividade, metas mínimas obrigatórias, controle de frequência ou salário fixo. O parceiro decide livremente quanto tempo e esforço deseja dedicar à divulgação e não possui garantia de ganhos.</p>
+            <p>A Bela Modas disponibiliza ferramentas digitais para divulgação e acompanhamento de pedidos e comissões, sem que isso represente, por si só, controle de jornada ou subordinação profissional. O parceiro não está autorizado a assumir compromissos, celebrar contratos, conceder descontos ou receber pagamentos em nome da Bela Modas sem autorização expressa. A parceria deverá ser executada de acordo com sua natureza independente e a legislação brasileira aplicável.</p>
+            <h5>3. Divulgação dos produtos</h5>
+            <p>O vendedor receberá um link exclusivo para divulgar a loja e seus produtos. As vendas deverão ser identificadas por esse link ou pelos mecanismos disponibilizados pela Bela Modas. O parceiro poderá compartilhar links individuais ou seu link geral, conforme as funcionalidades do aplicativo. A utilização dos links não garante vendas ou comissões.</p>
+            <h5>4. Comissões</h5>
+            <p>A comissão padrão será de <strong>5% (cinco por cento)</strong> sobre o valor dos produtos efetivamente vendidos e pagos. A Bela Modas poderá estabelecer percentuais diferentes em campanhas promocionais ou condições especiais, informando o percentual aplicável e o período ou as condições da campanha.</p>
+            <p>O cálculo será realizado exclusivamente sobre o valor dos produtos, sem incluir frete ou outras cobranças adicionais. Descontos concedidos ao cliente serão considerados, utilizando-se o valor efetivamente pago pelos produtos.</p>
+            <h5>5. Confirmação das vendas</h5>
+            <p>A comissão somente será válida após a confirmação do pagamento e a finalização da venda pela Bela Modas. Pedidos pendentes, não pagos ou cancelados não gerarão comissão. Em caso de devolução, reembolso ou estorno, a comissão correspondente poderá ser cancelada ou estornada. A identificação de uma venda pelo link não significa que a comissão já esteja liberada.</p>
+            <h5>6. Pagamento das comissões</h5>
+            <p>Os pagamentos serão realizados quinzenalmente, em ciclos de 15 dias, por meio da chave Pix cadastrada pelo vendedor. Não haverá valor mínimo para recebimento. Todo saldo disponível poderá ser repassado, independentemente do valor acumulado. Comissões de vendas ainda não finalizadas ou não confirmadas permanecerão pendentes. O vendedor deverá manter seus dados e sua chave Pix atualizados.</p>
+            <h5>7. Acompanhamento das comissões</h5>
+            <p>O vendedor poderá acompanhar pedidos, comissões pendentes, valores liberados e pagamentos realizados pelo aplicativo. Os registros estarão sujeitos à conferência e confirmação das vendas pela loja.</p>
+            <h5>8. Responsabilidades do vendedor</h5>
+            <p>O vendedor compromete-se a divulgar os produtos de maneira correta, respeitosa e verdadeira; utilizar informações, preços e condições fornecidos pela Bela Modas; não prometer descontos ou benefícios sem autorização; não receber pagamentos em nome da loja sem autorização expressa; não utilizar indevidamente a marca; manter seus dados atualizados; e respeitar os direitos dos clientes e a legislação aplicável.</p>
+            <h5>9. Uso da marca e materiais de divulgação</h5>
+            <p>Os materiais fornecidos poderão ser utilizados exclusivamente para promover os produtos e o programa. Não será permitido alterar ou utilizar a marca Bela Modas de maneira que prejudique sua imagem, identidade ou reputação. A autorização de uso poderá ser suspensa ou encerrada pela Bela Modas a qualquer momento.</p>
+            <h5>10. Encerramento do programa e descadastramento</h5>
+            <p>A Bela Modas poderá, a qualquer momento e a seu exclusivo critério, encerrar ou suspender o programa, total ou parcialmente, sem necessidade de aviso prévio; suspender, bloquear ou descadastrar individualmente qualquer vendedor, também sem aviso prévio ou justificativa prévia; e alterar condições de participação, percentuais de comissão e regras do programa, mediante comunicação das novas condições aos participantes.</p>
+            <p>O encerramento do programa ou o descadastramento não elimina o direito ao recebimento das comissões válidas já apuradas até a data do encerramento, desde que atendidas as condições de confirmação do pagamento e finalização da venda. Pedidos pendentes, cancelados, não pagos ou posteriormente devolvidos não gerarão comissão.</p>
+            <h5>11. Declaração de aceite</h5>
+            <p>Ao marcar a opção de aceite e enviar o cadastro, o interessado declara que leu e compreendeu integralmente este contrato; está ciente da natureza independente da parceria, sem jornada obrigatória, exclusividade ou garantia de ganhos; conhece a comissão padrão de 5% e a possibilidade de percentuais diferenciados; e concorda com as regras de cálculo, confirmação, pagamento, suspensão, descadastramento e encerramento do programa.</p>
+            <p><strong>BELA MODAS — PROGRAMA DE VENDEDORES PARCEIROS INDEPENDENTES</strong></p>
+          </div>
+        </details>
+        <label class="check-aceite-parceiro"><input id="vendedor-aceite-termo" name="aceiteTermo" type="checkbox" required> Li e aceito o Contrato de Adesão ao Programa de Vendedores Parceiros Independentes da Bela Modas.</label>
+      </section>
       <button class="botao-principal" type="submit">Enviar cadastro</button>
       <p id="resultado-cadastro-vendedor" role="status" aria-live="polite"></p>
     </form>
@@ -1387,7 +1452,12 @@ if (formularioVendedor) formularioVendedor.addEventListener("submit", async e =>
     resultado.textContent = "As senhas não conferem.";
     return;
   }
+  if (!document.getElementById("vendedor-aceite-termo").checked) {
+    resultado.textContent = "É necessário ler e aceitar o contrato para enviar a inscrição.";
+    return;
+  }
   delete dados.confirmaSenha;
+  delete dados.aceiteTermo;
   botao.disabled = true;
   resultado.textContent = "Enviando seu cadastro…";
   try {
