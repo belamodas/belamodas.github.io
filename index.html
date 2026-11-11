@@ -1067,45 +1067,7 @@ body.menu-parceiros-aberto { overflow:hidden; }
 }
 
 
-/* Ajuste responsivo da galeria: mantém o modal dentro da tela e pré-carrega fotos em segundo plano. */
-#modal .modal {
-  max-height:calc(100vh - 24px);
-  max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px);
-  overflow-y:auto;
-}
-#modal .visualizador {
-  width:100%;
-  height:min(44vh,390px);
-  height:min(44dvh,390px);
-  min-height:150px;
-  max-height:390px;
-  flex:0 0 auto;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-}
-#modal .visualizador img,
-#modal .visualizador video {
-  display:block;
-  width:auto;
-  height:auto;
-  max-width:100%;
-  max-height:100%;
-  object-fit:contain;
-}
-@media(max-width:520px) {
-  #modal .modal {
-    max-height:calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px);
-    max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px);
-  }
-  #modal .visualizador {
-    height:min(38vh,330px);
-    height:min(38dvh,330px);
-    min-height:145px;
-    max-height:330px;
-  }
-}
+/* A galeria mantém o dimensionamento amplo da versão anterior. O pré-carregamento das fotos permanece ativo no JavaScript. */
 </style>
 </head>
 
