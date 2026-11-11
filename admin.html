@@ -1487,6 +1487,27 @@ async function carregarPedidosVendedoresAdmin() {
   finally { if (botao) botao.disabled=false; }
 }
 function moedaAdmin(v) { return Number(v || 0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
+function exibirChavePixAdmin(valor) {
+  const original = String(valor ?? "").trim();
+  const digitos = original.replace(/\\D/g, "");
+  if (!digitos || !/^\\d+$/.test(original)) return original || "Não cadastrada";
+  if (digitos.length > 0 && digitos.length < 11) {
+    const cpf = digitos.padStart(11, "0");
+    const numeros = [...cpf].map(Number);
+    if (!/^([0-9])\\1{10}$/.test(cpf)) {
+      let soma = 0;
+      for (let i = 0; i < 9; i++) soma += numeros[i] * (10 - i);
+      let digito1 = (soma * 10) % 11;
+      if (digito1 === 10) digito1 = 0;
+      soma = 0;
+      for (let i = 0; i < 10; i++) soma += numeros[i] * (11 - i);
+      let digito2 = (soma * 10) % 11;
+      if (digito2 === 10) digito2 = 0;
+      if (numeros[9] === digito1 && numeros[10] === digito2) return cpf;
+    }
+  }
+  return original;
+}
 document.getElementById("atualizar-pedidos-vendedores")?.addEventListener("click",carregarPedidosVendedoresAdmin);
 async function carregarPagamentosVendedoresAdmin(){
   const area=document.getElementById("lista-pagamentos-pendentes"),hist=document.getElementById("historico-pagamentos-admin");
@@ -1519,7 +1540,7 @@ async function carregarPagamentosVendedoresAdmin(){
       box.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.addEventListener("change",atualizarTotal));
       atualizarTotal();box.appendChild(total);
       const pix=document.createElement("p");
-      pix.textContent="Chave Pix: "+(g.lista[0].chavePix||"Não cadastrada");
+      pix.textContent="Chave Pix: "+exibirChavePixAdmin(g.lista[0].chavePix);
       box.appendChild(pix);
       const file=document.createElement("input");
       file.type="file";file.accept="application/pdf,image/jpeg,image/png";box.appendChild(file);
