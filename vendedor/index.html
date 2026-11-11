@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#650817">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="../icone-avatar-app.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../isabela-avatar.jpg">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bela Vendedor">
+<title>Bela Modas | App do Vendedor</title>
+<style>
+:root{--v:#650817;--g:#e5bd70;--bg:#fff8ef;--ink:#351018;--line:#eadbc9}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px Arial,sans-serif}
+header{background:linear-gradient(120deg,var(--v),#430510);color:white;border-bottom:3px solid var(--g);padding:17px}
+.top{max-width:1080px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:12px}.brand{font:25px Georgia,serif;color:#ffe8bd}.sub{font-size:12px;color:#f5dcae;margin-top:4px}
+main{max-width:1080px;margin:22px auto;padding:0 14px}.panel{background:white;border:1px solid var(--line);border-radius:15px;padding:17px;margin-bottom:15px;box-shadow:0 5px 20px #4b06150c}
+h1{font-size:22px;margin:0 0 8px}h2{font-size:19px;color:var(--v);margin:0 0 12px}.muted{font-size:13px;line-height:1.5;color:#806e68}
+label{font-size:13px;font-weight:bold}input{display:block;width:100%;padding:12px;border:1px solid #d8c9c1;border-radius:9px;font:inherit;margin:6px 0 12px}
+button,.btn{border:0;border-radius:9px;padding:12px 15px;background:var(--v);color:white;font-weight:bold;cursor:pointer}button.gold{background:var(--g);color:#42101a}button.light{background:#f7eee5;color:var(--v);border:1px solid var(--line)}button:disabled{opacity:.6}
+.hidden{display:none!important}.status{font-size:13px;color:var(--v);margin-top:8px;min-height:18px}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px}.stat{background:#fffaf4;border:1px solid var(--line);border-radius:11px;padding:12px}.stat small{display:block;color:#806e68;margin-bottom:6px}.stat strong{font-size:18px;color:var(--v)}
+.linkrow{display:flex;gap:8px}.linkrow input{flex:1;min-width:0;margin:0}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px}
+.product{border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;background:#fff}.product img{width:100%;height:170px;object-fit:cover;background:#f5eee8}.info{padding:11px;display:flex;flex-direction:column;gap:7px;flex:1}.cat{font-size:11px;color:#8b6b60;text-transform:uppercase}.name{font-weight:bold;line-height:1.3}.price{font-size:18px;font-weight:bold;color:var(--v)}.disp{font-size:12px;color:#806e68}.info button{margin-top:auto}.line{border-bottom:1px solid #eee3d8;padding:10px 0;font-size:13px;line-height:1.5}.empty{text-align:center;padding:22px;color:#806e68}
+@media(max-width:520px){main{margin:14px auto}.panel{padding:14px}.product img{height:145px}.linkrow{flex-direction:column}}
+</style>
+</head>
+<body>
+<header><div class="top"><div><div class="brand">Bela Modas</div><div class="sub">Aplicativo do vendedor parceiro</div></div><a href="../" style="color:#ffe8bd;font-size:13px">Abrir vitrine ↗</a></div></header>
+<main>
+<section id="login" class="panel"><h1>Área do vendedor</h1><p class="muted">Entre para acessar o catálogo de divulgação e acompanhar suas vendas.</p>
+<form id="login-form"><label for="email">E-mail cadastrado</label><input id="email" type="email" autocomplete="username" required><label for="senha">Senha</label><input id="senha" type="password" autocomplete="current-password" required><button id="login-btn">Entrar</button><div id="login-msg" class="status" role="status"></div></form></section>
+<section id="troca-inicial" class="panel hidden"><h2>Defina sua nova senha</h2><form id="troca-inicial-form"><label for="senha-inicial">Nova senha (mínimo 8 caracteres)</label><input id="senha-inicial" type="password" minlength="8" required><button>Salvar senha</button><div id="troca-inicial-msg" class="status"></div></form></section>
+<div id="app" class="hidden">
+<section class="panel"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><div><h1 id="ola">Olá!</h1><p class="muted">Seu espaço de vendas e divulgação.</p></div><button class="light" id="sair">Sair</button></div>
+<div class="stats" id="stats"></div><h2 style="margin-top:17px">Meu link geral</h2><div class="linkrow"><input id="link-geral" readonly><button class="gold" id="copiar-geral">Copiar</button></div><div id="share-msg" class="status"></div></section>
+<section class="panel"><h2>Catálogo de produtos</h2><p class="muted">Toque em “Compartilhar produto” para enviar um link que abre diretamente o item na vitrine.</p><input id="busca" placeholder="Buscar por nome, categoria ou código"><div id="catalogo" class="grid"><div class="empty">Carregando produtos…</div></div></section>
+<section class="panel"><h2>Minhas vendas</h2><div id="pedidos"><p class="muted">Carregando…</p></div></section>
+<section class="panel"><h2>Minha chave Pix</h2><form id="pix-form"><label for="pix">Chave Pix</label><input id="pix" maxlength="150" placeholder="Sua chave Pix para receber comissões"><button>Salvar chave Pix</button><div id="pix-msg" class="status"></div></form></section>
+<section class="panel"><h2>Pagamentos recebidos</h2><div id="pagamentos"><p class="muted">Carregando…</p></div></section>
+<section class="panel"><h2>Alterar senha</h2><form id="senha-form"><label for="senha-nova">Nova senha</label><input id="senha-nova" type="password" minlength="8" required><button class="light">Alterar senha</button><div id="senha-msg" class="status"></div></form></section>
+</div>
+</main>
+<script src="../sync.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id),money=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+let seller=null,products=[];
+function setText(el,value){el.textContent=value==null?"":String(value)}
+function normalize(p){
+ let price=p.preco_valor??p.preco??0;
+ if(typeof price==="string"){price=price.trim().replace(/^R\\$\\s*/i,"").replace(/\\s/g,"");if(price.includes(","))price=price.replace(/\\./g,"").replace(",",".");}
+ const photos=Array.isArray(p.fotos)?p.fotos:[p.foto_principal,...String(p.fotos_adicionais||"").split("|")].filter(Boolean);
+ return {codigo:String(p.codigo||""),nome:String(p.nome||""),categoria:String(p.categoria||""),preco:Number(price)||0,disponibilidade:String(p.disponibilidade||"Consulte disponibilidade"),foto:String(p.foto_principal||photos[0]||""),ativo:p.ativo!==false&&p.ativo!=="false"};
+}
+function sellerLink(product){
+ const u=new URL("../",location.href);u.searchParams.set("produto",product.codigo);u.searchParams.set("vendedor",seller.codigo);u.searchParams.set("nomeVendedor",seller.nome||"");return u.href;
+}
+async function shareProduct(product){
+ const url=sellerLink(product);
+ try{if(navigator.share){await navigator.share({title:product.nome+" | Bela Modas",text:"Confira este produto da Bela Modas:",url});return;}}catch(e){if(e.name==="AbortError")return;}
+ try{await navigator.clipboard.writeText(url);setText($("share-msg"),"Link do produto copiado!");}catch(_){window.prompt("Copie o link do produto:",url);}
+}
+function renderProducts(){
+ const q=$("busca").value.trim().toLocaleLowerCase("pt-BR"),area=$("catalogo");area.replaceChildren();
+ const list=products.filter(p=>p.ativo&&(!q||(p.nome+" "+p.codigo+" "+p.categoria).toLocaleLowerCase("pt-BR").includes(q)));
+ if(!list.length){area.innerHTML='<div class="empty">Nenhum produto encontrado.</div>';return;}
+ list.forEach(p=>{const card=document.createElement("article");card.className="product";if(p.foto){const img=document.createElement("img");img.src=p.foto;img.alt=p.nome;img.loading="lazy";img.decoding="async";card.appendChild(img);}
+ const info=document.createElement("div");info.className="info";const cat=document.createElement("div");cat.className="cat";setText(cat,p.categoria);const name=document.createElement("div");name.className="name";setText(name,p.nome);const price=document.createElement("div");price.className="price";setText(price,p.preco?money(p.preco):"Consulte o preço");const disp=document.createElement("div");disp.className="disp";setText(disp,p.disponibilidade);const btn=document.createElement("button");btn.className="gold";btn.textContent="Compartilhar produto";btn.addEventListener("click",()=>shareProduct(p));info.append(cat,name,price,disp,btn);card.appendChild(info);area.appendChild(card);});
+}
+function renderPanel(data){
+ seller=data.vendedor||{};const summary=data.resumo||{};setText($("ola"),"Olá, "+(seller.nome||"vendedor")+"!");
+ const metrics=[["Pedidos",summary.totalPedidos??0],["Vendas finalizadas",summary.vendasConcluidas??0],["Comissões pendentes",money(summary.comissaoPendente)],["Comissões pagas",money(summary.comissaoPaga)]];
+ $("stats").replaceChildren();metrics.forEach(([label,value])=>{const box=document.createElement("div");box.className="stat";const small=document.createElement("small");setText(small,label);const strong=document.createElement("strong");setText(strong,value);box.append(small,strong);$("stats").appendChild(box);});
+ const general=new URL("../",location.href);general.searchParams.set("vendedor",seller.codigo||"");general.searchParams.set("nomeVendedor",seller.nome||"");$("link-geral").value=general.href;$("pix").value=seller.chavePix||"";
+ $("pedidos").replaceChildren();(data.pedidos||[]).forEach(p=>{const row=document.createElement("div");row.className="line";const date=p.criadoEm?new Date(p.criadoEm).toLocaleDateString("pt-BR"):"";const status=({aguardando:"Aguardando confirmação dos produtos",confirmada:"Aguardando entrega e pagamento",confirmando:"Aguardando entrega e pagamento",concluida:"Finalizado",finalizado:"Finalizado",cancelada:"Cancelado"})[p.status]||p.status||"Em análise";setText(row,date+" · Pedido "+String(p.id||"").slice(0,8)+" · "+money(p.total)+" · Comissão "+money(p.comissao)+" · "+status);$("pedidos").appendChild(row);});
+ if(!(data.pedidos||[]).length)$("pedidos").innerHTML='<p class="muted">Você ainda não possui pedidos registrados.</p>';
+ $("pagamentos").replaceChildren();(data.historico||[]).forEach(p=>{const row=document.createElement("div");row.className="line";setText(row,(p.periodo||"Pagamento")+" · "+(p.quantidade||0)+" venda(s) · "+money(p.valor)+" · ");if(p.comprovanteUrl){const a=document.createElement("a");a.href=p.comprovanteUrl;a.target="_blank";a.rel="noopener";a.textContent="Ver comprovante";row.appendChild(a);} $("pagamentos").appendChild(row);});
+ if(!(data.historico||[]).length)$("pagamentos").innerHTML='<p class="muted">Nenhum pagamento registrado até o momento.</p>';
+ $("login").classList.add("hidden");$("troca-inicial").classList.add("hidden");$("app").classList.remove("hidden");
+}
+async function loadPanel(){renderPanel(await BelaSync.painelVendedor());}
+async function loadProducts(){try{products=(await BelaSync.buscarProdutos()).map(normalize);renderProducts();}catch(e){$("catalogo").innerHTML='<div class="empty">Falha ao carregar produtos: '+String(e.message||"erro").replace(/[<>&"]/g,"")+'</div>';}}
+$("login-form").addEventListener("submit",async e=>{e.preventDefault();const b=$("login-btn");b.disabled=true;setText($("login-msg"),"Validando acesso…");try{const result=await BelaSync.entrarVendedor($("email").value,$("senha").value);if(result.trocarSenha){$("login").classList.add("hidden");$("troca-inicial").classList.remove("hidden");}else{await loadPanel();await loadProducts();}}catch(err){setText($("login-msg"),err.message||"Não foi possível entrar.");}finally{b.disabled=false;}});
+$("troca-inicial-form").addEventListener("submit",async e=>{e.preventDefault();try{await BelaSync.trocarSenhaVendedor($("senha-inicial").value);$("senha-inicial").value="";await loadPanel();await loadProducts();}catch(err){setText($("troca-inicial-msg"),err.message||"Falha ao salvar a senha.");}});
+$("busca").addEventListener("input",renderProducts);
+$("copiar-geral").addEventListener("click",async()=>{try{await navigator.clipboard.writeText($("link-geral").value);setText($("share-msg"),"Link geral copiado!");}catch(_){window.prompt("Copie seu link:",$("link-geral").value);}});
+$("pix-form").addEventListener("submit",async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;try{await BelaSync.salvarChavePixVendedor($("pix").value);setText($("pix-msg"),"Chave Pix salva com sucesso.");}catch(err){setText($("pix-msg"),err.message||"Falha ao salvar Pix.");}finally{b.disabled=false;}});
+$("senha-form").addEventListener("submit",async e=>{e.preventDefault();try{await BelaSync.trocarSenhaVendedor($("senha-nova").value);$("senha-nova").value="";setText($("senha-msg"),"Senha alterada com sucesso.");}catch(err){setText($("senha-msg"),err.message||"Falha ao alterar senha.");}});
+$("sair").addEventListener("click",async()=>{await BelaSync.sairVendedor();seller=null;$("app").classList.add("hidden");$("login").classList.remove("hidden");$("senha").value="";});
+(async()=>{if(!window.BelaSync){setText($("login-msg"),"Não foi possível carregar a conexão com o servidor.");return;}if(BelaSync.temSessaoVendedor()){try{await loadPanel();await loadProducts();}catch(e){await BelaSync.sairVendedor();setText($("login-msg"),"Sua sessão expirou. Entre novamente.");}}})();
+if("serviceWorker" in navigator&&location.protocol==="https:"){window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js",{scope:"./"}).catch(err=>console.warn("Falha ao ativar modo aplicativo:",err)));}
+</script>
+</body></html>
