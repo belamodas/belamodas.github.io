@@ -2317,13 +2317,13 @@ function atualizarResumoFrete() {
   avisoRetirada.hidden = !retirada;
   if (retirada) {
     cotacaoEntrega = null;
-    document.getElementById("valor-total").textContent = moeda(totalProdutosCarrinho());
+    document.getElementById("valor-total").textContent = moeda(Math.max(0,totalProdutosCarrinho()-Number(cupomAplicado?.desconto||0)));
   } else if (cotacaoEntrega) {
     document.getElementById("distancia-frete").textContent = Number(cotacaoEntrega.distanciaKm).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " km";
     document.getElementById("valor-minimo-frete").textContent = moeda(cotacaoEntrega.valorMinimo ?? 5);
     document.getElementById("valor-km-frete").textContent = moeda(cotacaoEntrega.valorKm) + " / km";
     document.getElementById("valor-frete").textContent = moeda(cotacaoEntrega.frete);
-    document.getElementById("total-com-frete").textContent = moeda(totalProdutosCarrinho() + Number(cotacaoEntrega.frete));
+    document.getElementById("total-com-frete").textContent = moeda(Math.max(0,totalProdutosCarrinho()-Number(cupomAplicado?.desconto||0)) + Number(cotacaoEntrega.frete));
   }
 }
 let cupomAplicado = null;
@@ -2348,6 +2348,7 @@ document.getElementById("aplicar-cupom")?.addEventListener("click",async()=>{
     document.getElementById("resumo-cupom").textContent="Cupom "+codigo+" aplicado. Desconto: "+moeda(resultado.desconto)+". Produtos em promoção não recebem desconto adicional.";
     document.getElementById("valor-total").textContent=moeda(Math.max(0,totalProdutosCarrinho()-Number(resultado.desconto||0)));
     status.textContent="Cupom válido. O uso será contabilizado ao finalizar o pedido.";
+    if (tipoRecebimento.value === "entrega" && cotacaoEntrega) document.getElementById("total-com-frete").textContent=moeda(Math.max(0,totalProdutosCarrinho()-Number(resultado.desconto||0))+Number(cotacaoEntrega.frete));
   }catch(err){limparCupomAplicado(err.message||"Cupom inválido.");}
   finally{botao.disabled=false;}
 });
