@@ -567,6 +567,24 @@ footer { padding-top:24px; }
 .item-carrinho:has(.admin-botao-promocao) { align-items:center; flex-wrap:wrap; }
 .item-carrinho:has(.admin-botao-promocao) > span:first-child { flex:1 1 180px; }
 @media(max-width:520px){.promo-admin-modal{padding:21px 17px}.promo-acoes button{flex:1 1 100%}}
+.admin-grade-produtos{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin:14px 0 24px}
+.admin-produto-card{min-width:0;overflow:hidden;border:1px solid rgba(229,189,112,.65);border-radius:13px;background:linear-gradient(155deg,#fffaf4,#f3e6dc);color:#351018;box-shadow:0 5px 15px rgba(0,0,0,.16)}
+.admin-produto-foto{height:220px;position:relative;display:flex;align-items:center;justify-content:center;background:#eadbd0;overflow:hidden}
+.admin-produto-foto img{width:100%;height:100%;object-fit:contain;display:block}
+.admin-produto-selo{position:absolute;top:9px;left:9px;padding:5px 8px;border-radius:20px;background:#650817;color:#ffe7b4;font-size:10px;font-weight:800}
+.admin-produto-info{padding:11px 12px 12px;display:grid;gap:6px}
+.admin-produto-categoria{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#87666a}
+.admin-produto-nome{font:normal 18px Georgia,serif;color:#4a0715;line-height:1.2;overflow-wrap:anywhere}
+.admin-produto-ref{font-size:11px;color:#806b68}
+.admin-produto-preco{font-size:17px;font-weight:800;color:#650817}
+.admin-produto-detalhe{font-size:11px;color:#735d5d}
+.admin-produto-acoes{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:5px}
+.admin-produto-acoes button{min-width:0;padding:10px 6px;border-radius:7px;border:1px solid #b99a83;background:#fff;color:#650817;font-size:11px;font-weight:800;cursor:pointer}
+.admin-produto-acoes .admin-editar{background:#650817;color:#fff4e7;border-color:#650817}
+.admin-produto-acoes .admin-excluir{color:#a21d2b;border-color:#d9a7a7}
+.admin-produto-destaque{display:flex;align-items:center;gap:7px;font-size:11px;color:#63474a;margin-top:2px}
+.admin-produto-destaque input{width:auto}
+@media(max-width:480px){.admin-grade-produtos{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.admin-produto-foto{height:clamp(145px,48vw,210px)}.admin-produto-info{padding:9px}.admin-produto-nome{font-size:15px}.admin-produto-acoes{gap:5px}.admin-produto-acoes button{padding:9px 3px;font-size:10px}}
 </style>
 </head>
 
@@ -693,7 +711,11 @@ footer { padding-top:24px; }
     <div id="progresso-salvamento" role="status" aria-live="polite"></div>
     <button class="botao-principal" id="salvar-produto" type="submit">＋ Salvar produto na nuvem</button>
     <button class="acao-header" id="cancelar-edicao" type="button">Limpar formulário</button>
-  </form><hr><h3>Produtos cadastrados</h3><div id="lista-admin"></div>
+  </form><hr><h3>Produtos cadastrados</h3>
+  <label for="busca-admin-produtos">Localizar produto</label>
+  <input id="busca-admin-produtos" type="search" placeholder="Buscar por nome, referência ou categoria..." autocomplete="off">
+  <p class="aviso-demo" id="total-admin-produtos"></p>
+  <div id="lista-admin" class="admin-grade-produtos"></div>
   </section>
   <section class="admin-secao" id="secao-admin-vendedores" hidden>
   
@@ -1202,35 +1224,41 @@ document.getElementById("retirar-promocao").onclick = async () => {
 };
 
 function renderListaAdmin() {
-  const area = document.getElementById("lista-admin"); area.replaceChildren();
-  produtos.forEach(p => {
-    const linha = document.createElement("div"); linha.className = "item-carrinho";
-    const nome = document.createElement("span"); nome.textContent = `${p.codigo} — ${p.nome}${p.ativo ? "" : " (inativo)"}`;
-    const destaqueLabel = document.createElement("label");
-    destaqueLabel.className = "admin-destaque-toggle";
-    destaqueLabel.title = p.destaque ? "Remover da vitrine de destaques" : "Colocar na vitrine de destaques";
-    const destaqueCheck = document.createElement("input");
-    destaqueCheck.type = "checkbox";
-    destaqueCheck.checked = Boolean(p.destaque);
-    destaqueCheck.setAttribute("aria-label", `${p.destaque ? "Remover" : "Adicionar"} ${p.nome} aos destaques`);
-    destaqueCheck.onchange = () => alterarDestaqueRapido(p, destaqueCheck);
-    destaqueLabel.append(destaqueCheck, document.createTextNode(" Destaque"));
-    const promocao = document.createElement("button"); promocao.type = "button";
-    promocao.className = "admin-botao-promocao";
-    promocao.textContent = p.emPromocao ? "🏷 Oferta ativa" : "🏷 Promoção";
-    promocao.title = p.emPromocao ? `Alterar ou retirar promoção (${moeda(p.precoPromocionalValor)})` : "Definir preço promocional";
-    promocao.onclick = () => abrirModalPromocao(p);
-    const editar = document.createElement("button"); editar.type = "button"; editar.textContent = "Editar";
-    editar.onclick = () => preencherFormulario(p);
-    const apagar = document.createElement("button"); apagar.type = "button"; apagar.textContent = "Excluir";
-    apagar.onclick = async () => {
-      if (!confirm(`Excluir ${p.nome} (${p.codigo}) da loja?`)) return;
-      try { await BelaSync.excluirProduto(p.codigo); produtos = produtos.filter(x => x.codigo !== p.codigo); salvarCacheProdutos(); mostrarProdutos(); renderListaAdmin(); }
-      catch (err) { alert(err.message || "Não foi possível excluir o produto."); }
-    };
-    linha.append(nome, destaqueLabel, promocao, editar, apagar); area.appendChild(linha);
+  const area = document.getElementById("lista-admin");
+  const termo = (document.getElementById("busca-admin-produtos")?.value || "").toLocaleLowerCase("pt-BR").trim();
+  const lista = produtos.filter(p => !termo || [p.nome,p.codigo,p.categoria,p.descricao].some(v => String(v || "").toLocaleLowerCase("pt-BR").includes(termo)));
+  area.replaceChildren();
+  const total = document.getElementById("total-admin-produtos");
+  if (total) total.textContent = `${lista.length} produto(s) encontrado(s) de ${produtos.length} cadastrado(s).`;
+  if (!lista.length) { const vazio=document.createElement("p"); vazio.className="aviso-demo"; vazio.textContent="Nenhum produto encontrado. Tente outro nome, referência ou categoria."; area.appendChild(vazio); return; }
+  lista.forEach(p => {
+    const card=document.createElement("article"); card.className="admin-produto-card";
+    const foto=document.createElement("div"); foto.className="admin-produto-foto";
+    const capa=p.miniaturas?.[0] || p.foto || p.fotos?.[0] || "";
+    if(capa){const img=document.createElement("img");img.src=gerarUrlMiniatura(capa);img.alt=p.nome;img.loading="lazy";img.decoding="async";foto.appendChild(img);}
+    else {const sem=document.createElement("span");sem.textContent="FOTO NÃO CADASTRADA";sem.style.cssText="font-size:10px;color:#806b68";foto.appendChild(sem);}
+    if(!p.ativo || p.emPromocao){const selo=document.createElement("span");selo.className="admin-produto-selo";selo.textContent=!p.ativo?"INATIVO":"OFERTA";foto.appendChild(selo);}
+    const info=document.createElement("div");info.className="admin-produto-info";
+    const categoria=document.createElement("div");categoria.className="admin-produto-categoria";categoria.textContent=p.categoria || "Sem categoria";
+    const nome=document.createElement("div");nome.className="admin-produto-nome";nome.textContent=p.nome;
+    const ref=document.createElement("div");ref.className="admin-produto-ref";ref.textContent="Referência: "+p.codigo;
+    const preco=document.createElement("div");preco.className="admin-produto-preco";preco.textContent=p.preco || moeda(p.precoValor || 0);
+    const detalhe=document.createElement("div");detalhe.className="admin-produto-detalhe";detalhe.textContent=`Estoque: ${p.estoque ?? 0} · ${p.disponibilidade || (p.ativo ? "Ativo" : "Inativo")}`;
+    const destaqueLabel=document.createElement("label");destaqueLabel.className="admin-produto-destaque";
+    const destaqueCheck=document.createElement("input");destaqueCheck.type="checkbox";destaqueCheck.checked=Boolean(p.destaque);
+    destaqueCheck.setAttribute("aria-label",`${p.destaque ? "Remover" : "Adicionar"} ${p.nome} aos destaques`);
+    destaqueCheck.onchange=()=>alterarDestaqueRapido(p,destaqueCheck);
+    destaqueLabel.append(destaqueCheck,document.createTextNode(" Exibir nos destaques"));
+    const acoes=document.createElement("div");acoes.className="admin-produto-acoes";
+    const editar=document.createElement("button");editar.type="button";editar.className="admin-editar";editar.textContent="✎ Editar";editar.onclick=()=>preencherFormulario(p);
+    const promocao=document.createElement("button");promocao.type="button";promocao.textContent=p.emPromocao?"🏷 Oferta":"🏷 Promoção";promocao.onclick=()=>abrirModalPromocao(p);
+    const apagar=document.createElement("button");apagar.type="button";apagar.className="admin-excluir";apagar.textContent="Excluir";
+    apagar.onclick=async()=>{if(!confirm(`Excluir ${p.nome} (${p.codigo}) da loja?`))return;try{await BelaSync.excluirProduto(p.codigo);produtos=produtos.filter(x=>x.codigo!==p.codigo);salvarCacheProdutos();mostrarProdutos();renderListaAdmin();}catch(err){alert(err.message||"Não foi possível excluir o produto.");}};
+    acoes.append(editar,promocao,apagar);
+    info.append(categoria,nome,ref,preco,detalhe,destaqueLabel,acoes);card.append(foto,info);area.appendChild(card);
   });
 }
+document.getElementById("busca-admin-produtos")?.addEventListener("input",renderListaAdmin);
 function renderFotosExistentes() {
   const area = document.getElementById("fotos-atuais"); area.replaceChildren();
   if (!codigoEmEdicao || !fotosExistentesEdicao.length) {
