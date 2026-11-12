@@ -1286,7 +1286,7 @@ function renderListaAdmin() {
     const acoes=document.createElement("div");acoes.className="admin-produto-acoes";
     const editar=document.createElement("button");editar.type="button";editar.className="admin-editar";editar.textContent="✎ Editar";editar.onclick=()=>preencherFormulario(p);
     const promocao=document.createElement("button");promocao.type="button";promocao.textContent=p.emPromocao?"🏷 Oferta":"🏷 Promoção";promocao.onclick=()=>abrirModalPromocao(p);
-    const comissao=document.createElement("button");comissao.type="button";comissao.textContent=p.comissaoPercentual === "" ? "Comissão: padrão" : "Comissão: "+p.comissaoPercentual+"%";comissao.onclick=()=>alterarComissaoProduto(p,comissao);
+    const comissao=document.createElement("button");comissao.type="button";comissao.textContent=p.comissaoPercentual === "" || p.comissaoPercentual == null ? "Comissão padrão" : "Comissão "+p.comissaoPercentual+"%";comissao.onclick=()=>alterarComissaoProduto(p,comissao);
     const apagar=document.createElement("button");apagar.type="button";apagar.className="admin-excluir";apagar.textContent="Excluir";
     apagar.onclick=async()=>{if(!confirm(`Excluir ${p.nome} (${p.codigo}) da loja?`))return;try{await BelaSync.excluirProduto(p.codigo);produtos=produtos.filter(x=>x.codigo!==p.codigo);salvarCacheProdutos();mostrarProdutos();renderListaAdmin();}catch(err){alert(err.message||"Não foi possível excluir o produto.");}};
     acoes.append(editar,promocao,comissao,apagar);
