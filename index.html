@@ -1159,6 +1159,130 @@ body.menu-parceiros-aberto { overflow:hidden; }
   #modal .pontos-foto { margin-top: 5px; }
 }
 
+
+/* Identidade visual leve pós-Natal: cabeçalho vinho e vitrine clara. */
+.cabecalho-marca {
+  background:linear-gradient(110deg,#560512 0%,#710b1e 50%,#560512 100%);
+  border-bottom:1px solid rgba(229,189,112,.5);
+  box-shadow:0 3px 14px rgba(53,16,24,.12);
+}
+/* Gorro natalino desenhado em CSS: não altera a fonte nem o desenho do logotipo. */
+.marca-nome span { position:relative; display:inline-block; }
+.marca-nome span::before {
+  content:""; position:absolute; z-index:2; left:-3px; top:-13px;
+  width:23px; height:19px; border-radius:3px 12px 2px 2px;
+  background:linear-gradient(145deg,#ef4650 0%,#c20d28 72%);
+  clip-path:polygon(4% 100%,100% 100%,73% 0);
+  transform:rotate(-17deg);
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.2));
+}
+.marca-nome span::after {
+  content:""; position:absolute; z-index:3; left:-7px; top:1px;
+  width:25px; height:6px; border-radius:6px;
+  background:#fffaf3; box-shadow:17px -13px 0 -1px #fffaf3;
+}
+body {
+  background:#f8f5f0;
+  background-image:none;
+  background-color:#f8f5f0;
+  color:#351018;
+}
+main { color:#351018; }
+.titulo-destaques h2, h2 { color:#650817; }
+.titulo-destaques p, .subtitulo { color:#806c68; }
+.vitrine-destaques { color:#351018; }
+.controles-destaque button {
+  border:1px solid #d8c7b8;
+  background:#fff;
+  color:#650817;
+  box-shadow:0 3px 10px rgba(53,16,24,.08);
+}
+.card-destaque {
+  border:1px solid #e4d8ce;
+  background:#fff;
+  box-shadow:0 8px 24px rgba(53,16,24,.10);
+}
+.foto-destaque { background:#f0e9e2; }
+.selo-destaque {
+  background:#650817; color:#fff8ef; border:1px solid #d9bd91;
+  box-shadow:0 2px 8px rgba(53,16,24,.16);
+}
+.info-destaque { background:#fff; }
+.categoria-destaque { color:#94744d; }
+.nome-destaque { color:#351018; }
+.preco-destaque { color:#650817; }
+.ver-destaque { border-color:#650817; background:#650817; color:#fff; }
+.adicionar-destaque { border-color:#d6bd91; background:#ead9c5; color:#4c2027; }
+.categorias-visuais { color:#351018; }
+.categoria-visual {
+  background:linear-gradient(145deg,#f3e9df,#e8d9cb);
+  border:1px solid #dfcdbb;
+  color:#351018;
+  box-shadow:0 4px 13px rgba(53,16,24,.08);
+}
+.categoria-visual .icone-categoria {
+  color:#650817;
+  text-shadow:none;
+}
+.categoria-visual strong { color:#650817; }
+.categoria-visual small { color:#8a6d5c; }
+.produto {
+  border:1px solid #e7ddd4;
+  background:#fff;
+  color:#351018;
+  box-shadow:0 4px 13px rgba(53,16,24,.07);
+}
+.produto .foto {
+  background:linear-gradient(145deg,#f4eee8,#e9dfd6);
+  border-bottom:1px solid #eee5dd;
+}
+.produto:nth-child(3n+2) .foto,
+.produto:nth-child(3n) .foto {
+  background:linear-gradient(145deg,#f4eee8,#e9dfd6);
+}
+.produto .tipo { color:#94765e; }
+.produto .nome { color:#351018; }
+.produto .preco { color:#650817; }
+.produto .disponibilidade { color:#806c68; }
+.busca {
+  border:1px solid #ded1c6;
+  background-color:#fff;
+  box-shadow:0 2px 8px rgba(53,16,24,.04);
+}
+#abrir-carrinho {
+  background:#650817;
+  border:1px solid #650817;
+  color:#fff;
+}
+.navegacao-inferior {
+  background:#fffdfa;
+  border-top:1px solid #e5d8cc;
+  box-shadow:0 -4px 18px rgba(53,16,24,.08);
+}
+.navegacao-inferior button {
+  color:#650817;
+  border-right:1px solid #eee4dc;
+}
+.navegacao-inferior button span { color:#650817; }
+.navegacao-inferior .nav-avatar .avatar-provisorio {
+  border-color:#d7c1a8;
+  box-shadow:none;
+}
+.navegacao-inferior .sacola-icone .icone-sacola-svg { stroke:#650817; }
+.navegacao-inferior .sacola-icone i { background:#650817; color:#fff; }
+footer {
+  background:#eee5dc;
+  color:#650817;
+  border-top:1px solid #dfcdbb;
+}
+footer p { color:#806c68; }
+footer strong { color:#650817; }
+.vazio { color:#806c68; }
+@media(max-width:520px) {
+  .marca-nome span::before { left:-2px; top:-11px; width:20px; height:17px; }
+  .marca-nome span::after { left:-6px; top:1px; width:22px; height:5px; box-shadow:15px -11px 0 -1px #fffaf3; }
+}
+
 </style>
 </head>
 
