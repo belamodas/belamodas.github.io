@@ -474,9 +474,9 @@
     return Array.isArray(resultado) ? resultado : [];
   }
 
-  async function atualizarPedidoVendedor(id, status) {
+  async function atualizarPedidoVendedor(id, status, motivoCancelamento = "") {
     exigirSessao();
-    return requisicaoPost({ acao: "atualizarPedidoVendedor", token: tokenAdmin, id, status });
+    return requisicaoPost({ acao: "atualizarPedidoVendedor", token: tokenAdmin, id, status, motivoCancelamento });
   }
   async function listarPagamentosVendedores(){exigirSessao();return requisicaoPost({acao:"listarPagamentosVendedores",token:tokenAdmin});}
   async function registrarPagamentoVendedor(dados,arquivo){exigirSessao();const base64=await arquivoBase64(arquivo,["application/pdf","image/jpeg","image/png"],3*1024*1024);return requisicaoPost({acao:"registrarPagamentoVendedor",token:tokenAdmin,pagamento:{...dados,nomeArquivo:arquivo.name,tipo:arquivo.type,base64}});}
