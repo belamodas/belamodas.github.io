@@ -682,6 +682,7 @@ footer { padding-top:24px; }
   <nav class="admin-menu" aria-label="Áreas administrativas">
     <button type="button" class="ativo" data-admin-aba="produtos" aria-selected="true"><span>🛍️</span>Produtos</button>
     <button type="button" data-admin-aba="vendedores" aria-selected="false"><span>🤝</span>Vendedores</button>
+    <button type="button" data-admin-aba="cupons" aria-selected="false"><span>🎟️</span>Cupons</button>
     <button type="button" data-admin-aba="entregas" aria-selected="false"><span>🚚</span>Entregas</button>
     <button type="button" data-admin-aba="pagamentos" aria-selected="false"><span>💸</span>Pagamentos</button>
   </nav>
@@ -729,7 +730,9 @@ footer { padding-top:24px; }
     <div id="lista-pedidos-vendedores" aria-live="polite">Carregando pedidos quando a área for aberta…</div>
     <button class="acao-header" id="atualizar-pedidos-vendedores" type="button">Atualizar pedidos</button>
   </section>
-  <section id="admin-cupons" style="border:1px solid #d8c9c1;border-radius:10px;padding:16px;margin:22px 0;background:#fffaf4">
+  </section>
+  <section class="admin-secao" id="secao-admin-cupons" hidden>
+<section id="admin-cupons" style="border:1px solid #d8c9c1;border-radius:10px;padding:16px;margin:22px 0;background:#fffaf4">
     <h3>Cupons de desconto</h3><p>Cupons globais, compartilhados entre todos os clientes. Produtos com preço promocional ficam fora do desconto.</p>
     <form id="form-cupom-admin" style="display:grid;gap:8px;max-width:560px">
       <label for="cupom-admin-codigo">Código</label><input id="cupom-admin-codigo" required maxlength="30" placeholder="EX: BELA10">
@@ -1749,7 +1752,7 @@ function atualizarPainelAdmin() {
   const logado = BelaSync.estaLogado();
   document.getElementById("admin-login").hidden = logado;
   document.getElementById("admin-conteudo").hidden = !logado;
-  if (logado) { renderListaAdmin(); carregarVendedoresAdmin(); carregarPedidosVendedoresAdmin(); carregarPagamentosVendedoresAdmin(); }
+  if (logado) { renderListaAdmin(); carregarVendedoresAdmin(); carregarPedidosVendedoresAdmin(); carregarCuponsAdmin(); carregarPagamentosVendedoresAdmin(); }
 }
 document.getElementById("form-login").addEventListener("submit", async e => {
   e.preventDefault();
