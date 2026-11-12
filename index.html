@@ -545,6 +545,11 @@ footer { padding-top:24px; }
 .preco-modal { display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
 .preco-modal .preco-atual { font-size:25px; }
 .tamanhos-modal { display:block; margin-top:8px; color:inherit; font-size:12px; font-weight:normal; }
+.acoes-compra-modal { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:14px; }
+.acoes-compra-modal button { min-width:0; min-height:46px; padding:11px 8px; border-radius:8px; font-size:11px; font-weight:800; letter-spacing:.25px; cursor:pointer; }
+.acao-modal-secundaria { background:transparent; color:#650817; border:1px solid #9b6b58; }
+.acao-modal-principal { background:linear-gradient(110deg,#8b1230,#4b0615); color:#fff2d8; border:1px solid #e5bd70; }
+@media(max-width:390px){ .acoes-compra-modal { grid-template-columns:1fr; gap:7px; } }
 
 /* CORREÇÃO DO MODAL RESPONSIVO - BELA MODAS */
 #modal.modal-fundo {
@@ -1332,6 +1337,10 @@ body.menu-parceiros-aberto { overflow:hidden; }
     <h3 id="modal-nome"></h3>
     <p id="modal-preco"></p>
     <div id="modal-galeria" class="galeria-produto"></div>
+    <div class="acoes-compra-modal">
+      <button type="button" id="modal-adicionar-sacola" class="acao-modal-secundaria">ADICIONAR À SACOLA</button>
+      <button type="button" id="modal-comprar-agora" class="acao-modal-principal">COMPRAR AGORA</button>
+    </div>
   </div>
 </div>
 
@@ -1863,6 +1872,8 @@ function abrirProduto(produto) {
   }
   const galeria = document.getElementById("modal-galeria");
   galeria.replaceChildren();
+  document.getElementById("modal-adicionar-sacola").onclick = () => abrirSeletorTamanho(produto.codigo, "adicionar");
+  document.getElementById("modal-comprar-agora").onclick = () => abrirSeletorTamanho(produto.codigo, "comprar");
   const fotos = produto.fotos.length ? produto.fotos : (produto.foto ? [produto.foto] : []);
   const midias = fotos.map(src => ({ tipo: "foto", src }));
   if (produto.video) midias.push({ tipo: "video", src: produto.video });
@@ -1992,11 +2003,17 @@ function abrirProduto(produto) {
 function tamanhosDoProduto(produto) {
   return [...new Set(String(produto.tamanhos || "").split(/[,;|\n]+/).map(x => x.trim()).filter(Boolean))];
 }
-function abrirSeletorTamanho(codigo) {
+let acaoAposSelecionarTamanho = "adicionar";
+function abrirSeletorTamanho(codigo, acao = "adicionar") {
   const produto = produtos.find(x => x.codigo === codigo);
   if (!produto) return;
+  acaoAposSelecionarTamanho = acao === "comprar" ? "comprar" : "adicionar";
   const tamanhos = tamanhosDoProduto(produto);
-  if (!tamanhos.length) { adicionarAoCarrinho(codigo, ""); return; }
+  if (!tamanhos.length) {
+    adicionarAoCarrinho(codigo, "", acaoAposSelecionarTamanho !== "comprar");
+    if (acaoAposSelecionarTamanho === "comprar") { modal.classList.remove("aberto"); abrirPainel("painel-carrinho"); }
+    return;
+  }
   produtoAguardandoTamanho = produto;
   tamanhoSelecionado = "";
   document.getElementById("nome-produto-tamanho").textContent = produto.nome;
@@ -2017,7 +2034,9 @@ function abrirSeletorTamanho(codigo) {
     });
     opcoes.appendChild(botao);
   });
-  document.getElementById("confirmar-tamanho").disabled = true;
+  const confirmarTamanho = document.getElementById("confirmar-tamanho");
+  confirmarTamanho.textContent = acaoAposSelecionarTamanho === "comprar" ? "Comprar agora" : "Adicionar à sacola";
+  confirmarTamanho.disabled = true;
   const caixa = document.getElementById("modal-tamanhos");
   caixa.classList.add("aberto"); caixa.setAttribute("aria-hidden", "false");
 }
@@ -2025,20 +2044,25 @@ function fecharSeletorTamanho() {
   const caixa = document.getElementById("modal-tamanhos");
   caixa.classList.remove("aberto"); caixa.setAttribute("aria-hidden", "true");
   produtoAguardandoTamanho = null; tamanhoSelecionado = "";
+  document.getElementById("confirmar-tamanho").textContent = "Adicionar à sacola";
+  acaoAposSelecionarTamanho = "adicionar";
 }
-function adicionarAoCarrinho(codigo, tamanho = "") {
+function adicionarAoCarrinho(codigo, tamanho = "", avisar = true) {
   const p = produtos.find(x => x.codigo === codigo); if (!p) return;
   const chave = String(tamanho || "").trim().toLocaleLowerCase("pt-BR");
   const existente = carrinho.find(x => x.codigo === codigo && String(x.tamanho || "").trim().toLocaleLowerCase("pt-BR") === chave);
   if (existente) existente.quantidade++;
   else carrinho.push({ codigo, tamanho: String(tamanho || "").trim(), quantidade: 1 });
   invalidarCotacaoEntrega();
-  atualizarCarrinho(); alert("Produto adicionado à sacola!");
+  atualizarCarrinho(); if (avisar) alert("Produto adicionado à sacola!");
 }
 document.getElementById("confirmar-tamanho").addEventListener("click", () => {
   if (!produtoAguardandoTamanho || !tamanhoSelecionado) return;
-  adicionarAoCarrinho(produtoAguardandoTamanho.codigo, tamanhoSelecionado);
+  const codigo = produtoAguardandoTamanho.codigo;
+  const comprarAgora = acaoAposSelecionarTamanho === "comprar";
+  adicionarAoCarrinho(codigo, tamanhoSelecionado, !comprarAgora);
   fecharSeletorTamanho();
+  if (comprarAgora) { modal.classList.remove("aberto"); abrirPainel("painel-carrinho"); }
 });
 document.getElementById("fechar-seletor-tamanho").addEventListener("click", fecharSeletorTamanho);
 document.getElementById("cancelar-tamanho").addEventListener("click", fecharSeletorTamanho);
