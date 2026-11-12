@@ -462,6 +462,25 @@
   async function registrarPedidoVendedor(pedido) {
     return requisicaoPost({ acao: "registrarPedidoVendedor", pedido });
   }
+  async function validarCupom(pedido) {
+    return requisicaoPost({ acao: "validarCupom", pedido });
+  }
+  async function finalizarCheckout(pedido) {
+    return requisicaoPost({ acao: "finalizarCheckout", pedido });
+  }
+  async function listarCupons() {
+    exigirSessao();
+    const r=await requisicaoPost({acao:"listarCupons",token:tokenAdmin});
+    return Array.isArray(r)?r:[];
+  }
+  async function salvarCupom(cupom) {
+    exigirSessao();
+    return requisicaoPost({acao:"salvarCupom",token:tokenAdmin,cupom});
+  }
+  async function alternarCupom(codigo,ativo) {
+    exigirSessao();
+    return requisicaoPost({acao:"alternarCupom",token:tokenAdmin,codigo,ativo:String(Boolean(ativo))});
+  }
 
   async function resetarSenhaVendedor(id) {
     exigirSessao();
@@ -557,6 +576,11 @@
     trocarSenhaVendedor,
     sairVendedor,
     registrarPedidoVendedor,
+    validarCupom,
+    finalizarCheckout,
+    listarCupons,
+    salvarCupom,
+    alternarCupom,
     resetarSenhaVendedor,
     listarPedidosVendedores,
     atualizarPedidoVendedor,
