@@ -2346,6 +2346,7 @@ document.getElementById("aplicar-cupom")?.addEventListener("click",async()=>{
     cupomAplicado=resultado;
     document.getElementById("resumo-cupom").hidden=false;
     document.getElementById("resumo-cupom").textContent="Cupom "+codigo+" aplicado. Desconto: "+moeda(resultado.desconto)+". Produtos em promoção não recebem desconto adicional.";
+    document.getElementById("valor-total").textContent=moeda(Math.max(0,totalProdutosCarrinho()-Number(resultado.desconto||0)));
     status.textContent="Cupom válido. O uso será contabilizado ao finalizar o pedido.";
   }catch(err){limparCupomAplicado(err.message||"Cupom inválido.");}
   finally{botao.disabled=false;}
@@ -2437,6 +2438,10 @@ document.getElementById("enviar-whatsapp").onclick = async () => {
   if (!carrinho.length) { alert("Sua sacola está vazia."); return; }
   if (!numeroWhatsAppLoja) { alert("O número de WhatsApp da Bela Modas ainda precisa ser configurado no código."); return; }
   const nome = document.getElementById("nome-cliente").value.trim() || "Cliente";
+  if (document.getElementById("codigo-cupom").value.trim()) {
+    try { cupomAplicado = await BelaSync.validarCupom({codigoCupom:document.getElementById("codigo-cupom").value.trim(),itens:carrinho.map(i=>({codigo:i.codigo,quantidade:i.quantidade}))}); }
+    catch(err) { limparCupomAplicado(err.message || "O cupom não está mais válido."); alert(err.message || "O cupom não está mais válido."); return; }
+  }
   const pagamento = document.getElementById("forma-pagamento").value;
   const entrega = tipoRecebimento.value === "entrega";
   const rua = document.getElementById("rua-entrega").value.trim();
@@ -2493,7 +2498,8 @@ document.getElementById("enviar-whatsapp").onclick = async () => {
         recebimento: entrega ? "entrega" : "retirada",
         observacoes: document.getElementById("obs-pedido").value.trim()
       });
-      linhas.push("Código do pedido registrado: " + pedidoId);
+      const numeroPedido = finalizado?.pedidoVendedor?.numeroPedido;
+      linhas.push("Pedido registrado: " + (numeroPedido ? "#"+numeroPedido : pedidoId));
     } catch (err) {
       alert("Não foi possível registrar este pedido para o vendedor parceiro: " + (err.message || "falha no servidor") + ". O pedido não será aberto no WhatsApp para evitar perda do acompanhamento.");
       return;
