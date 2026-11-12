@@ -560,6 +560,8 @@ footer { padding-top:24px; }
 .preco-modal { display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
 .preco-modal .preco-atual { font-size:25px; }
 .tamanhos-modal { display:block; margin-top:8px; color:inherit; font-size:12px; font-weight:normal; }
+.acao-compartilhar-produto { width:100%; margin-top:10px; padding:12px; border:1px solid #650817; border-radius:24px; background:transparent; color:#650817; font-size:11px; font-weight:800; letter-spacing:.5px; cursor:pointer; }
+.acao-compartilhar-produto:active { transform:scale(.99); }
 .acoes-compra-modal { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:14px; }
 .acoes-compra-modal button { min-width:0; min-height:46px; padding:11px 8px; border-radius:8px; font-size:11px; font-weight:800; letter-spacing:.25px; cursor:pointer; }
 .acao-modal-secundaria { background:transparent; color:#650817; border:1px solid #9b6b58; }
@@ -1506,6 +1508,7 @@ footer strong { color:#650817; }
       <button type="button" id="modal-adicionar-sacola" class="acao-modal-secundaria">ADICIONAR À SACOLA</button>
       <button type="button" id="modal-comprar-agora" class="acao-modal-principal">COMPRAR AGORA</button>
     </div>
+    <button type="button" id="modal-compartilhar-produto" class="acao-compartilhar-produto">COMPARTILHAR PRODUTO</button>
   </div>
 </div>
 
@@ -2032,6 +2035,32 @@ function mostrarProdutos() {
     areaProdutos.appendChild(card);
   });
 }
+function linkCompartilhamentoProduto(produto) {
+  const url = new URL(window.location.origin + window.location.pathname);
+  url.searchParams.set("produto", String(produto.codigo || ""));
+  if (codigoVendedor) {
+    url.searchParams.set("vendedor", codigoVendedor);
+    if (nomeVendedor) url.searchParams.set("nomeVendedor", nomeVendedor);
+  }
+  return url.toString();
+}
+async function compartilharProduto(produto) {
+  const link = linkCompartilhamentoProduto(produto);
+  const preco = produto.precoPromocional || produto.preco || "";
+  const texto = [produto.nome || "Produto Bela Modas", preco ? "R$ " + String(preco).replace(".", ",") : "", "Bela Modas", link].filter(Boolean).join("\n");
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: produto.nome || "Bela Modas", text: texto, url: link });
+    } else if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(link);
+      alert("Link do produto copiado. Agora é só compartilhar!");
+    } else {
+      window.prompt("Copie o link do produto:", link);
+    }
+  } catch (erro) {
+    if (erro?.name !== "AbortError") window.prompt("Copie o link do produto:", link);
+  }
+}
 function abrirProduto(produto) {
   document.getElementById("modal-tipo").textContent = produto.categoria;
   document.getElementById("modal-nome").textContent = produto.nome;
@@ -2047,6 +2076,7 @@ function abrirProduto(produto) {
   galeria.replaceChildren();
   document.getElementById("modal-adicionar-sacola").onclick = () => abrirSeletorTamanho(produto.codigo, "adicionar");
   document.getElementById("modal-comprar-agora").onclick = () => abrirSeletorTamanho(produto.codigo, "comprar");
+  document.getElementById("modal-compartilhar-produto").onclick = () => compartilharProduto(produto);
   const fotos = produto.fotos.length ? produto.fotos : (produto.foto ? [produto.foto] : []);
   const midias = fotos.map(src => ({ tipo: "foto", src }));
   if (produto.video) midias.push({ tipo: "video", src: produto.video });
@@ -2286,6 +2316,13 @@ async function carregarProdutos() {
   salvarCacheProdutos();
   mostrarProdutos();
   renderDestaques();
+  const codigoCompartilhado = new URLSearchParams(window.location.search).get("produto");
+  if (codigoCompartilhado) {
+    const produtoCompartilhado = produtos.find(p => String(p.codigo) === String(codigoCompartilhado));
+    if (produtoCompartilhado) {
+      setTimeout(() => abrirProduto(produtoCompartilhado), 120);
+    }
+  }
 }
 function comprimirImagem(arquivo) {
   return new Promise((resolve, reject) => {
