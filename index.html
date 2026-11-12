@@ -1509,7 +1509,15 @@ footer strong { color:#650817; }
 
 <div class="painel-extra" id="painel-carrinho"><div class="painel-conteudo">
   <button class="fechar" data-fechar="painel-carrinho">×</button><h3>Sua sacola</h3>
-  <div id="itens-carrinho"></div><p><strong>Total: <span id="valor-total">R$ 0,00</span></strong></p>
+  <div id="itens-carrinho"></div>
+  <div class="campo-cupom" style="display:grid;grid-template-columns:1fr auto;gap:8px;margin:12px 0">
+    <label for="codigo-cupom" style="grid-column:1/-1">Cupom de desconto</label>
+    <input id="codigo-cupom" type="text" maxlength="30" placeholder="Digite seu cupom">
+    <button type="button" id="aplicar-cupom">Aplicar</button>
+    <small id="status-cupom" style="grid-column:1/-1" role="status" aria-live="polite"></small>
+  </div>
+  <p id="resumo-cupom" hidden></p>
+  <p><strong>Total: <span id="valor-total">R$ 0,00</span></strong></p>
   <label for="nome-cliente">Seu nome</label><input id="nome-cliente" placeholder="Como podemos te chamar?" autocomplete="name">
   <section class="endereco-entrega" aria-labelledby="titulo-endereco-entrega">
     <h4 id="titulo-endereco-entrega">Como deseja receber?</h4>
@@ -2318,9 +2326,30 @@ function atualizarResumoFrete() {
     document.getElementById("total-com-frete").textContent = moeda(totalProdutosCarrinho() + Number(cotacaoEntrega.frete));
   }
 }
+let cupomAplicado = null;
 function totalProdutosCarrinho() {
   return carrinho.reduce((s,i) => { const p=produtos.find(x=>x.codigo===i.codigo); return s+(p?Number(p.precoFinalValor ?? p.precoValor ?? 0)*i.quantidade:0); },0);
 }
+function limparCupomAplicado(mensagem) {
+  cupomAplicado=null;
+  const resumo=document.getElementById("resumo-cupom"); if(resumo){resumo.hidden=true;resumo.textContent="";}
+  const status=document.getElementById("status-cupom"); if(status&&mensagem)status.textContent=mensagem;
+}
+document.getElementById("aplicar-cupom")?.addEventListener("click",async()=>{
+  const codigo=document.getElementById("codigo-cupom").value.trim().toUpperCase();
+  const status=document.getElementById("status-cupom"),botao=document.getElementById("aplicar-cupom");
+  if(!codigo){limparCupomAplicado("Digite um código de cupom.");return;}
+  if(!carrinho.length){limparCupomAplicado("Adicione produtos à sacola primeiro.");return;}
+  botao.disabled=true;status.textContent="Validando cupom…";
+  try{
+    const resultado=await BelaSync.validarCupom({codigoCupom:codigo,itens:carrinho.map(i=>({codigo:i.codigo,quantidade:i.quantidade}))});
+    cupomAplicado=resultado;
+    document.getElementById("resumo-cupom").hidden=false;
+    document.getElementById("resumo-cupom").textContent="Cupom "+codigo+" aplicado. Desconto: "+moeda(resultado.desconto)+". Produtos em promoção não recebem desconto adicional.";
+    status.textContent="Cupom válido. O uso será contabilizado ao finalizar o pedido.";
+  }catch(err){limparCupomAplicado(err.message||"Cupom inválido.");}
+  finally{botao.disabled=false;}
+});
 function invalidarCotacaoEntrega() {
   cotacaoEntrega = null;
   if (statusFrete) {
@@ -2423,6 +2452,7 @@ document.getElementById("enviar-whatsapp").onclick = async () => {
     alert("Calcule o valor da entrega antes de enviar o pedido pelo WhatsApp.");
     return;
   }
+  if (cupomAplicado && !document.getElementById("codigo-cupom").value.trim()) limparCupomAplicado("O cupom foi removido.");
   const linhas = [`Olá, Bela Modas! Meu nome é ${nome} e gostaria de fazer este pedido:`];
   const indicacao = obterIndicacaoVendedor();
   if (indicacao) linhas.push("Vendedor parceiro: " + (indicacao.nome || "Parceiro") + " (código: " + indicacao.codigo + ")");
@@ -2433,7 +2463,12 @@ document.getElementById("enviar-whatsapp").onclick = async () => {
     if (p.foto) linhas.push("Foto do produto: " + p.foto);
   });
   const total = carrinho.reduce((s, i) => { const p = produtos.find(x => x.codigo === i.codigo); return s + (p ? Number(p.precoFinalValor ?? p.precoValor ?? 0) * i.quantidade : 0); }, 0);
-  linhas.push(`Total dos produtos: ${moeda(total)}`);
+  linhas.push(`Subtotal dos produtos: ${moeda(total)}`);
+  if (cupomAplicado) {
+    linhas.push("Cupom: "+cupomAplicado.codigo);
+    linhas.push("Desconto: "+moeda(cupomAplicado.desconto));
+    linhas.push("Total dos produtos com desconto: "+moeda(Math.max(0,total-Number(cupomAplicado.desconto||0))));
+  }
   if (entrega) {
     linhas.push("Forma de recebimento: Entrega por motoboy");
     linhas.push("Endereço de entrega: " + rua + ", " + numero + (document.getElementById("complemento-entrega").value.trim() ? " — " + document.getElementById("complemento-entrega").value.trim() : ""));
@@ -2441,7 +2476,7 @@ document.getElementById("enviar-whatsapp").onclick = async () => {
     linhas.push("Cidade/UF: " + cidade + "/" + document.getElementById("estado-entrega").value.trim());
     linhas.push("CEP: " + cep);
     linhas.push("Frete: " + moeda(cotacaoEntrega.frete));
-    linhas.push("Total com entrega: " + moeda(total + Number(cotacaoEntrega.frete)));
+    linhas.push("Total com entrega: " + moeda(total - Number(cupomAplicado?.desconto||0) + Number(cotacaoEntrega.frete)));
   } else {
     linhas.push("Forma de recebimento: Retirada na loja");
   }
@@ -2451,8 +2486,8 @@ document.getElementById("enviar-whatsapp").onclick = async () => {
   if (indicacao) {
     try {
       const pedidoId = (crypto.randomUUID ? crypto.randomUUID() : "BM" + Date.now() + Math.random().toString(16).slice(2));
-      await BelaSync.registrarPedidoVendedor({
-        id: pedidoId, codigoVendedor: indicacao.codigo, cliente: nome,
+      const finalizado = await BelaSync.finalizarCheckout({
+        id: pedidoId, codigoVendedor: indicacao.codigo, codigoCupom:cupomAplicado?.codigo||"", cliente: nome,
         itens: carrinho.map(i => ({codigo:i.codigo, tamanho:i.tamanho || "", quantidade:i.quantidade})),
         frete: entrega ? Number(cotacaoEntrega.frete || 0) : 0,
         recebimento: entrega ? "entrega" : "retirada",
@@ -2463,6 +2498,10 @@ document.getElementById("enviar-whatsapp").onclick = async () => {
       alert("Não foi possível registrar este pedido para o vendedor parceiro: " + (err.message || "falha no servidor") + ". O pedido não será aberto no WhatsApp para evitar perda do acompanhamento.");
       return;
     }
+  } else if (cupomAplicado) {
+    try {
+      await BelaSync.finalizarCheckout({codigoCupom:cupomAplicado.codigo,itens:carrinho.map(i=>({codigo:i.codigo,tamanho:i.tamanho||"",quantidade:i.quantidade})),frete:entrega?Number(cotacaoEntrega.frete||0):0});
+    } catch(err) { alert(err.message||"Não foi possível validar o cupom no fechamento. O pedido não será aberto."); return; }
   }
   window.open(`https://wa.me/${numeroWhatsAppLoja}?text=${encodeURIComponent(linhas.join("\n"))}`, "_blank", "noopener");
 };
