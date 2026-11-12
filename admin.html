@@ -729,6 +729,19 @@ footer { padding-top:24px; }
     <div id="lista-pedidos-vendedores" aria-live="polite">Carregando pedidos quando a área for aberta…</div>
     <button class="acao-header" id="atualizar-pedidos-vendedores" type="button">Atualizar pedidos</button>
   </section>
+  <section id="admin-cupons" style="border:1px solid #d8c9c1;border-radius:10px;padding:16px;margin:22px 0;background:#fffaf4">
+    <h3>Cupons de desconto</h3><p>Cupons globais, compartilhados entre todos os clientes. Produtos com preço promocional ficam fora do desconto.</p>
+    <form id="form-cupom-admin" style="display:grid;gap:8px;max-width:560px">
+      <label for="cupom-admin-codigo">Código</label><input id="cupom-admin-codigo" required maxlength="30" placeholder="EX: BELA10">
+      <label for="cupom-admin-tipo">Tipo de desconto</label><select id="cupom-admin-tipo"><option value="percentual">Percentual (%)</option><option value="fixo">Valor fixo (R$)</option></select>
+      <label for="cupom-admin-valor">Valor</label><input id="cupom-admin-valor" type="number" min="0.01" step="0.01" required>
+      <label for="cupom-admin-inicio">Início (opcional)</label><input id="cupom-admin-inicio" type="datetime-local">
+      <label for="cupom-admin-fim">Validade até (opcional)</label><input id="cupom-admin-fim" type="datetime-local">
+      <label for="cupom-admin-limite">Limite de usos (0 = ilimitado)</label><input id="cupom-admin-limite" type="number" min="0" step="1" value="0">
+      <button class="acao-header" type="submit">Salvar cupom</button>
+    </form><div id="lista-cupons-admin" aria-live="polite">Carregue os cupons para consultar.</div>
+    <button class="acao-header" id="atualizar-cupons-admin" type="button">Atualizar cupons</button>
+  </section>
   </section>
   <section class="admin-secao" id="secao-admin-pagamentos" hidden><h3>Pagamentos de comissões</h3><p>Selecione as vendas finalizadas, confira o total e anexe o comprovante do pagamento quinzenal.</p><button class="acao-header" id="atualizar-pagamentos-vendedores" type="button">Atualizar comissões</button><div id="lista-pagamentos-pendentes">Carregando comissões…</div><hr><h3>Pagamentos realizados</h3><div id="historico-pagamentos-admin"></div></section>
   <section class="admin-secao" id="secao-admin-entregas" hidden>
@@ -1538,6 +1551,29 @@ async function carregarPedidosVendedoresAdmin() {
   } catch(err) { area.textContent = "Não foi possível carregar os pedidos: " + (err.message || "erro desconhecido"); }
   finally { if (botao) botao.disabled=false; }
 }
+
+async function carregarCuponsAdmin(){
+ const area=document.getElementById("lista-cupons-admin");if(!area)return;
+ area.textContent="Carregando cupons…";
+ try{
+  const cupons=await BelaSync.listarCupons();area.replaceChildren();
+  if(!cupons.length){area.textContent="Nenhum cupom cadastrado.";return;}
+  cupons.forEach(c=>{
+   const linha=document.createElement("div");linha.style.cssText="padding:10px 0;border-bottom:1px solid #e5d4bd;display:flex;gap:10px;align-items:center;flex-wrap:wrap";
+   const info=document.createElement("span");info.textContent=c.codigo+" · "+(c.tipo==="percentual"?c.valor+"%":moedaAdmin(c.valor))+" · usos "+c.usos+(c.limiteUsos?" / "+c.limiteUsos:" / ilimitado")+" · "+(c.ativo?"Ativo":"Inativo");
+   const toggle=document.createElement("button");toggle.type="button";toggle.textContent=c.ativo?"Desativar":"Ativar";toggle.onclick=async()=>{toggle.disabled=true;try{await BelaSync.alternarCupom(c.codigo,!c.ativo);await carregarCuponsAdmin();}catch(e){alert(e.message||"Falha ao alterar cupom.");}finally{toggle.disabled=false;}};
+   linha.append(info,toggle);area.appendChild(linha);
+  });
+ }catch(e){area.textContent=e.message||"Não foi possível carregar os cupons.";}
+}
+document.getElementById("atualizar-cupons-admin")?.addEventListener("click",carregarCuponsAdmin);
+document.getElementById("form-cupom-admin")?.addEventListener("submit",async e=>{
+ e.preventDefault();const b=e.submitter;b.disabled=true;
+ try{
+  await BelaSync.salvarCupom({codigo:document.getElementById("cupom-admin-codigo").value,tipo:document.getElementById("cupom-admin-tipo").value,valor:Number(document.getElementById("cupom-admin-valor").value),inicio:document.getElementById("cupom-admin-inicio").value,fim:document.getElementById("cupom-admin-fim").value,limiteUsos:Number(document.getElementById("cupom-admin-limite").value||0),ativo:true});
+  await carregarCuponsAdmin();alert("Cupom salvo."); 
+ }catch(err){alert(err.message||"Não foi possível salvar o cupom.");}finally{b.disabled=false;}
+});
 function moedaAdmin(v) { return Number(v || 0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
 function exibirChavePixAdmin(valor) {
   const original = String(valor ?? "").trim();
