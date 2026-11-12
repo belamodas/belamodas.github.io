@@ -1529,7 +1529,7 @@ async function carregarPedidosVendedoresAdmin() {
       titulo.textContent = p.vendedor + " · " + p.cliente + " · " + new Date(p.criadoEm).toLocaleString("pt-BR");
       if (p.numeroPedido) titulo.textContent = "#" + p.numeroPedido + " · " + titulo.textContent;
       const resumo = document.createElement("span");
-      resumo.textContent = "Pedido " + p.id + " · Produtos: " + moedaAdmin(p.totalProdutos) + " · Frete: " + moedaAdmin(p.frete) + " · Total: " + moedaAdmin(p.total) + " · Comissão: " + moedaAdmin(p.comissao) + " (" + p.comissaoPercentual + "%)";
+      resumo.textContent = "Pedido " + p.id + " · Produtos: " + moedaAdmin(p.totalProdutos) + (p.codigoCupom ? " · Cupom "+p.codigoCupom+" (-"+moedaAdmin(p.descontoCupom)+")" : "") + " · Frete: " + moedaAdmin(p.frete) + " · Total: " + moedaAdmin(p.total) + " · Comissão: " + moedaAdmin(p.comissao) + " (" + p.comissaoPercentual + "%)";
       const status = document.createElement("select");
       [["aguardando","Aguardando — confirmar produtos"],["confirmando","Confirmando — produtos disponíveis"],["finalizado","Finalizado — liberar comissão"],["cancelada","Cancelado"]].forEach(([v,t]) => { const o=document.createElement("option");o.value=v;o.textContent=t;status.appendChild(o); });
       status.value=({confirmada:"confirmando",concluida:"finalizado"})[p.status]||p.status;
