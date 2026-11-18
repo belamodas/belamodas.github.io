@@ -1,4 +1,4 @@
-const CACHE_NAME = "bela-modas-app-v9";
+const CACHE_NAME = "bela-modas-app-v10";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -31,44 +31,23 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   const request = event.request;
   if (request.method !== "GET") return;
-
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-
-  // Abre a página salva rapidamente e atualiza o cache em segundo plano.
-  if (request.mode === "navigate") {
-    const cachePromise = caches.open(CACHE_NAME);
-    const atualizacao = cachePromise.then(cache =>
-      fetch(request).then(response => {
-        if (response && response.ok) cache.put(request, response.clone());
-        return response;
-      })
-    );
-    event.waitUntil(atualizacao.then(() => undefined).catch(() => undefined));
-    event.respondWith((async () => {
-      const cache = await cachePromise;
-      const paginaSalva = await cache.match(request);
-      if (paginaSalva) return paginaSalva;
-      const raizSalva = await cache.match("./index.html");
-      return atualizacao.catch(() => raizSalva || cache.match("./"));
-    })());
-    return;
-  }
-
-  // Somente arquivos essenciais do aplicativo entram no cache.
   const isAppFile = APP_SHELL.some(path => new URL(path, self.location.href).pathname === url.pathname);
-  if (!isAppFile) return;
-
+  if (request.mode !== "navigate" && !isAppFile) return;
+  // Prioriza sempre o código publicado; usa o cache somente sem conexão.
   event.respondWith(
-    caches.match(request).then(cached => {
-      if (cached) return cached;
-      return fetch(request).then(response => {
-        if (response && response.ok) {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
-        }
-        return response;
-      });
+    fetch(request).then(response => {
+      if (response && response.ok) {
+        const copy = response.clone();
+        event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.put(request, copy)));
+      }
+      return response;
+    }).catch(async () => {
+      const cache = await caches.open(CACHE_NAME);
+      return (await cache.match(request)) ||
+        (request.mode === "navigate" ? await cache.match("./index.html") : undefined) ||
+        Response.error();
     })
   );
 });
