@@ -2237,15 +2237,45 @@ function tamanhosDoProduto(produto) {
   return variacoesDoProduto(produto).map(v => v.tamanho);
 }
 let acaoAposSelecionarTamanho = "adicionar";
+let consultaTamanhoEmAndamento = false;
 async function abrirSeletorTamanho(codigo, acao = "adicionar") {
+  if (consultaTamanhoEmAndamento) return;
   const produto = produtos.find(x => x.codigo === codigo);
   if (!produto) return;
   acaoAposSelecionarTamanho = acao === "comprar" ? "comprar" : "adicionar";
-  if (produto.id_catalogo) await atualizarEstoqueCatalogo();
+  if (produto.id_catalogo) {
+    consultaTamanhoEmAndamento = true;
+    const caixa = document.getElementById("modal-tamanhos");
+    const opcoes = document.getElementById("opcoes-tamanho");
+    produtoAguardandoTamanho = null;
+    tamanhoSelecionado = "";
+    document.getElementById("nome-produto-tamanho").textContent = produto.nome;
+    opcoes.replaceChildren();
+    const aviso = document.createElement("p");
+    aviso.setAttribute("role", "status");
+    aviso.setAttribute("aria-live", "polite");
+    aviso.style.cssText = "width:100%;text-align:center;padding:16px 4px;font-weight:600;color:#650817";
+    aviso.textContent = "⏳ Consultando tamanhos e estoque...";
+    opcoes.appendChild(aviso);
+    const confirmar = document.getElementById("confirmar-tamanho");
+    confirmar.disabled = true;
+    confirmar.textContent = "Aguarde...";
+    caixa.classList.add("aberto");
+    caixa.setAttribute("aria-hidden", "false");
+    try {
+      await atualizarEstoqueCatalogo();
+    } finally {
+      consultaTamanhoEmAndamento = false;
+    }
+    if (!caixa.classList.contains("aberto")) return;
+  }
   const variacoes = variacoesDoProduto(produto);
   const tamanhos = variacoes.map(v => v.tamanho);
   if (produto.id_catalogo && !tamanhos.length) {
-    alert(estoqueCatalogoErro || "Nenhuma variação encontrada para o ID Catálogo " + produto.id_catalogo + ". Confira o código-base no Bela Caixa.");
+    const aviso = document.getElementById("opcoes-tamanho");
+    aviso.textContent = estoqueCatalogoErro || "Nenhuma variação encontrada para o ID Catálogo " + produto.id_catalogo + ". Confira o código-base no Bela Caixa.";
+    document.getElementById("confirmar-tamanho").textContent = "Indisponível";
+    document.getElementById("confirmar-tamanho").disabled = true;
     return;
   }
   if (!tamanhos.length) {
