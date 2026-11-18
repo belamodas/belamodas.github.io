@@ -1790,6 +1790,7 @@ function normalizarProduto(p) {
     fotos,
     miniaturas: fotos.map(gerarUrlMiniatura),
     tamanhos: String(p.tamanhos || ""),
+    id_catalogo: String(p.id_catalogo || "").trim().toLowerCase(),
     video: String(p.video_url || p.video || "")
   };
 }
@@ -2203,15 +2204,50 @@ function abrirProduto(produto) {
   quadro.append(anterior, proxima); galeria.append(quadro, contador, pontos); mostrarMidia();
   modal.classList.add("aberto");
 }
+let estoqueCatalogoPorBase = new Map();
+let estoqueCatalogoCarregado = false;
+let estoqueCatalogoErro = "";
+async function atualizarEstoqueCatalogo() {
+  try {
+    const grupos = await BelaSync.buscarEstoqueCatalogo();
+    estoqueCatalogoPorBase = new Map(grupos.map(g => [
+      String(g.codigo_base || "").trim().toLowerCase(),
+      Array.isArray(g.variacoes) ? g.variacoes.map(v => ({
+        tamanho: String(v.tamanho || "").trim(),
+        estoque: Math.max(0, Number(v.estoque) || 0)
+      })).filter(v => v.tamanho) : []
+    ]));
+    estoqueCatalogoCarregado = true;
+    estoqueCatalogoErro = "";
+  } catch (erro) {
+    estoqueCatalogoErro = erro?.message || "Estoque temporariamente indisponível";
+    console.warn("Consulta ao estoque Bela Caixa:", estoqueCatalogoErro);
+  }
+}
+function variacoesDoProduto(produto) {
+  const base = String(produto.id_catalogo || "").trim().toLowerCase();
+  if (base) {
+    if (!estoqueCatalogoCarregado || !estoqueCatalogoPorBase.has(base)) return [];
+    return estoqueCatalogoPorBase.get(base);
+  }
+  return [...new Set(String(produto.tamanhos || "").split(/[,;|\n]+/).map(x => x.trim()).filter(Boolean))]
+    .map(tamanho => ({ tamanho, estoque: null }));
+}
 function tamanhosDoProduto(produto) {
-  return [...new Set(String(produto.tamanhos || "").split(/[,;|\n]+/).map(x => x.trim()).filter(Boolean))];
+  return variacoesDoProduto(produto).map(v => v.tamanho);
 }
 let acaoAposSelecionarTamanho = "adicionar";
-function abrirSeletorTamanho(codigo, acao = "adicionar") {
+async function abrirSeletorTamanho(codigo, acao = "adicionar") {
   const produto = produtos.find(x => x.codigo === codigo);
   if (!produto) return;
   acaoAposSelecionarTamanho = acao === "comprar" ? "comprar" : "adicionar";
-  const tamanhos = tamanhosDoProduto(produto);
+  if (produto.id_catalogo) await atualizarEstoqueCatalogo();
+  const variacoes = variacoesDoProduto(produto);
+  const tamanhos = variacoes.map(v => v.tamanho);
+  if (produto.id_catalogo && !tamanhos.length) {
+    alert(estoqueCatalogoErro || "Nenhuma variação encontrada para o ID Catálogo " + produto.id_catalogo + ". Confira o código-base no Bela Caixa.");
+    return;
+  }
   if (!tamanhos.length) {
     adicionarAoCarrinho(codigo, "", acaoAposSelecionarTamanho !== "comprar");
     if (acaoAposSelecionarTamanho === "comprar") { modal.classList.remove("aberto"); abrirPainel("painel-carrinho"); }
@@ -2222,9 +2258,12 @@ function abrirSeletorTamanho(codigo, acao = "adicionar") {
   document.getElementById("nome-produto-tamanho").textContent = produto.nome;
   const opcoes = document.getElementById("opcoes-tamanho");
   opcoes.replaceChildren();
-  tamanhos.forEach(tamanho => {
+  variacoes.forEach(({tamanho, estoque}) => {
     const botao = document.createElement("button");
-    botao.type = "button"; botao.className = "opcao-tamanho"; botao.textContent = tamanho;
+    botao.type = "button"; botao.className = "opcao-tamanho";
+    botao.textContent = estoque === null ? tamanho : tamanho + " (" + estoque + ")";
+    botao.disabled = estoque !== null && estoque <= 0;
+    botao.title = estoque === null ? "Tamanho " + tamanho : estoque > 0 ? estoque + " unidade(s) disponível(is)" : "Esgotado";
     botao.setAttribute("aria-pressed", "false");
     botao.addEventListener("click", () => {
       tamanhoSelecionado = tamanho;
@@ -2312,6 +2351,7 @@ function salvarCacheProdutos() {
 async function carregarProdutos() {
   const dados = await BelaSync.buscarProdutos();
   produtos = dados.map(normalizarProduto);
+  if (produtos.some(p => p.id_catalogo)) atualizarEstoqueCatalogo();
   ordenarProdutosLocalmente();
   salvarCacheProdutos();
   mostrarProdutos();
