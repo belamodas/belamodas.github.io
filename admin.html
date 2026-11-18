@@ -700,6 +700,7 @@ footer { padding-top:24px; }
   </section>
   <form id="form-produto">
     <div class="linha-form"><div><label for="admin-codigo">Referência</label><input id="admin-codigo" required placeholder="Ex.: BM005"></div><div><label for="admin-categoria">Categoria</label><select id="admin-categoria"><option>Feminino</option><option>Masculino</option><option>Infantil</option><option>Acessórios</option></select></div></div>
+    <label for="admin-id-catalogo">ID Catálogo (código-base do Bela Caixa)</label><input id="admin-id-catalogo" maxlength="4" pattern="[A-Za-z0-9]{4}" autocomplete="off" placeholder="Ex.: 1m23"><small>Informe apenas os 4 caracteres do grupo. Deixe vazio para produto sem vínculo.</small>
     <label for="admin-nome">Nome do produto</label><input id="admin-nome" required placeholder="Nome da peça">
     <label for="admin-descricao">Descrição</label><textarea id="admin-descricao" rows="3" placeholder="Detalhes, tecido, cor e outras informações"></textarea>
     <div class="linha-form"><div><label for="admin-preco">Preço (R$)</label><input id="admin-preco" type="number" min="0" step="0.01" placeholder="49,90"></div><div><label for="admin-estoque">Estoque / quantidade</label><input id="admin-estoque" type="number" min="0" step="1" placeholder="Ex.: 5"></div></div>
@@ -888,6 +889,7 @@ function normalizarProduto(p) {
     fotos,
     miniaturas: fotos.map(gerarUrlMiniatura),
     tamanhos: String(p.tamanhos || ""),
+    id_catalogo: String(p.id_catalogo || "").trim().toLowerCase(),
     video: String(p.video_url || p.video || "")
   };
 }
@@ -1148,6 +1150,7 @@ async function alterarDestaqueRapido(produto, controle) {
       foto_principal: produto.foto || "",
       fotos_adicionais: (produto.fotos || []).filter(url => url && url !== produto.foto).join("|"),
       tamanhos: produto.tamanhos || "",
+      id_catalogo: produto.id_catalogo || "",
       video_url: produto.video || "",
       destaque: novoEstado,
       ativo: produto.ativo,
@@ -1332,6 +1335,7 @@ function preencherFormulario(p) {
   document.getElementById("admin-preco").value = precoParaEditar > 0 ? precoParaEditar.toFixed(2) : "";
   document.getElementById("admin-estoque").value = p.estoque ?? 0;
   document.getElementById("admin-tamanhos").value = p.tamanhos || "";
+  document.getElementById("admin-id-catalogo").value = p.id_catalogo || "";
   document.getElementById("admin-disponibilidade").value = p.disponibilidade || "Consulte disponibilidade";
   document.getElementById("admin-ativo").checked = Boolean(p.ativo);
   document.getElementById("admin-foto").value = "";
@@ -1877,6 +1881,7 @@ document.getElementById("form-produto").addEventListener("submit", async e => {
       foto_principal: fotosOrdenadas[0] || "",
       fotos_adicionais: fotosOrdenadas.slice(1).join("|"),
       tamanhos: [...new Set(document.getElementById("admin-tamanhos").value.split(/[,;|\n]+/).map(x => x.trim()).filter(Boolean))].join(", "),
+      id_catalogo: document.getElementById("admin-id-catalogo").value.trim().toLowerCase(),
       video_url: videoUrl,
       destaque: existente ? Boolean(existente.destaque) : false,
       ativo: document.getElementById("admin-ativo").checked
