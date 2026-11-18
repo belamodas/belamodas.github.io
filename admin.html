@@ -1255,8 +1255,23 @@ async function alterarComissaoProduto(produto, botao) {
   botao.disabled = true;
   try {
     await BelaSync.salvarProduto({codigo:produto.codigo,nome:produto.nome,ordem:produto.ordem,categoria:produto.categoria,descricao:produto.descricao,preco:Number(produto.precoValor||0),preco_promocional:produto.precoPromocionalValor||"",promocao_inicio:produto.promocaoInicio||"",promocao_fim:produto.promocaoFim||"",estoque:produto.estoque,disponibilidade:produto.disponibilidade,foto_principal:produto.foto||"",fotos_adicionais:(produto.fotos||[]).filter(url=>url&&url!==produto.foto).join("|"),tamanhos:produto.tamanhos||"",id_catalogo:produto.id_catalogo||"",video_url:produto.video||"",destaque:Boolean(produto.destaque),ativo:produto.ativo,comissao_percentual:valor});
-    produto.comissaoPercentual=valor; salvarCacheProdutos(); renderListaAdmin();
-  } catch(err) { alert(err.message||"Não foi possível salvar a comissão."); }
+    // Confirma na fonte de dados, em vez de exibir apenas a alteração local.
+    const dadosAtualizados = await BelaSync.buscarProdutos();
+    const confirmado = dadosAtualizados.find(p => String(p.codigo).trim().toLowerCase() === String(produto.codigo).trim().toLowerCase());
+    if (!confirmado) throw new Error("Produto não encontrado na consulta após salvar.");
+    const gravado = confirmado.comissao_percentual === "" || confirmado.comissao_percentual == null
+      ? "" : Number(confirmado.comissao_percentual);
+    produtos = dadosAtualizados.map(normalizarProduto);
+    ordenarProdutosLocalmente();
+    salvarCacheProdutos();
+    renderListaAdmin();
+    if (gravado !== valor) {
+      alert("O servidor respondeu ao salvamento, mas o percentual ainda não apareceu na planilha. Esperado: " +
+        (valor === "" ? "padrão" : valor + "%") + "; retornado: " +
+        (gravado === "" ? "padrão" : gravado + "%") +
+        ". Verifique a implantação atual do Apps Script e a coluna comissao_percentual.");
+    }
+  } catch(err) { alert(err.message||"Não foi possível confirmar a comissão. Confira o valor na planilha antes de tentar novamente."); }
   finally { botao.disabled=false; }
 }
 
