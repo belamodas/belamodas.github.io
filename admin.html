@@ -1211,7 +1211,7 @@ async function gravarPromocao(valor) {
       estoque: produto.estoque, disponibilidade: produto.disponibilidade,
       foto_principal: produto.foto || "",
       fotos_adicionais: (produto.fotos || []).filter(url => url && url !== produto.foto).join("|"),
-      tamanhos: produto.tamanhos || "", video_url: produto.video || "",
+      tamanhos: produto.tamanhos || "", id_catalogo: produto.id_catalogo || "", video_url: produto.video || "",
       destaque: Boolean(produto.destaque), ativo: produto.ativo,
       comissao_percentual: produto.comissaoPercentual ?? ""
     });
@@ -1254,7 +1254,7 @@ async function alterarComissaoProduto(produto, botao) {
   if (valor !== "" && (!Number.isFinite(valor) || valor < 0 || valor > 100)) { alert("Informe um percentual entre 0 e 100."); return; }
   botao.disabled = true;
   try {
-    await BelaSync.salvarProduto({codigo:produto.codigo,nome:produto.nome,ordem:produto.ordem,categoria:produto.categoria,descricao:produto.descricao,preco:Number(produto.precoValor||0),preco_promocional:produto.precoPromocionalValor||"",promocao_inicio:produto.promocaoInicio||"",promocao_fim:produto.promocaoFim||"",estoque:produto.estoque,disponibilidade:produto.disponibilidade,foto_principal:produto.foto||"",fotos_adicionais:(produto.fotos||[]).filter(url=>url&&url!==produto.foto).join("|"),tamanhos:produto.tamanhos||"",video_url:produto.video||"",destaque:Boolean(produto.destaque),ativo:produto.ativo,comissao_percentual:valor});
+    await BelaSync.salvarProduto({codigo:produto.codigo,nome:produto.nome,ordem:produto.ordem,categoria:produto.categoria,descricao:produto.descricao,preco:Number(produto.precoValor||0),preco_promocional:produto.precoPromocionalValor||"",promocao_inicio:produto.promocaoInicio||"",promocao_fim:produto.promocaoFim||"",estoque:produto.estoque,disponibilidade:produto.disponibilidade,foto_principal:produto.foto||"",fotos_adicionais:(produto.fotos||[]).filter(url=>url&&url!==produto.foto).join("|"),tamanhos:produto.tamanhos||"",id_catalogo:produto.id_catalogo||"",video_url:produto.video||"",destaque:Boolean(produto.destaque),ativo:produto.ativo,comissao_percentual:valor});
     produto.comissaoPercentual=valor; salvarCacheProdutos(); renderListaAdmin();
   } catch(err) { alert(err.message||"Não foi possível salvar a comissão."); }
   finally { botao.disabled=false; }
