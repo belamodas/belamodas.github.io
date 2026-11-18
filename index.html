@@ -2207,22 +2207,34 @@ function abrirProduto(produto) {
 let estoqueCatalogoPorBase = new Map();
 let estoqueCatalogoCarregado = false;
 let estoqueCatalogoErro = "";
+let estoqueCatalogoAtualizadoEm = 0;
+let estoqueCatalogoRequisicao = null;
+const ESTOQUE_CACHE_MS = 20000; // Reaproveita a consulta recente por até 20 segundos.
 async function atualizarEstoqueCatalogo() {
-  try {
-    const grupos = await BelaSync.buscarEstoqueCatalogo();
-    estoqueCatalogoPorBase = new Map(grupos.map(g => [
-      String(g.codigo_base || "").trim().toLowerCase(),
-      Array.isArray(g.variacoes) ? g.variacoes.map(v => ({
-        tamanho: String(v.tamanho || "").trim(),
-        estoque: Math.max(0, Number(v.estoque) || 0)
-      })).filter(v => v.tamanho) : []
-    ]));
-    estoqueCatalogoCarregado = true;
-    estoqueCatalogoErro = "";
-  } catch (erro) {
-    estoqueCatalogoErro = erro?.message || "Estoque temporariamente indisponível";
-    console.warn("Consulta ao estoque Bela Caixa:", estoqueCatalogoErro);
-  }
+  if (estoqueCatalogoCarregado && Date.now() - estoqueCatalogoAtualizadoEm < ESTOQUE_CACHE_MS) return;
+  if (estoqueCatalogoRequisicao) return estoqueCatalogoRequisicao;
+  estoqueCatalogoRequisicao = (async () => {
+    try {
+      const grupos = await BelaSync.buscarEstoqueCatalogo();
+      estoqueCatalogoPorBase = new Map(grupos.map(g => [
+        String(g.codigo_base || "").trim().toLowerCase(),
+        Array.isArray(g.variacoes) ? g.variacoes.map(v => ({
+          tamanho: String(v.tamanho || "").trim(),
+          estoque: Math.max(0, Number(v.estoque) || 0)
+        })).filter(v => v.tamanho) : []
+      ]));
+      estoqueCatalogoCarregado = true;
+      estoqueCatalogoAtualizadoEm = Date.now();
+      estoqueCatalogoErro = "";
+    } catch (erro) {
+      estoqueCatalogoCarregado = false;
+      estoqueCatalogoErro = erro?.message || "Estoque temporariamente indisponível";
+      console.warn("Consulta ao estoque Bela Caixa:", estoqueCatalogoErro);
+    } finally {
+      estoqueCatalogoRequisicao = null;
+    }
+  })();
+  return estoqueCatalogoRequisicao;
 }
 function variacoesDoProduto(produto) {
   const base = String(produto.id_catalogo || "").trim().toLowerCase();
