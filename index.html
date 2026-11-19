@@ -1323,7 +1323,7 @@ footer strong { color:#650817; }
       </div>
     </section>
     <section class="banner-blackfriday hero-banner-slide" aria-label="Black Friday Bela Modas">
-      <video autoplay muted loop playsinline preload="none" poster="https://images.pexels.com/videos/5644289/free-video-5644289.jpg?auto=compress&cs=tinysrgb&w=1200" aria-hidden="true">
+      <video muted loop playsinline preload="none" poster="https://images.pexels.com/videos/5644289/free-video-5644289.jpg?auto=compress&cs=tinysrgb&w=1200" aria-hidden="true">
         <source src="https://videos.pexels.com/video-files/5644289/5644289-uhd_2160_4096_25fps.mp4" type="video/mp4">
       </video>
       <div class="banner-blackfriday-conteudo">
@@ -2732,18 +2732,37 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") { modal.clas
 
 
 let bannerAtual = 0;
+let bannerVisivel = false;
+function atualizarReproducaoBanner() {
+  const faixa = document.getElementById("hero-banner-track");
+  if (!faixa) return;
+  faixa.querySelectorAll("video").forEach((video, i) => {
+    if (bannerVisivel && !document.hidden && i === bannerAtual) {
+      if (video.readyState === 0 && video.currentSrc) video.load();
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  });
+}
 function mostrarBanner(indice) {
   const faixa = document.getElementById("hero-banner-track");
   if (!faixa) return;
   bannerAtual = (indice + 2) % 2;
   faixa.style.transform = "translateX(-" + (bannerAtual * 100) + "%)";
   document.querySelectorAll("[data-banner-slide]").forEach((p,i) => p.classList.toggle("ativo",i===bannerAtual));
-  const videos = faixa.querySelectorAll("video");
-  videos.forEach((video,i) => {
-    if (i === bannerAtual) { if (video.readyState === 0) video.load(); video.play().catch(() => {}); }
-    else video.pause();
-  });
+  atualizarReproducaoBanner();
 }
+if ("IntersectionObserver" in window) {
+  const observadorBanner = new IntersectionObserver(entradas => {
+    bannerVisivel = entradas.some(e => e.isIntersecting);
+    atualizarReproducaoBanner();
+  }, {threshold: 0.1});
+  observadorBanner.observe(document.getElementById("hero-banner-carousel"));
+} else {
+  bannerVisivel = true;
+}
+document.addEventListener("visibilitychange", atualizarReproducaoBanner);
 document.getElementById("banner-anterior").addEventListener("click", () => mostrarBanner(bannerAtual-1));
 document.getElementById("banner-proximo").addEventListener("click", () => mostrarBanner(bannerAtual+1));
 document.querySelectorAll("[data-banner-slide]").forEach(p => p.addEventListener("click", () => mostrarBanner(Number(p.dataset.bannerSlide))));
@@ -2849,11 +2868,10 @@ async function carregarVideoBanner() {
   }
   if (video.src !== url) {
     video.src = url;
-    video.load();
   }
   video.muted = true;
   video.playsInline = true;
-  video.play().catch(() => {});
+  atualizarReproducaoBanner();
 }
 
 (async function iniciarCatalogo() {
