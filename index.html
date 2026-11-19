@@ -2360,6 +2360,7 @@ async function conferirEstoqueDaSacola() {
   const itensIntegrados = carrinho.filter(i => produtos.find(p => p.codigo === i.codigo)?.id_catalogo);
   if (!itensIntegrados.length) return true;
   // Revalida sempre na finalização, mesmo quando o cache ainda está dentro dos 20 segundos.
+  if (estoqueCatalogoRequisicao) await estoqueCatalogoRequisicao;
   estoqueCatalogoAtualizadoEm = 0;
   await atualizarEstoqueCatalogo();
   if (!estoqueCatalogoCarregado || estoqueCatalogoErro) {
@@ -2607,6 +2608,8 @@ botaoCalcularFrete.addEventListener("click", async () => {
   } finally { botaoCalcularFrete.disabled = false; }
 });
 
+let ultimaAssinaturaPedido = "";
+let ultimoIdPedido = "";
 let envioPedidoEmAndamento = false;
 document.getElementById("enviar-whatsapp").onclick = async () => {
   if (!carrinho.length) { alert("Sua sacola está vazia."); return; }
@@ -2674,7 +2677,16 @@ document.getElementById("enviar-whatsapp").onclick = async () => {
   if (indicacao) {
     botaoEnviar.textContent = "Registrando pedido...";
     try {
-      const pedidoId = (crypto.randomUUID ? crypto.randomUUID() : "BM" + Date.now() + Math.random().toString(16).slice(2));
+      const assinaturaPedido = JSON.stringify({
+        vendedor: indicacao.codigo, cliente: nome, itens: carrinho,
+        cupom: cupomAplicado?.codigo || "", entrega, frete: entrega ? cotacaoEntrega?.frete : 0,
+        endereco: entrega ? [rua, numero, bairro, cidade, cep] : []
+      });
+      if (assinaturaPedido !== ultimaAssinaturaPedido) {
+        ultimaAssinaturaPedido = assinaturaPedido;
+        ultimoIdPedido = (crypto.randomUUID ? crypto.randomUUID() : "BM" + Date.now() + Math.random().toString(16).slice(2));
+      }
+      const pedidoId = ultimoIdPedido;
       const finalizado = await BelaSync.finalizarCheckout({
         id: pedidoId, codigoVendedor: indicacao.codigo, codigoCupom:cupomAplicado?.codigo||"", cliente: nome,
         itens: carrinho.map(i => ({codigo:i.codigo, tamanho:i.tamanho || "", quantidade:i.quantidade})),
@@ -2695,7 +2707,7 @@ document.getElementById("enviar-whatsapp").onclick = async () => {
     } catch(err) { alert(err.message||"Não foi possível validar o cupom no fechamento. O pedido não será aberto."); return; }
   }
   botaoEnviar.textContent = "Abrindo WhatsApp...";
-  const linkWhatsApp = "https://wa.me/" + numeroWhatsAppLoja + "?text=" + encodeURIComponent(linhas.join("\\n"));
+  const linkWhatsApp = "https://wa.me/" + numeroWhatsAppLoja + "?text=" + encodeURIComponent(linhas.join("\n"));
   window.location.assign(linkWhatsApp);
   } catch (erro) {
     alert("Não foi possível preparar o pedido: " + (erro?.message || "tente novamente."));
