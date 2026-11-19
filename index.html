@@ -2607,20 +2607,19 @@ botaoCalcularFrete.addEventListener("click", async () => {
   } finally { botaoCalcularFrete.disabled = false; }
 });
 
+let envioPedidoEmAndamento = false;
 document.getElementById("enviar-whatsapp").onclick = async () => {
   if (!carrinho.length) { alert("Sua sacola está vazia."); return; }
   if (!numeroWhatsAppLoja) { alert("O número de WhatsApp da Bela Modas ainda precisa ser configurado no código."); return; }
   const botaoEnviar = document.getElementById("enviar-whatsapp");
-  if (botaoEnviar.disabled) return;
+  if (envioPedidoEmAndamento) return;
+  envioPedidoEmAndamento = true;
   botaoEnviar.disabled = true;
   const textoAnterior = botaoEnviar.textContent;
   botaoEnviar.textContent = "Conferindo estoque...";
   try {
     if (!(await conferirEstoqueDaSacola())) return;
-  } finally {
-    botaoEnviar.disabled = false;
-    botaoEnviar.textContent = textoAnterior;
-  }
+    botaoEnviar.textContent = "Preparando pedido...";
   const nome = document.getElementById("nome-cliente").value.trim() || "Cliente";
   if (document.getElementById("codigo-cupom").value.trim()) {
     try { cupomAplicado = await BelaSync.validarCupom({codigoCupom:document.getElementById("codigo-cupom").value.trim(),itens:carrinho.map(i=>({codigo:i.codigo,quantidade:i.quantidade}))}); }
@@ -2673,6 +2672,7 @@ document.getElementById("enviar-whatsapp").onclick = async () => {
   linhas.push("Observações: " + (document.getElementById("obs-pedido").value.trim() || "Nenhuma"));
 
   if (indicacao) {
+    botaoEnviar.textContent = "Registrando pedido...";
     try {
       const pedidoId = (crypto.randomUUID ? crypto.randomUUID() : "BM" + Date.now() + Math.random().toString(16).slice(2));
       const finalizado = await BelaSync.finalizarCheckout({
@@ -2689,11 +2689,21 @@ document.getElementById("enviar-whatsapp").onclick = async () => {
       return;
     }
   } else if (cupomAplicado) {
+    botaoEnviar.textContent = "Validando cupom...";
     try {
       await BelaSync.finalizarCheckout({codigoCupom:cupomAplicado.codigo,itens:carrinho.map(i=>({codigo:i.codigo,tamanho:i.tamanho||"",quantidade:i.quantidade})),frete:entrega?Number(cotacaoEntrega.frete||0):0});
     } catch(err) { alert(err.message||"Não foi possível validar o cupom no fechamento. O pedido não será aberto."); return; }
   }
-  window.open(`https://wa.me/${numeroWhatsAppLoja}?text=${encodeURIComponent(linhas.join("\n"))}`, "_blank", "noopener");
+  botaoEnviar.textContent = "Abrindo WhatsApp...";
+  const linkWhatsApp = "https://wa.me/" + numeroWhatsAppLoja + "?text=" + encodeURIComponent(linhas.join("\\n"));
+  window.location.assign(linkWhatsApp);
+  } catch (erro) {
+    alert("Não foi possível preparar o pedido: " + (erro?.message || "tente novamente."));
+  } finally {
+    envioPedidoEmAndamento = false;
+    botaoEnviar.disabled = false;
+    botaoEnviar.textContent = textoAnterior;
+  }
 };
 document.querySelectorAll(".categoria").forEach(botao => botao.addEventListener("click", () => {
   somentePromocoes = false;
