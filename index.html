@@ -2331,20 +2331,58 @@ function fecharSeletorTamanho() {
   document.getElementById("confirmar-tamanho").textContent = "Adicionar à sacola";
   acaoAposSelecionarTamanho = "adicionar";
 }
+function disponibilidadeTamanho(produto, tamanho) {
+  if (!produto.id_catalogo) return null;
+  if (!estoqueCatalogoCarregado) return 0;
+  const variacao = variacoesDoProduto(produto).find(v =>
+    String(v.tamanho).trim().toLocaleLowerCase("pt-BR") === String(tamanho).trim().toLocaleLowerCase("pt-BR"));
+  return variacao ? Math.max(0, Number(variacao.estoque) || 0) : 0;
+}
 function adicionarAoCarrinho(codigo, tamanho = "", avisar = true) {
-  const p = produtos.find(x => x.codigo === codigo); if (!p) return;
+  const p = produtos.find(x => x.codigo === codigo); if (!p) return false;
   const chave = String(tamanho || "").trim().toLocaleLowerCase("pt-BR");
   const existente = carrinho.find(x => x.codigo === codigo && String(x.tamanho || "").trim().toLocaleLowerCase("pt-BR") === chave);
+  const disponivel = disponibilidadeTamanho(p, tamanho);
+  if (disponivel !== null && (existente?.quantidade || 0) >= disponivel) {
+    alert(disponivel > 0
+      ? "Estoque insuficiente. Existem apenas " + disponivel + " unidade(s) do tamanho " + tamanho + "."
+      : "Este tamanho está esgotado ou indisponível no momento.");
+    return false;
+  }
   if (existente) existente.quantidade++;
   else carrinho.push({ codigo, tamanho: String(tamanho || "").trim(), quantidade: 1 });
   invalidarCotacaoEntrega();
-  atualizarCarrinho(); if (avisar) alert("Produto adicionado à sacola!");
+  atualizarCarrinho();
+  if (avisar) alert("Produto adicionado à sacola!");
+  return true;
+}
+async function conferirEstoqueDaSacola() {
+  const itensIntegrados = carrinho.filter(i => produtos.find(p => p.codigo === i.codigo)?.id_catalogo);
+  if (!itensIntegrados.length) return true;
+  // Revalida sempre na finalização, mesmo quando o cache ainda está dentro dos 20 segundos.
+  estoqueCatalogoAtualizadoEm = 0;
+  await atualizarEstoqueCatalogo();
+  if (!estoqueCatalogoCarregado || estoqueCatalogoErro) {
+    alert("Não foi possível conferir o estoque agora. Tente novamente em instantes.");
+    return false;
+  }
+  for (const item of itensIntegrados) {
+    const produto = produtos.find(p => p.codigo === item.codigo);
+    const disponivel = disponibilidadeTamanho(produto, item.tamanho);
+    if (item.quantidade > disponivel) {
+      alert("Estoque atualizado: " + produto.nome + " — tamanho " + (item.tamanho || "não informado") +
+        ". Disponível: " + disponivel + "; na sacola: " + item.quantidade +
+        ". Remova a quantidade excedente antes de continuar.");
+      return false;
+    }
+  }
+  return true;
 }
 document.getElementById("confirmar-tamanho").addEventListener("click", () => {
   if (!produtoAguardandoTamanho || !tamanhoSelecionado) return;
   const codigo = produtoAguardandoTamanho.codigo;
   const comprarAgora = acaoAposSelecionarTamanho === "comprar";
-  adicionarAoCarrinho(codigo, tamanhoSelecionado, !comprarAgora);
+  if (!adicionarAoCarrinho(codigo, tamanhoSelecionado, !comprarAgora)) return;
   fecharSeletorTamanho();
   if (comprarAgora) { modal.classList.remove("aberto"); abrirPainel("painel-carrinho"); }
 });
@@ -2572,6 +2610,17 @@ botaoCalcularFrete.addEventListener("click", async () => {
 document.getElementById("enviar-whatsapp").onclick = async () => {
   if (!carrinho.length) { alert("Sua sacola está vazia."); return; }
   if (!numeroWhatsAppLoja) { alert("O número de WhatsApp da Bela Modas ainda precisa ser configurado no código."); return; }
+  const botaoEnviar = document.getElementById("enviar-whatsapp");
+  if (botaoEnviar.disabled) return;
+  botaoEnviar.disabled = true;
+  const textoAnterior = botaoEnviar.textContent;
+  botaoEnviar.textContent = "Conferindo estoque...";
+  try {
+    if (!(await conferirEstoqueDaSacola())) return;
+  } finally {
+    botaoEnviar.disabled = false;
+    botaoEnviar.textContent = textoAnterior;
+  }
   const nome = document.getElementById("nome-cliente").value.trim() || "Cliente";
   if (document.getElementById("codigo-cupom").value.trim()) {
     try { cupomAplicado = await BelaSync.validarCupom({codigoCupom:document.getElementById("codigo-cupom").value.trim(),itens:carrinho.map(i=>({codigo:i.codigo,quantidade:i.quantidade}))}); }
