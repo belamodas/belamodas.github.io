@@ -1336,6 +1336,43 @@ footer strong { color:#650817; }
   .produto,.busca { transition:none; }
 }
 
+/* Navegação rápida visível: primeira etapa de reorganização da vitrine */
+.atalhos-vitrine {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  scrollbar-width:none;
+  padding:13px max(18px,calc((100vw - 1150px)/2));
+  background:#fffaf3;
+  border-bottom:1px solid #e8d9c8;
+  box-shadow:0 3px 10px rgba(53,16,24,.06);
+}
+.atalhos-vitrine::-webkit-scrollbar { display:none; }
+.atalhos-vitrine button {
+  flex:0 0 auto;
+  min-height:39px;
+  border:1px solid #dcc5a9;
+  border-radius:24px;
+  padding:9px 17px;
+  background:#fff;
+  color:#650817;
+  font:600 13px Arial,sans-serif;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.atalhos-vitrine button.ativo {
+  background:#650817;
+  color:#fff8ef;
+  border-color:#650817;
+}
+.atalhos-vitrine button:focus-visible { outline:3px solid #d5a857;outline-offset:2px; }
+@media(max-width:520px) {
+  .atalhos-vitrine { gap:7px; padding:11px 12px; }
+  .atalhos-vitrine button { min-height:37px;padding:8px 13px;font-size:12px; }
+}
+
 </style>
 </head>
 
@@ -1347,6 +1384,14 @@ footer strong { color:#650817; }
     <div class="marca-assinatura"><span></span> ESTILO · BELEZA · VOCÊ <span></span></div>
   </div>
 </header>
+<nav class="atalhos-vitrine" aria-label="Acesso rápido à coleção">
+  <button type="button" data-atalho-categoria="Todos">Tudo</button>
+  <button type="button" data-atalho-categoria="Feminino">Feminino</button>
+  <button type="button" data-atalho-categoria="Masculino">Masculino</button>
+  <button type="button" data-atalho-categoria="Infantil">Infantil</button>
+  <button type="button" data-atalho-categoria="Acessórios">Acessórios</button>
+  <button type="button" data-atalho-busca="true">⌕ Buscar</button>
+</nav>
 <section class="hero-banner-carousel" id="hero-banner-carousel" aria-label="Banners promocionais">
   <div class="hero-banner-track" id="hero-banner-track">
     <section class="banner-editorial hero-banner-slide" aria-label="Conheça a coleção Bela Modas">
@@ -2967,5 +3012,24 @@ async function carregarVideoBanner() {
 </script>
 
 <button id="instalar-app-bela" type="button" hidden>＋ Instalar app</button>
+<script>
+// Atalhos da vitrine: reutilizam os filtros existentes, sem duplicar a lógica.
+document.querySelectorAll("[data-atalho-categoria]").forEach(botao => {
+  botao.addEventListener("click", () => {
+    const categoria = botao.dataset.atalhoCategoria;
+    const filtro = Array.from(document.querySelectorAll(".categorias .categoria"))
+      .find(item => item.dataset.categoria === categoria);
+    if (filtro) filtro.click();
+    document.querySelectorAll("[data-atalho-categoria]").forEach(item =>
+      item.classList.toggle("ativo", item.dataset.atalhoCategoria === categoria));
+    document.getElementById("produtos")?.scrollIntoView({behavior:"smooth",block:"start"});
+  });
+});
+document.querySelector("[data-atalho-busca]")?.addEventListener("click", () => {
+  document.getElementById("busca")?.scrollIntoView({behavior:"smooth",block:"center"});
+  document.getElementById("busca")?.focus({preventScroll:true});
+});
+document.querySelector('[data-atalho-categoria="Todos"]')?.classList.add("ativo");
+</script>
 </body>
 </html>
