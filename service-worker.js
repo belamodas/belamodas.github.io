@@ -1,4 +1,4 @@
-const CACHE_NAME = "bela-modas-app-v10";
+const CACHE_NAME = "bela-modas-app-v11";
 const APP_SHELL = [
   "./",
   "./index.html",
