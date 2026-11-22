@@ -1564,9 +1564,6 @@ footer strong { color:#650817; }
     <button class="botao-principal" id="calcular-frete" type="button">Recalcular entrega</button>
     <p id="status-frete" class="status-cep" role="status" aria-live="polite">Informe o endereço completo e calcule o frete para continuar.</p>
     <div id="resumo-frete" class="resumo-frete" hidden>
-      <div><span>Distância da rota (ida)</span><strong id="distancia-frete">—</strong></div>
-      <div><span>Taxa mínima</span><strong id="valor-minimo-frete">—</strong></div>
-      <div><span>Valor por km</span><strong id="valor-km-frete">—</strong></div>
       <div><span>Frete</span><strong id="valor-frete">—</strong></div>
       <div class="total-com-frete"><span>Total com entrega</span><strong id="total-com-frete">—</strong></div>
     </div>
@@ -2492,9 +2489,6 @@ function atualizarResumoFrete() {
     cotacaoEntrega = null;
     document.getElementById("valor-total").textContent = moeda(Math.max(0,totalProdutosCarrinho()-Number(cupomAplicado?.desconto||0)));
   } else if (cotacaoEntrega) {
-    document.getElementById("distancia-frete").textContent = Number(cotacaoEntrega.distanciaKm).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " km";
-    document.getElementById("valor-minimo-frete").textContent = moeda(cotacaoEntrega.valorMinimo ?? 5);
-    document.getElementById("valor-km-frete").textContent = moeda(cotacaoEntrega.valorKm) + " / km";
     document.getElementById("valor-frete").textContent = moeda(cotacaoEntrega.frete);
     document.getElementById("total-com-frete").textContent = moeda(Math.max(0,totalProdutosCarrinho()-Number(cupomAplicado?.desconto||0)) + Number(cotacaoEntrega.frete));
   }
