@@ -585,6 +585,7 @@ footer { padding-top:24px; }
 .admin-produto-destaque{display:flex;align-items:center;gap:7px;font-size:11px;color:#63474a;margin-top:2px}
 .admin-produto-destaque input{width:auto}
 @media(max-width:480px){.admin-grade-produtos{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.admin-produto-foto{height:clamp(145px,48vw,210px)}.admin-produto-info{padding:9px}.admin-produto-nome{font-size:15px}.admin-produto-acoes{gap:5px}.admin-produto-acoes button{padding:9px 3px;font-size:10px}}
+.notificacoes-admin{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}.notificacoes-admin button{display:inline-flex;gap:8px;align-items:center}.contador-notificacoes{background:#b72237;color:#fff;border-radius:20px;min-width:22px;text-align:center;padding:3px 6px;font-weight:bold}.lista-notificacoes-admin{border:1px solid #dfc7ad;border-radius:10px;background:#fffaf4;padding:12px;margin:0 0 15px}.notificacao-vendedor{padding:12px 4px;border-bottom:1px solid #e8d8c8;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.notificacao-vendedor:last-child{border-bottom:0}.notificacao-vendedor button{white-space:nowrap}
 </style>
 </head>
 
@@ -678,6 +679,7 @@ footer { padding-top:24px; }
     </form>
   </div>
   <div id="admin-conteudo" hidden>
+  <div class="notificacoes-admin"><button type="button" id="abrir-notificacoes-admin" class="acao-header" aria-expanded="false" aria-controls="lista-notificacoes-admin">🔔 Notificações <span id="contador-notificacoes-admin" class="contador-notificacoes" hidden>0</span></button><button type="button" id="atualizar-notificacoes-admin" class="acao-header">Atualizar avisos</button></div><div id="lista-notificacoes-admin" class="lista-notificacoes-admin" hidden aria-live="polite"></div>
   <p class="aviso-demo">Escolha uma área para administrar a Bela Modas.</p>
   <nav class="admin-menu" aria-label="Áreas administrativas">
     <button type="button" class="ativo" data-admin-aba="produtos" aria-selected="true"><span>🛍️</span>Produtos</button>
@@ -1445,6 +1447,46 @@ document.getElementById("salvar-banner").addEventListener("click", async () => {
 function escaparTextoVendedor(valor) {
   return String(valor || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
+let notificacoesVendedores = [];
+function atualizarNotificacoesVendedores(vendedores) {
+  notificacoesVendedores = vendedores.filter(v => String(v.status || "pendente").trim().toLowerCase() === "pendente");
+  const contador = document.getElementById("contador-notificacoes-admin");
+  contador.textContent = String(notificacoesVendedores.length);
+  contador.hidden = !notificacoesVendedores.length;
+  const area = document.getElementById("lista-notificacoes-admin");
+  if (area.hidden) return;
+  renderizarNotificacoesVendedores();
+}
+function renderizarNotificacoesVendedores() {
+  const area = document.getElementById("lista-notificacoes-admin");
+  area.replaceChildren();
+  if (!notificacoesVendedores.length) {
+    area.textContent = "Nenhum cadastro de vendedor aguardando aprovação.";
+    return;
+  }
+  const titulo = document.createElement("strong");
+  titulo.textContent = notificacoesVendedores.length + (notificacoesVendedores.length === 1 ? " cadastro aguardando aprovação" : " cadastros aguardando aprovação");
+  area.append(titulo);
+  notificacoesVendedores.forEach(v => {
+    const linha = document.createElement("div"); linha.className = "notificacao-vendedor";
+    const info = document.createElement("span");
+    info.textContent = (v.nome || "Vendedor sem nome") + (v.email ? " · " + v.email : "");
+    const acao = document.createElement("button"); acao.type = "button"; acao.className = "acao-header"; acao.textContent = "Analisar cadastro";
+    acao.addEventListener("click", () => {
+      const aba = document.querySelector('[data-admin-aba="vendedores"]');
+      aba?.click();
+      document.getElementById("admin-vendedores")?.scrollIntoView({behavior:"smooth",block:"start"});
+    });
+    linha.append(info,acao); area.append(linha);
+  });
+}
+document.getElementById("abrir-notificacoes-admin").addEventListener("click", () => {
+  const area = document.getElementById("lista-notificacoes-admin");
+  area.hidden = !area.hidden;
+  document.getElementById("abrir-notificacoes-admin").setAttribute("aria-expanded", String(!area.hidden));
+  if (!area.hidden) renderizarNotificacoesVendedores();
+});
+document.getElementById("atualizar-notificacoes-admin").addEventListener("click", () => carregarVendedoresAdmin());
 async function carregarVendedoresAdmin() {
   const area = document.getElementById("lista-vendedores");
   const botao = document.getElementById("atualizar-vendedores");
@@ -1457,6 +1499,7 @@ async function carregarVendedoresAdmin() {
   area.textContent = "Carregando cadastros…";
   try {
     const vendedores = await BelaSync.listarVendedores();
+    atualizarNotificacoesVendedores(Array.isArray(vendedores) ? vendedores : []);
     area.replaceChildren();
     if (!Array.isArray(vendedores) || !vendedores.length) {
       area.textContent = "Nenhum cadastro de vendedor recebido até o momento.";
@@ -1509,6 +1552,8 @@ async function carregarVendedoresAdmin() {
     });
   } catch (err) {
     area.textContent = "Não foi possível carregar os vendedores: " + (err.message || "erro desconhecido");
+    const avisos = document.getElementById("lista-notificacoes-admin");
+    if (!avisos.hidden) avisos.textContent = "Não foi possível atualizar os avisos. Tente novamente.";
   } finally { if (botao) botao.disabled = false; }
 }
 async function excluirVendedorAdmin(vendedor, botao) {
