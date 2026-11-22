@@ -1561,7 +1561,7 @@ footer strong { color:#650817; }
         <div><label for="estado-entrega">Estado</label><input id="estado-entrega" maxlength="2" placeholder="UF" autocomplete="address-level1"></div>
       </div>
     </div>
-    <button class="botao-principal" id="calcular-frete" type="button">Calcular valor da entrega</button>
+    <button class="botao-principal" id="calcular-frete" type="button">Recalcular entrega</button>
     <p id="status-frete" class="status-cep" role="status" aria-live="polite">Informe o endereço completo e calcule o frete para continuar.</p>
     <div id="resumo-frete" class="resumo-frete" hidden>
       <div><span>Distância da rota (ida)</span><strong id="distancia-frete">—</strong></div>
@@ -2525,56 +2525,98 @@ document.getElementById("aplicar-cupom")?.addEventListener("click",async()=>{
   }catch(err){limparCupomAplicado(err.message||"Cupom inválido.");}
   finally{botao.disabled=false;}
 });
+let versaoEnderecoEntrega = 0;
+let temporizadorFreteAutomatico = null;
+let consultaCepEmAndamento = null;
+let cepConsultado = "";
+function camposFretePreenchidos() {
+  return tipoRecebimento.value === "entrega" &&
+    cepEntrega.value.replace(/\D/g,"").length === 8 &&
+    ["rua-entrega","numero-entrega","bairro-entrega","cidade-entrega","estado-entrega"]
+      .every(id => document.getElementById(id).value.trim());
+}
 function invalidarCotacaoEntrega() {
+  versaoEnderecoEntrega++;
+  clearTimeout(temporizadorFreteAutomatico);
   cotacaoEntrega = null;
   if (statusFrete) {
-    statusFrete.textContent = "A sacola mudou. Calcule novamente o valor da entrega.";
+    statusFrete.textContent = "Informe o CEP e o número para calcular a entrega automaticamente.";
     statusFrete.className = "status-cep";
   }
   if (resumoFrete) resumoFrete.hidden = true;
 }
+function agendarFreteAutomatico() {
+  clearTimeout(temporizadorFreteAutomatico);
+  if (!camposFretePreenchidos() || consultaCepEmAndamento) return;
+  temporizadorFreteAutomatico = setTimeout(() => calcularFreteEntrega(false), 650);
+}
 tipoRecebimento.addEventListener("change", () => {
+  invalidarCotacaoEntrega();
   camposEnderecoEntrega.hidden = tipoRecebimento.value !== "entrega";
   atualizarResumoFrete();
+  agendarFreteAutomatico();
 });
-
-cepEntrega.addEventListener("input", () => {
-  const numeros = cepEntrega.value.replace(/\D/g, "").slice(0, 8);
-  cepEntrega.value = numeros.length > 5 ? numeros.slice(0, 5) + "-" + numeros.slice(5) : numeros;
-});
-
-cepEntrega.addEventListener("blur", async () => {
+async function consultarCepEntrega() {
   const cep = cepEntrega.value.replace(/\D/g, "");
   if (cep.length !== 8) {
     statusCep.textContent = cep ? "Informe um CEP válido com 8 números." : "Digite o CEP para preencher o endereço automaticamente.";
     statusCep.className = "status-cep" + (cep ? " erro" : "");
     return;
   }
+  if (cep === cepConsultado) { agendarFreteAutomatico(); return; }
+  const versao = versaoEnderecoEntrega;
   statusCep.textContent = "Consultando CEP…";
   statusCep.className = "status-cep";
-  try {
-    const resposta = await fetch("https://viacep.com.br/ws/" + cep + "/json/");
-    if (!resposta.ok) throw new Error("Falha na consulta do CEP.");
-    const endereco = await resposta.json();
-    if (endereco.erro) throw new Error("CEP não encontrado. Confira os números.");
-    document.getElementById("rua-entrega").value = endereco.logradouro || "";
-    document.getElementById("bairro-entrega").value = endereco.bairro || "";
-    document.getElementById("cidade-entrega").value = endereco.localidade || "";
-    document.getElementById("estado-entrega").value = endereco.uf || "";
-    document.getElementById("numero-entrega").focus();
-    statusCep.textContent = "Endereço localizado. Confira os dados e informe o número.";
-    statusCep.className = "status-cep sucesso";
-  } catch (erro) {
-    statusCep.textContent = erro.message || "Não foi possível consultar o CEP. Preencha o endereço manualmente.";
-    statusCep.className = "status-cep erro";
+  const consulta = (async () => {
+    try {
+      const resposta = await fetch("https://viacep.com.br/ws/" + cep + "/json/");
+      if (!resposta.ok) throw new Error("Falha na consulta do CEP.");
+      const endereco = await resposta.json();
+      if (endereco.erro) throw new Error("CEP não encontrado. Confira os números.");
+      if (versao !== versaoEnderecoEntrega || cepEntrega.value.replace(/\D/g,"") !== cep) return;
+      document.getElementById("rua-entrega").value = endereco.logradouro || "";
+      document.getElementById("bairro-entrega").value = endereco.bairro || "";
+      document.getElementById("cidade-entrega").value = endereco.localidade || "";
+      document.getElementById("estado-entrega").value = endereco.uf || "";
+      cepConsultado = cep;
+      statusCep.textContent = "Endereço localizado. Confira os dados e informe o número.";
+      statusCep.className = "status-cep sucesso";
+      if (!document.getElementById("numero-entrega").value.trim()) document.getElementById("numero-entrega").focus();
+    } catch (erro) {
+      if (versao !== versaoEnderecoEntrega) return;
+      statusCep.textContent = erro.message || "Não foi possível consultar o CEP. Preencha o endereço manualmente.";
+      statusCep.className = "status-cep erro";
+    }
+  })();
+  consultaCepEmAndamento = consulta;
+  try { await consulta; }
+  finally { if (consultaCepEmAndamento === consulta) consultaCepEmAndamento = null; }
+  if (versao === versaoEnderecoEntrega) agendarFreteAutomatico();
+}
+cepEntrega.addEventListener("input", () => {
+  const numeros = cepEntrega.value.replace(/\D/g, "").slice(0, 8);
+  cepEntrega.value = numeros.length > 5 ? numeros.slice(0, 5) + "-" + numeros.slice(5) : numeros;
+  invalidarCotacaoEntrega();
+  if (numeros !== cepConsultado) cepConsultado = "";
+  if (numeros.length === 8) consultarCepEntrega();
+});
+cepEntrega.addEventListener("blur", () => {
+  if (cepEntrega.value.replace(/\D/g,"").length === 8) consultarCepEntrega();
+});
+["rua-entrega","numero-entrega","complemento-entrega","bairro-entrega","cidade-entrega","estado-entrega"].forEach(id => {
+  document.getElementById(id).addEventListener("input", () => {
+    invalidarCotacaoEntrega();
+    agendarFreteAutomatico();
+  });
+});
+async function calcularFreteEntrega(manual = false) {
+  if (!camposFretePreenchidos()) {
+    if (manual) {
+      statusFrete.textContent = "Preencha CEP, rua, número, bairro, cidade e UF antes de calcular.";
+      statusFrete.className = "status-cep erro";
+    }
+    return;
   }
-});
-
-["rua-entrega","numero-entrega","complemento-entrega","bairro-entrega","cidade-entrega","estado-entrega","cep-entrega"].forEach(id => {
-  document.getElementById(id).addEventListener("input", invalidarCotacaoEntrega);
-});
-
-botaoCalcularFrete.addEventListener("click", async () => {
   const campos = {
     cep: cepEntrega.value.trim(),
     rua: document.getElementById("rua-entrega").value.trim(),
@@ -2584,11 +2626,7 @@ botaoCalcularFrete.addEventListener("click", async () => {
     cidade: document.getElementById("cidade-entrega").value.trim(),
     estado: document.getElementById("estado-entrega").value.trim()
   };
-  if (campos.cep.replace(/\D/g,"").length !== 8 || !campos.rua || !campos.numero || !campos.bairro || !campos.cidade || !campos.estado) {
-    statusFrete.textContent = "Preencha CEP, rua, número, bairro, cidade e UF antes de calcular.";
-    statusFrete.className = "status-cep erro";
-    return;
-  }
+  const versao = versaoEnderecoEntrega;
   const destino = [campos.rua,campos.numero,campos.complemento,campos.bairro,campos.cidade,campos.estado,"Brasil",campos.cep].filter(Boolean).join(", ");
   botaoCalcularFrete.disabled = true;
   statusFrete.textContent = "Calculando a rota e o valor da entrega…";
@@ -2596,17 +2634,20 @@ botaoCalcularFrete.addEventListener("click", async () => {
   resumoFrete.hidden = true;
   try {
     const resultado = await BelaSync.calcularEntrega(destino);
+    if (versao !== versaoEnderecoEntrega || tipoRecebimento.value !== "entrega") return;
     if (!resultado || !Number.isFinite(Number(resultado.frete)) || !Number.isFinite(Number(resultado.distanciaKm))) throw new Error("O servidor não retornou um cálculo válido.");
     cotacaoEntrega = resultado;
-    statusFrete.textContent = "Frete calculado pela rota de carro. O valor já está incluído no total abaixo.";
+    statusFrete.textContent = "Frete calculado automaticamente. O valor já está incluído no total abaixo.";
     statusFrete.className = "status-cep sucesso";
     atualizarResumoFrete();
   } catch (erro) {
+    if (versao !== versaoEnderecoEntrega) return;
     cotacaoEntrega = null;
     statusFrete.textContent = erro.message || "Não foi possível calcular a entrega. Confira o endereço e tente novamente.";
     statusFrete.className = "status-cep erro";
-  } finally { botaoCalcularFrete.disabled = false; }
-});
+  } finally { if (versao === versaoEnderecoEntrega) botaoCalcularFrete.disabled = false; }
+}
+botaoCalcularFrete.addEventListener("click", () => calcularFreteEntrega(true));
 
 let ultimaAssinaturaPedido = "";
 let ultimoIdPedido = "";
