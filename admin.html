@@ -586,6 +586,7 @@ footer { padding-top:24px; }
 .admin-produto-destaque input{width:auto}
 @media(max-width:480px){.admin-grade-produtos{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.admin-produto-foto{height:clamp(145px,48vw,210px)}.admin-produto-info{padding:9px}.admin-produto-nome{font-size:15px}.admin-produto-acoes{gap:5px}.admin-produto-acoes button{padding:9px 3px;font-size:10px}}
 .notificacoes-admin{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}.notificacoes-admin button{display:inline-flex;gap:8px;align-items:center}.contador-notificacoes{background:#b72237;color:#fff;border-radius:20px;min-width:22px;text-align:center;padding:3px 6px;font-weight:bold}.lista-notificacoes-admin{border:1px solid #dfc7ad;border-radius:10px;background:#fffaf4;padding:12px;margin:0 0 15px}.notificacao-vendedor{padding:12px 4px;border-bottom:1px solid #e8d8c8;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.notificacao-vendedor:last-child{border-bottom:0}.notificacao-vendedor button{white-space:nowrap}
+.filtros-pedidos-admin{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}.filtros-pedidos-admin label{flex:1 1 150px;max-width:280px;font-size:12px;font-weight:bold;color:#650817}.filtros-pedidos-admin select{display:block;width:100%;padding:9px;margin-top:5px;border:1px solid #d8c9c1;border-radius:8px;background:white}.pedido-admin-origem{display:inline-block;border-radius:20px;background:#efe2d4;color:#650817;padding:5px 10px;font-size:11px;font-weight:800}.pedido-admin-origem.loja{background:#650817;color:white}
 </style>
 </head>
 
@@ -684,6 +685,7 @@ footer { padding-top:24px; }
   <nav class="admin-menu" aria-label="Áreas administrativas">
     <button type="button" class="ativo" data-admin-aba="produtos" aria-selected="true"><span>🛍️</span>Produtos</button>
     <button type="button" data-admin-aba="vendedores" aria-selected="false"><span>🤝</span>Vendedores</button>
+    <button type="button" data-admin-aba="pedidos" aria-selected="false"><span>📦</span>Pedidos</button>
     <button type="button" data-admin-aba="cupons" aria-selected="false"><span>🎟️</span>Cupons</button>
     <button type="button" data-admin-aba="entregas" aria-selected="false"><span>🚚</span>Entregas</button>
     <button type="button" data-admin-aba="pagamentos" aria-selected="false"><span>💸</span>Pagamentos</button>
@@ -728,11 +730,18 @@ footer { padding-top:24px; }
     <p>Analise os cadastros recebidos. Somente vendedores aprovados terão um link exclusivo para divulgar o catálogo.</p>
     <div id="lista-vendedores" aria-live="polite">Carregue os cadastros para consultar os vendedores.</div>
     <button class="acao-header" id="atualizar-vendedores" type="button">Atualizar cadastros</button>
-    <hr><h3>Pedidos e comissões dos vendedores</h3>
-    <p>Os pedidos atribuídos a vendedores aparecem aqui após o cliente enviar o pedido pelo catálogo. Atualize o status quando a venda avançar.</p>
-    <div id="lista-pedidos-vendedores" aria-live="polite">Carregando pedidos quando a área for aberta…</div>
-    <button class="acao-header" id="atualizar-pedidos-vendedores" type="button">Atualizar pedidos</button>
   </section>
+  </section>
+  <section class="admin-secao" id="secao-admin-pedidos" hidden>
+    <h3>Pedidos · Bela Modas</h3>
+    <p class="aviso-demo">Pedidos de vendedores já registrados aparecem aqui. Pedidos feitos diretamente pelo catálogo ainda precisam de registro no Apps Script para aparecer nesta lista; mensagens do WhatsApp não são importadas automaticamente.</p>
+    <div class="filtros-pedidos-admin">
+      <label>Origem<select id="filtro-origem-pedidos-admin"><option value="todos">Todas</option><option value="loja">Loja</option><option value="vendedor">Vendedores</option></select></label>
+      <label>Status<select id="filtro-status-pedidos-admin"><option value="todos">Todos</option><option value="aguardando">Aguardando</option><option value="confirmando">Confirmando</option><option value="finalizado">Finalizado</option><option value="cancelada">Cancelado</option></select></label>
+    </div>
+    <p id="total-pedidos-admin" class="aviso-demo"></p>
+    <div id="lista-pedidos-vendedores" aria-live="polite">Carregando pedidos registrados…</div>
+    <button class="acao-header" id="atualizar-pedidos-vendedores" type="button">Atualizar pedidos</button>
   </section>
   <section class="admin-secao" id="secao-admin-cupons" hidden>
 <section id="admin-cupons" style="border:1px solid #d8c9c1;border-radius:10px;padding:16px;margin:22px 0;background:#fffaf4">
