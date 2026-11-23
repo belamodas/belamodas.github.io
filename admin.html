@@ -1627,7 +1627,7 @@ function renderPedidosAdmin(){
    finally{status.disabled=false;}
   });
   card.append(origemLabel,titulo,resumo,itens,status);
-  if(!["finalizado","concluida"].includes(String(p.status||"").toLowerCase())){
+  if(["aguardando","cancelada","cancelado"].includes(String(p.status||"").toLowerCase())){
     const excluir=document.createElement("button");
     excluir.type="button";excluir.className="acao-header";
     excluir.textContent="Excluir definitivamente";
