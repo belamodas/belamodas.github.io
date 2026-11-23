@@ -517,6 +517,24 @@
     return Array.isArray(resultado) ? resultado : [];
   }
 
+  async function listarTodosPedidos() {
+    exigirSessao();
+    const resultado = await requisicaoPost({ acao: "listarTodosPedidos", token: tokenAdmin });
+    if (!Array.isArray(resultado)) throw new Error("A consulta unificada de pedidos não retornou uma lista.");
+    return resultado;
+  }
+
+  async function atualizarPedidoLoja(id, status, motivoCancelamento = "") {
+    exigirSessao();
+    return requisicaoPost({ acao: "atualizarPedidoLoja", token: tokenAdmin, id, status, motivoCancelamento });
+  }
+
+  async function excluirPedidoAdmin(id, origem) {
+    exigirSessao();
+    if (!id || !["loja", "vendedor"].includes(origem)) throw new Error("Selecione o pedido e sua origem.");
+    return requisicaoPost({ acao: "excluirPedidoAdmin", token: tokenAdmin, id, origem });
+  }
+
   async function atualizarPedidoVendedor(id, status, motivoCancelamento = "") {
     exigirSessao();
     return requisicaoPost({ acao: "atualizarPedidoVendedor", token: tokenAdmin, id, status, motivoCancelamento });
@@ -608,6 +626,9 @@
     alternarCupom,
     resetarSenhaVendedor,
     listarPedidosVendedores,
+    listarTodosPedidos,
+    atualizarPedidoLoja,
+    excluirPedidoAdmin,
     atualizarPedidoVendedor,
     listarPagamentosVendedores,
     registrarPagamentoVendedor,
