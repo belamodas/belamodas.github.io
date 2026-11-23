@@ -2709,37 +2709,43 @@ document.getElementById("enviar-whatsapp").onclick = async () => {
   linhas.push("Forma de pagamento pretendida: " + pagamento);
   linhas.push("Observações: " + (document.getElementById("obs-pedido").value.trim() || "Nenhuma"));
 
-  if (indicacao) {
-    botaoEnviar.textContent = "Registrando pedido...";
-    try {
-      const assinaturaPedido = JSON.stringify({
-        vendedor: indicacao.codigo, cliente: nome, itens: carrinho,
-        cupom: cupomAplicado?.codigo || "", entrega, frete: entrega ? cotacaoEntrega?.frete : 0,
-        endereco: entrega ? [rua, numero, bairro, cidade, cep] : []
-      });
-      if (assinaturaPedido !== ultimaAssinaturaPedido) {
-        ultimaAssinaturaPedido = assinaturaPedido;
-        ultimoIdPedido = (crypto.randomUUID ? crypto.randomUUID() : "BM" + Date.now() + Math.random().toString(16).slice(2));
-      }
-      const pedidoId = ultimoIdPedido;
-      const finalizado = await BelaSync.finalizarCheckout({
-        id: pedidoId, codigoVendedor: indicacao.codigo, codigoCupom:cupomAplicado?.codigo||"", cliente: nome,
-        itens: carrinho.map(i => ({codigo:i.codigo, tamanho:i.tamanho || "", quantidade:i.quantidade})),
-        frete: entrega ? Number(cotacaoEntrega.frete || 0) : 0,
-        recebimento: entrega ? "entrega" : "retirada",
-        observacoes: document.getElementById("obs-pedido").value.trim()
-      });
-      const numeroPedido = finalizado?.pedidoVendedor?.numeroPedido;
-      linhas.push("Pedido registrado: " + (numeroPedido ? "#"+numeroPedido : pedidoId));
-    } catch (err) {
-      alert("Não foi possível registrar este pedido para o vendedor parceiro: " + (err.message || "falha no servidor") + ". O pedido não será aberto no WhatsApp para evitar perda do acompanhamento.");
-      return;
+  botaoEnviar.textContent = "Registrando pedido...";
+  try {
+    const enderecoEntrega = entrega ? [
+      rua, numero, document.getElementById("complemento-entrega").value.trim(),
+      bairro, cidade, document.getElementById("estado-entrega").value.trim(),
+      "Brasil", cep
+    ].filter(Boolean).join(", ") : "";
+    const assinaturaPedido = JSON.stringify({
+      vendedor: indicacao?.codigo || "", cliente: nome, itens: carrinho,
+      cupom: cupomAplicado?.codigo || "", entrega,
+      frete: entrega ? cotacaoEntrega?.frete : 0,
+      endereco: enderecoEntrega, pagamento,
+      observacoes: document.getElementById("obs-pedido").value.trim()
+    });
+    if (assinaturaPedido !== ultimaAssinaturaPedido) {
+      ultimaAssinaturaPedido = assinaturaPedido;
+      ultimoIdPedido = crypto.randomUUID ? crypto.randomUUID() : "BM" + Date.now() + Math.random().toString(16).slice(2);
     }
-  } else if (cupomAplicado) {
-    botaoEnviar.textContent = "Validando cupom...";
-    try {
-      await BelaSync.finalizarCheckout({codigoCupom:cupomAplicado.codigo,itens:carrinho.map(i=>({codigo:i.codigo,tamanho:i.tamanho||"",quantidade:i.quantidade})),frete:entrega?Number(cotacaoEntrega.frete||0):0});
-    } catch(err) { alert(err.message||"Não foi possível validar o cupom no fechamento. O pedido não será aberto."); return; }
+    const pedidoId = ultimoIdPedido;
+    const finalizado = await BelaSync.finalizarCheckout({
+      id: pedidoId, codigoVendedor: indicacao?.codigo || "",
+      codigoCupom: cupomAplicado?.codigo || "", cliente: nome,
+      itens: carrinho.map(i => ({codigo:i.codigo, tamanho:i.tamanho || "", quantidade:i.quantidade})),
+      frete: entrega ? Number(cotacaoEntrega.frete || 0) : 0,
+      recebimento: entrega ? "entrega" : "retirada",
+      enderecoEntrega, formaPagamento: pagamento,
+      observacoes: document.getElementById("obs-pedido").value.trim()
+    });
+    const registrado = indicacao ? finalizado?.pedidoVendedor : finalizado?.pedidoLoja;
+    if (!registrado?.registrado) {
+      throw new Error("O servidor ainda não confirmou o registro do pedido. Publique o novo Code.gs para ativar a central de pedidos.");
+    }
+    const numeroPedido = registrado.numeroPedido;
+    linhas.push("Pedido registrado: " + (numeroPedido ? "#"+numeroPedido : pedidoId));
+  } catch (err) {
+    alert("Não foi possível registrar o pedido: " + (err.message || "falha no servidor") + ". O pedido não será enviado ao WhatsApp para evitar perda do acompanhamento.");
+    return;
   }
   botaoEnviar.textContent = "Abrindo WhatsApp...";
   const linkWhatsApp = "https://wa.me/" + numeroWhatsAppLoja + "?text=" + encodeURIComponent(linhas.join("\n"));
