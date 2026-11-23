@@ -1588,45 +1588,58 @@ async function resetarAcessoVendedor(vendedor, botao) {
   } catch(err) { alert(err.message || "Não foi possível gerar a senha temporária."); }
   finally { botao.disabled = false; }
 }
-async function carregarPedidosVendedoresAdmin() {
-  const area = document.getElementById("lista-pedidos-vendedores");
-  const botao = document.getElementById("atualizar-pedidos-vendedores");
-  if (!area) return;
-  if (botao) botao.disabled = true;
-  area.textContent = "Carregando pedidos…";
-  try {
-    const pedidos = await BelaSync.listarPedidosVendedores();
-    area.replaceChildren();
-    if (!pedidos.length) { area.textContent = "Nenhum pedido de vendedor registrado."; return; }
-    pedidos.forEach(p => {
-      const card = document.createElement("div");
-      card.style.cssText = "padding:12px 0;border-bottom:1px solid #e5d4bd;display:grid;gap:7px";
-      const titulo = document.createElement("strong");
-      titulo.textContent = p.vendedor + " · " + p.cliente + " · " + new Date(p.criadoEm).toLocaleString("pt-BR");
-      if (p.numeroPedido) titulo.textContent = "#" + p.numeroPedido + " · " + titulo.textContent;
-      const resumo = document.createElement("span");
-      resumo.textContent = "Pedido " + p.id + " · Produtos: " + moedaAdmin(p.totalProdutos) + (p.codigoCupom ? " · Cupom "+p.codigoCupom+" (-"+moedaAdmin(p.descontoCupom)+")" : "") + " · Frete: " + moedaAdmin(p.frete) + " · Total: " + moedaAdmin(p.total) + " · Comissão: " + moedaAdmin(p.comissao) + " (" + p.comissaoPercentual + "%)";
-      const status = document.createElement("select");
-      [["aguardando","Aguardando — confirmar produtos"],["confirmando","Confirmando — produtos disponíveis"],["finalizado","Finalizado — liberar comissão"],["cancelada","Cancelado"]].forEach(([v,t]) => { const o=document.createElement("option");o.value=v;o.textContent=t;status.appendChild(o); });
-      status.value=({confirmada:"confirmando",concluida:"finalizado"})[p.status]||p.status;
-      status.addEventListener("change", async () => {
-        status.disabled = true;
-        let motivoCancelamento = "";
-        if (status.value === "cancelada") { motivoCancelamento = window.prompt("Informe o motivo do cancelamento:") || ""; if (!motivoCancelamento.trim()) { status.value=({confirmada:"confirmando",concluida:"finalizado"})[p.status]||p.status; status.disabled=false; return; } }
-        try { await BelaSync.atualizarPedidoVendedor(p.id,status.value,motivoCancelamento); await carregarPedidosVendedoresAdmin(); }
-        catch(err) { alert(err.message || "Não foi possível atualizar o pedido."); status.value=p.status; }
-        finally { status.disabled=false; }
-      });
-      const itens = document.createElement("small");
-      try { itens.textContent = JSON.parse(p.itens).map(i => i.nome + " ×" + i.quantidade + (i.tamanho ? " · " + i.tamanho : "")).join(" | "); }
-      catch(_) { itens.textContent = "Itens do pedido"; }
-      card.append(titulo,resumo,itens,status);
-      if (p.motivoCancelamento) { const motivo=document.createElement("small"); motivo.textContent="Motivo do cancelamento: "+p.motivoCancelamento; card.appendChild(motivo); }
-      area.appendChild(card);
-    });
-  } catch(err) { area.textContent = "Não foi possível carregar os pedidos: " + (err.message || "erro desconhecido"); }
-  finally { if (botao) botao.disabled=false; }
+let pedidosAdminCache = [];
+function statusPedidoAdmin(p){const s=String(p.status||"aguardando").toLowerCase();return ({confirmada:"confirmando",concluida:"finalizado",cancelado:"cancelada"})[s]||s;}
+function origemPedidoAdmin(p){return String(p.origem||"").toLowerCase()==="loja"?"loja":"vendedor";}
+function renderPedidosAdmin(){
+ const area=document.getElementById("lista-pedidos-vendedores");
+ const fOrigem=document.getElementById("filtro-origem-pedidos-admin").value;
+ const fStatus=document.getElementById("filtro-status-pedidos-admin").value;
+ const lista=pedidosAdminCache.filter(p=>(fOrigem==="todos"||origemPedidoAdmin(p)===fOrigem)&&(fStatus==="todos"||statusPedidoAdmin(p)===fStatus));
+ document.getElementById("total-pedidos-admin").textContent=lista.length+" de "+pedidosAdminCache.length+" pedidos registrados na consulta.";
+ area.replaceChildren();
+ if(!lista.length){area.textContent=fOrigem==="loja"?"Ainda não há pedidos da loja disponíveis: falta integrar o registro dos pedidos diretos no Apps Script.":"Nenhum pedido encontrado.";return;}
+ lista.forEach(p=>{
+  const origem=origemPedidoAdmin(p);
+  const card=document.createElement("article");card.style.cssText="padding:14px 0;border-bottom:1px solid #e5d4bd;display:grid;gap:8px";
+  const origemLabel=document.createElement("span");origemLabel.className="pedido-admin-origem"+(origem==="loja"?" loja":"");origemLabel.textContent=origem==="loja"?"Loja":"Vendedor: "+(p.vendedor||"Parceiro");
+  const titulo=document.createElement("strong");
+  const data=p.criadoEm?new Date(p.criadoEm):null;
+  titulo.textContent="Pedido #"+(p.numeroPedido||String(p.id||"").slice(0,8)||"—")+" · "+(p.cliente||"Cliente")+(data&&!isNaN(data)?" · "+data.toLocaleString("pt-BR"):"");
+  const resumo=document.createElement("span");resumo.textContent="Produtos: "+moedaAdmin(p.totalProdutos)+(p.codigoCupom?" · Cupom "+p.codigoCupom+" (-"+moedaAdmin(p.descontoCupom)+")":"")+" · Frete: "+moedaAdmin(p.frete)+" · Total: "+moedaAdmin(p.total)+(origem==="vendedor"?" · Comissão: "+moedaAdmin(p.comissao):"");
+  const itens=document.createElement("small");try{const dados=Array.isArray(p.itens)?p.itens:JSON.parse(p.itens);itens.textContent=dados.map(i=>(i.nome||i.codigo||"Produto")+" ×"+(i.quantidade||1)+(i.tamanho?" · "+i.tamanho:"")).join(" | ");}catch(_){itens.textContent="Itens não disponíveis";}
+  const status=document.createElement("select");
+  [["aguardando","Aguardando"],["confirmando","Confirmando"],["finalizado","Finalizado"],["cancelada","Cancelado"]].forEach(([v,n])=>{const op=document.createElement("option");op.value=v;op.textContent=n;status.appendChild(op);});
+  status.value=statusPedidoAdmin(p);
+  if(origem==="loja"){status.disabled=true;status.title="Pedidos de loja precisam de atualização no Apps Script.";}
+  else status.addEventListener("change",async()=>{
+   let motivo="";
+   if(status.value==="cancelada"){motivo=(prompt("Informe o motivo do cancelamento:")||"").trim();if(!motivo){status.value=statusPedidoAdmin(p);return;}}
+   status.disabled=true;
+   try{await BelaSync.atualizarPedidoVendedor(p.id,status.value,motivo);await carregarPedidosVendedoresAdmin();}
+   catch(err){alert(err.message||"Falha ao atualizar o pedido.");status.value=statusPedidoAdmin(p);}
+   finally{status.disabled=false;}
+  });
+  card.append(origemLabel,titulo,resumo,itens,status);
+  if(p.motivoCancelamento){const motivo=document.createElement("small");motivo.textContent="Motivo do cancelamento: "+p.motivoCancelamento;card.appendChild(motivo);}
+  area.appendChild(card);
+ });
 }
+async function carregarPedidosVendedoresAdmin(){
+ const area=document.getElementById("lista-pedidos-vendedores");
+ const botao=document.getElementById("atualizar-pedidos-vendedores");
+ if(!area)return;
+ if(botao)botao.disabled=true;area.textContent="Carregando pedidos…";
+ try{
+  const pedidos=await BelaSync.listarPedidosVendedores();
+  if(!Array.isArray(pedidos))throw Error("Resposta inválida do servidor.");
+  pedidosAdminCache=pedidos;
+  renderPedidosAdmin();
+ }catch(err){area.textContent="Não foi possível carregar os pedidos: "+(err.message||"erro desconhecido");}
+ finally{if(botao)botao.disabled=false;}
+}
+document.getElementById("filtro-origem-pedidos-admin").addEventListener("change",renderPedidosAdmin);
+document.getElementById("filtro-status-pedidos-admin").addEventListener("change",renderPedidosAdmin);
 
 async function carregarCuponsAdmin(){
  const area=document.getElementById("lista-cupons-admin");if(!area)return;
