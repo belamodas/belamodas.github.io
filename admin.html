@@ -767,6 +767,9 @@ footer { padding-top:24px; }
       <label for="admin-tarifa-entrega">Taxa mínima + valor por quilômetro</label>
       <input id="admin-tarifa-entrega" type="text" inputmode="decimal" maxlength="32" value="5,00 + 2,00/km" placeholder="5,00 + 2,00/km" aria-describedby="resumo-tarifa-entrega">
       <p class="aviso-demo" id="resumo-tarifa-entrega">Exemplo: 3 km = R$ 11,00.</p>
+      <label for="admin-distancia-maxima-entrega">Distância máxima para entregas (km)</label>
+      <input id="admin-distancia-maxima-entrega" type="number" min="1" max="200" step="0.1" inputmode="decimal" placeholder="Ex.: 40" aria-describedby="aviso-limite-entrega">
+      <p class="aviso-demo" id="aviso-limite-entrega">Limite medido pela rota de carro, somente ida. A configuração só será efetiva após o Apps Script armazenar e devolver a distância máxima.</p>
       <label for="admin-endereco-origem">Endereço de saída para entregas</label>
       <input id="admin-endereco-origem" value="Avenida México, 87, Petrovale, Betim - MG, CEP 32668-052">
       <p class="aviso-demo">O cálculo será baseado na distância da rota de carro, considerando somente a ida. A integração do cálculo automático no catálogo será uma etapa separada.</p>
@@ -1801,6 +1804,10 @@ async function carregarConfigEntregasAdmin() {
     const config = await BelaSync.buscarEntregas();
     document.getElementById("admin-tarifa-entrega").value = Number(config.valorMinimo ?? 5).toLocaleString("pt-BR", {minimumFractionDigits:2,maximumFractionDigits:2}) + " + " + Number(config.valorKm ?? 2).toLocaleString("pt-BR", {minimumFractionDigits:2,maximumFractionDigits:2}) + "/km";
     atualizarResumoTarifaEntregaAdmin();
+    const limiteDoServidor = Number(config.distanciaMaximaKm);
+    const configurado = config.distanciaMaximaKm != null && config.distanciaMaximaKm !== "" && Number.isFinite(limiteDoServidor) && limiteDoServidor > 0;
+    document.getElementById("admin-distancia-maxima-entrega").value = configurado ? String(limiteDoServidor) : "";
+    document.getElementById("aviso-limite-entrega").textContent = configurado ? "Limite atual: " + limiteDoServidor.toLocaleString("pt-BR") + " km pela rota de carro (somente ida)." : "O servidor ainda não informa uma distância máxima. A atualização do Apps Script será necessária para ativar esta regra.";
     document.getElementById("admin-endereco-origem").value = config.enderecoOrigem || "";
     document.getElementById("admin-endereco-retirada").value = config.enderecoRetirada || "";
     status.textContent = "Configurações carregadas.";
@@ -1812,9 +1819,16 @@ document.getElementById("salvar-config-entregas").addEventListener("click", asyn
   let tarifa;
   try { tarifa = interpretarTarifaEntregaAdmin(); }
   catch (err) { alert(err.message); document.getElementById("admin-tarifa-entrega").focus(); return; }
+  const campoLimite = document.getElementById("admin-distancia-maxima-entrega");
+  const valorLimite = campoLimite.value.trim().replace(",",".");
+  const distanciaMaximaKm = Number(valorLimite);
+  if (!valorLimite || !Number.isFinite(distanciaMaximaKm) || distanciaMaximaKm < 1 || distanciaMaximaKm > 200) {
+    alert("Informe uma distância máxima entre 1 e 200 km."); campoLimite.focus(); return;
+  }
   const config = {
     valorMinimo: tarifa.valorMinimo,
     valorKm: tarifa.valorKm,
+    distanciaMaximaKm,
     enderecoOrigem: document.getElementById("admin-endereco-origem").value.trim(),
     enderecoRetirada: document.getElementById("admin-endereco-retirada").value.trim()
   };
@@ -1826,8 +1840,16 @@ document.getElementById("salvar-config-entregas").addEventListener("click", asyn
     const salvo = await BelaSync.salvarEntregas(config);
     document.getElementById("admin-tarifa-entrega").value = Number(salvo.valorMinimo ?? config.valorMinimo).toLocaleString("pt-BR", {minimumFractionDigits:2,maximumFractionDigits:2}) + " + " + Number(salvo.valorKm).toLocaleString("pt-BR", {minimumFractionDigits:2,maximumFractionDigits:2}) + "/km";
     atualizarResumoTarifaEntregaAdmin();
-    status.textContent = "Configurações de entrega salvas com sucesso.";
-    alert("Configurações de entrega salvas.");
+    const limiteConfirmado = Number(salvo.distanciaMaximaKm) === config.distanciaMaximaKm && salvo.distanciaMaximaKm != null;
+    if (limiteConfirmado) {
+      document.getElementById("aviso-limite-entrega").textContent = "Limite ativo: " + distanciaMaximaKm.toLocaleString("pt-BR") + " km pela rota de carro (somente ida).";
+      status.textContent = "Configurações de entrega salvas, incluindo distância máxima.";
+      alert("Configurações de entrega salvas.");
+    } else {
+      document.getElementById("aviso-limite-entrega").textContent = "O Apps Script não confirmou o limite de distância. Ele ainda precisa ser atualizado para aplicar essa regra.";
+      status.textContent = "Tarifa e endereços enviados. Limite de distância ainda não confirmado pelo servidor.";
+      alert("O Apps Script ainda não confirmou o limite de entrega. É necessário atualizar o Code.gs para ativar essa regra.");
+    }
   } catch (err) {
     status.textContent = "Falha ao salvar: " + (err.message || "erro desconhecido");
     alert(err.message || "Não foi possível salvar as configurações.");
