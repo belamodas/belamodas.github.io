@@ -734,7 +734,7 @@ footer { padding-top:24px; }
   </section>
   <section class="admin-secao" id="secao-admin-pedidos" hidden>
     <h3>Pedidos · Bela Modas</h3>
-    <p class="aviso-demo">Pedidos de vendedores já registrados aparecem aqui. Pedidos feitos diretamente pelo catálogo ainda precisam de registro no Apps Script para aparecer nesta lista; mensagens do WhatsApp não são importadas automaticamente.</p>
+    <p class="aviso-demo">A central reúne pedidos da Loja e dos vendedores. Compras anteriores à atualização do Apps Script não são importadas do WhatsApp automaticamente.</p>
     <div class="filtros-pedidos-admin">
       <label>Origem<select id="filtro-origem-pedidos-admin"><option value="todos">Todas</option><option value="loja">Loja</option><option value="vendedor">Vendedores</option></select></label>
       <label>Status<select id="filtro-status-pedidos-admin"><option value="todos">Todos</option><option value="aguardando">Aguardando</option><option value="confirmando">Confirmando</option><option value="finalizado">Finalizado</option><option value="cancelada">Cancelado</option></select></label>
@@ -1614,16 +1614,36 @@ function renderPedidosAdmin(){
   const status=document.createElement("select");
   [["aguardando","Aguardando"],["confirmando","Confirmando"],["finalizado","Finalizado"],["cancelada","Cancelado"]].forEach(([v,n])=>{const op=document.createElement("option");op.value=v;op.textContent=n;status.appendChild(op);});
   status.value=statusPedidoAdmin(p);
-  if(origem==="loja"){status.disabled=true;status.title="Pedidos de loja precisam de atualização no Apps Script.";}
-  else status.addEventListener("change",async()=>{
+  status.addEventListener("change",async()=>{
    let motivo="";
    if(status.value==="cancelada"){motivo=(prompt("Informe o motivo do cancelamento:")||"").trim();if(!motivo){status.value=statusPedidoAdmin(p);return;}}
    status.disabled=true;
-   try{await BelaSync.atualizarPedidoVendedor(p.id,status.value,motivo);await carregarPedidosVendedoresAdmin();}
+   try{
+     if(origem==="loja")await BelaSync.atualizarPedidoLoja(p.id,status.value,motivo);
+     else await BelaSync.atualizarPedidoVendedor(p.id,status.value,motivo);
+     await carregarPedidosVendedoresAdmin();
+   }
    catch(err){alert(err.message||"Falha ao atualizar o pedido.");status.value=statusPedidoAdmin(p);}
    finally{status.disabled=false;}
   });
   card.append(origemLabel,titulo,resumo,itens,status);
+  if(!["finalizado","concluida"].includes(String(p.status||"").toLowerCase())){
+    const excluir=document.createElement("button");
+    excluir.type="button";excluir.className="acao-header";
+    excluir.textContent="Excluir definitivamente";
+    excluir.style.cssText="width:max-content;border-color:#af3248;color:#af3248;";
+    excluir.addEventListener("click",async()=>{
+      const identificacao="Pedido #"+(p.numeroPedido||String(p.id||"").slice(0,8))+" ("+(origem==="loja"?"Loja":"Vendedor")+")";
+      if(!confirm("Excluir DEFINITIVAMENTE "+identificacao+"? Esta ação é irreversível."))return;
+      const confirmacao=prompt("Para confirmar a exclusão definitiva, digite EXCLUIR:");
+      if(confirmacao!=="EXCLUIR")return;
+      excluir.disabled=true;
+      try{await BelaSync.excluirPedidoAdmin(p.id,origem);await carregarPedidosVendedoresAdmin();alert("Pedido excluído definitivamente.");}
+      catch(err){alert(err.message||"Não foi possível excluir o pedido.");}
+      finally{excluir.disabled=false;}
+    });
+    card.append(excluir);
+  }
   if(p.motivoCancelamento){const motivo=document.createElement("small");motivo.textContent="Motivo do cancelamento: "+p.motivoCancelamento;card.appendChild(motivo);}
   area.appendChild(card);
  });
@@ -1634,7 +1654,14 @@ async function carregarPedidosVendedoresAdmin(){
  if(!area)return;
  if(botao)botao.disabled=true;area.textContent="Carregando pedidos…";
  try{
-  const pedidos=await BelaSync.listarPedidosVendedores();
+  let pedidos;
+  try{
+    pedidos=await BelaSync.listarTodosPedidos();
+  }catch(erro){
+    if(!String(erro?.message||"").includes("Operação desconhecida"))throw erro;
+    // Preserva a listagem legada até a publicação do novo Code.gs.
+    pedidos=await BelaSync.listarPedidosVendedores();
+  }
   if(!Array.isArray(pedidos))throw Error("Resposta inválida do servidor.");
   pedidosAdminCache=pedidos;
   renderPedidosAdmin();
